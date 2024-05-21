@@ -1,5 +1,8 @@
 import { Sequelize, DataTypes } from "sequelize";
 import dbConfig from "../config/dbConfig";
+import userModel from "./userModel";
+import roleModel from "./roleModel";
+
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   dialect: dbConfig.dialect,
@@ -16,7 +19,8 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
 })();
 
 const models = {
- 
+  Users: userModel(sequelize, DataTypes),
+  Roles: roleModel(sequelize, DataTypes)
 };
 
 const db = {
@@ -31,6 +35,6 @@ sequelize.sync({ force: false })
   })
   .catch((error) => {
     console.error("Error syncing database:", error);
-  });
+});
 
 export default db;
