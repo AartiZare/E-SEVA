@@ -14,13 +14,13 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
-const corOptions = {
-    origin: 'https://localhost:8081'
-};
+// const corOptions = {
+//     origin: 'https://localhost:8081'
+// };
 
 const PORT = process.env.PORT || 8080;
 
-app.use(cors(corOptions));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
