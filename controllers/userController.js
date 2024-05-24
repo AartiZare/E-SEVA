@@ -6,43 +6,55 @@ import httpStatus from 'http-status';
 import ApiError from '../utils/ApiError';
 import db from '../models';
 import { genToken } from '../middlewares/passport';
+import mailService from "../utils/mailService";
+import { generateOTP } from "../utils/generateOtp";
 const userModel = db.Users;
+const roleModel = db.Roles;
 
 export const create = catchAsync(async (req, res, next) => {
-    try {
-        const { body } = req;
-        // console.log(req.user, "logged in user")
-        // body.created_by = req.user.id;
-        body.email_id = body.email_id.toLowerCase();
-        const hashedPassword = await bcrypt.hash(body.password, 10);
-        
-        const user = await userModel.findOne({
-            where: {
-                [Op.or]: [
-                    { email_id: body.email_id },
-                    { contact_no: body.contact_no }
-                ]
-            }
-        });
+  try {
+    const { body } = req;
+    // console.log(req.user, "logged in user")
+    // body.created_by = req.user.id;
+    body.email_id = body.email_id.toLowerCase();
+    const user = await userModel.findOne({
+      where: {
+        [Op.or]: [
+          { email_id: body.email_id },
+          { contact_no: body.contact_no }
+        ]
+      }
+    });
 
-        if (user) {
-            if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
-                return next(new ApiError(httpStatus.BAD_REQUEST, `email ${body.email_id} is already exist!`));
-            }
-            if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
-                return next(new ApiError(httpStatus.BAD_REQUEST, `phone no ${body.contact_no} is already exist!`));
-            }
-            if ( user.email_id === body.email_id && user.contact_no === body.contact_no) {
-                return next(new ApiError(httpStatus.BAD_REQUEST, 'user already exist'));
-            }
-        }
-
-        const createdUser = await userService.createUser({...body, password: hashedPassword});
-        return res.send(createdUser);
-    } catch (error) {
-        console.log(error);
-        return res.status(500).send({ error: 'Internal Server Error' });
+    if (user) {
+      if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
+        return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
+      }
+      if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
+        return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
+      }
+      if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
+        return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
+      }
     }
+
+    const resetPasswordToken = genToken({ email: body.email_id });
+    const createdUser = await userService.createUser({ ...body, resetPasswordToken });
+
+    const emailSubject = "Set Your Password";
+    const emailText = `To set your password, use the following URL: http://localhost:8080/reset-password?token=${resetPasswordToken}`;
+    const emailHtml = `<p>To set your password, click <a href="http://localhost:8080/reset-password?token=${resetPasswordToken}">here</a>.</p>`;
+
+    await mailService(body.email_id, emailSubject, emailText, emailHtml);
+
+    return res.send({
+      msg: "User created successfully",
+      results: createdUser,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ error: 'Internal Server Error' });
+  }
 });
 
 export const getAll = catchAsync(async (req, res) => {
@@ -117,7 +129,6 @@ export const getUserById = catchAsync(async (req, res, next) => {
     }
 });
 
-
 export const login = catchAsync(async (req, res, next) => {
     try {
         const { password } = req.body;
@@ -126,16 +137,113 @@ export const login = catchAsync(async (req, res, next) => {
 
         const noUserErrorNext = () => next(new ApiError(httpStatus.BAD_REQUEST, 'Invalid Email ID or Password'));
         let user = await userModel.findOne({ where: { email_id: req.body.email_id } });
+        console.log(user, "user")
+
         if (!user) {
             return noUserErrorNext();
         }
-        if (await bcrypt.compare(password, user.password)) {
-            const token = genToken(user);
-            return res.status(200).json({ msg: "Logged in sucessfully", user: user, token: token });
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return noUserErrorNext();
         }
-        return noUserErrorNext();
+
+        // Check user role
+        const userRole = await roleModel.findByPk(user.roleId);
+        console.log(userRole, "User roles");
+
+        if (!userRole) {
+            return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'User role not found'));
+        }
+
+        // Generate token
+        const token = genToken(user);
+        
+        // Return login response with user's role
+        return res.send({ status: true,  msg: "Logged in successfully", user: user, token: token, role: userRole.name });
     } catch (error) {
         console.error(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
-})
+});
+
+export const forgotPassword = catchAsync(async (req, res, next) => {
+    try {
+        const { email_id } = req.body;
+        const user = await userModel.findOne({ where: { email_id } });
+
+        if (!user) {
+            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+        }
+
+        // Generate OTP
+        const otp = generateOTP();
+
+        // Store OTP and its expiration time in user document
+        user.resetOTP = otp;
+        user.resetOTPExpiration = new Date(Date.now() + 5 * 60000);
+        await user.save();
+
+        // Send OTP via email
+        const emailSubject = "Password Reset OTP";
+        const emailHtml = `Your OTP for password reset is: ${otp}`;
+        await mailService(user.email_id, emailSubject, null, emailHtml);
+
+        return res.send({ message: "OTP sent for password reset." });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+export const verifyOTP = catchAsync(async (req, res, next) => {
+    try {
+        const { email_id, otp } = req.body;
+
+        if (!otp) {
+            return res.status(400).json({ message: "OTP is required" });
+        }
+
+        const user = await userModel.findOne({ where: { email_id } });
+
+        if (!user) {
+            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+        }
+
+        if (user.resetOTP !== otp || user.resetOTPExpiration < new Date()) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
+        }
+
+        return res.status(200).json({ message: "OTP verified successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+
+export const resetPassword = catchAsync(async (req, res, next) => {
+    try {
+        const { email_id, password } = req.body;
+        const user = await userModel.findOne({ where: { email_id } });
+
+        if (!user) {
+            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+        }
+
+        // Update user's password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+
+        // Clear reset OTP fields
+        user.resetOTP = undefined;
+        user.resetOTPExpiration = undefined;
+
+        await user.save();
+
+        return res.send({ message: "Password reset successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
