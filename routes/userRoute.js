@@ -7,6 +7,18 @@ import auth from '../middlewares/auth';
 const router = express.Router();
 
 router
+.route('/forgot_password')
+    .get(userController.forgotPassword);
+
+router
+.route('/reset_password')
+    .post(userController.resetPassword);
+    
+router
+.route('/verify_OTP')
+    .get(userController.verifyOTP);
+
+router
 .route('/')
     .post(validate(userValidation.createUser), userController.create)
     .get(validate(userValidation.getAllUsers), userController.getAll);

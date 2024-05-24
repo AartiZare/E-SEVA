@@ -31,6 +31,15 @@ const userModel = (sequelize, DataTypes) => {
         qualifications: {
             type: DataTypes.STRING,
         },
+        resetOTP: {
+            type: DataTypes.STRING
+        },
+        password: {
+            type: DataTypes.STRING
+        },
+        resetOTPExpiration: {
+            type: DataTypes.DATE
+        },
         dob: {
             type: DataTypes.DATE,
             allowNull: false,
@@ -58,10 +67,6 @@ const userModel = (sequelize, DataTypes) => {
             allowNull: false,
         },
         branch: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        password: {
             type: DataTypes.STRING,
             allowNull: false,
         },
