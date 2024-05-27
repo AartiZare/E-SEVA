@@ -1,10 +1,13 @@
-const passport = require('passport');
-const httpStatus = require('http-status');
-const ApiError = require('../utils/ApiError');
+import passport from 'passport';
+import httpStatus from 'http-status';
+import ApiError from '../utils/ApiError.js';
+
+const { authenticate } = passport
+const { UNAUTHORIZED } = httpStatus
 
 const verifyCallback = (req, resolve, reject) => async (err, user, info) => {
   if (err || info || !user) {
-    return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Token Expired!'));
+    return reject(new ApiError(UNAUTHORIZED, 'Token Expired!'));
   }
   req.user = user;
   resolve();
@@ -12,11 +15,11 @@ const verifyCallback = (req, resolve, reject) => async (err, user, info) => {
 
 const auth = (role) => async (req, res, next) => {
   return new Promise((resolve, reject) => {
-    passport.authenticate('jwt', { session: false }, verifyCallback(req, resolve, reject, role))(req, res, next);
+    authenticate('jwt', { session: false }, verifyCallback(req, resolve, reject, role))(req, res, next);
   })
     .then(() => next())
     .catch((err) => next(err));
 };
 
-module.exports = auth;
+export default auth;
  

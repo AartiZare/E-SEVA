@@ -1,6 +1,6 @@
 import express from 'express';
-import userRoute from './userRoute';
-import roleRoute from './roleRoute';
+import userRoute from './userRoute.js';
+import roleRoute from './roleRoute.js';
 // import referralRoute from './referralRoute';
 const router = express.Router();
 

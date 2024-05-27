@@ -1,8 +1,8 @@
 import { Op } from 'sequelize';
-import { catchAsync } from '../utils/catchAsync';
+import { catchAsync } from '../utils/catchAsync.js';
 import httpStatus from 'http-status';
-import ApiError from '../utils/ApiError';
-import db from '../models';
+import ApiError from '../utils/ApiError.js';
+import db from '../models/index.js';
 const roleModel = db.Roles;
 
 export const create = catchAsync(async (req, res, next) => {

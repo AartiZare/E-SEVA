@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import httpStatus from 'http-status';
-import ApiError from '../utils/ApiError';
+import ApiError from '../utils/ApiError.js';
 
 const pick = (obj, keys) => {
   return keys.reduce((acc, key) => {

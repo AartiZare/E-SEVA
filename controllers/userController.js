@@ -1,13 +1,13 @@
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
-import { catchAsync } from '../utils/catchAsync';
-import { userService } from '../services';
+import { catchAsync } from '../utils/catchAsync.js';
+import { userService } from '../services/index.js';
 import httpStatus from 'http-status';
-import ApiError from '../utils/ApiError';
-import db from '../models';
-import { genToken } from '../middlewares/passport';
-import mailService from "../utils/mailService";
-import { generateOTP } from "../utils/generateOtp";
+import ApiError from '../utils/ApiError.js';
+import db from '../models/index.js';
+import { genToken } from '../middlewares/passport.js';
+import mailService from "../utils/mailService.js";
+import { generateOTP } from "../utils/generateOtp.js";
 const userModel = db.Users;
 const roleModel = db.Roles;
 
