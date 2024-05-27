@@ -4,7 +4,7 @@ import db from '../models/index.js';
 const userModel = db.Users;
 
 // Replace these values with your actual secret and issuer
-const secretKey = 'time-tracker';
+export const secretKey = 'time-tracker';
 const issuer = 'TIME_TRACKER';
 
 export const genToken = (user, type) => {

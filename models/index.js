@@ -2,6 +2,7 @@ import { Sequelize, DataTypes } from "sequelize";
 import dbConfig from "../config/dbConfig.js";
 import userModel from "./userModel.js";
 import roleModel from "./roleModel.js";
+import branchModel from "./branchModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -20,7 +21,8 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
 
 const models = {
   Users: userModel(sequelize, DataTypes),
-  Roles: roleModel(sequelize, DataTypes)
+  Roles: roleModel(sequelize, DataTypes),
+  Branch: branchModel(sequelize, DataTypes)
 };
 
 const db = {
