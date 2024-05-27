@@ -1,5 +1,8 @@
+import * as userController from "./userController.js";
+import * as roleController from "./roleController.js";
 
+export { userController };
+export { roleController };
 
-// module.exports.referralController = require('./referralController');
-module.exports.userController = require('./userController');
-module.exports.roleController = require('./roleController');
+// export const userController = require('./userController');
+// export const roleController = require('./roleController');

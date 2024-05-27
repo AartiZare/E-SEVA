@@ -1,6 +1,6 @@
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import { signJWT } from '../utils/sign_jwt';
-import db from '../models';
+import { signJWT } from '../utils/sign_jwt.js';
+import db from '../models/index.js';
 const userModel = db.Users;
 
 // Replace these values with your actual secret and issuer

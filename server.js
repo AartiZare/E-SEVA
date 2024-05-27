@@ -1,13 +1,14 @@
 import express from 'express';
 import cors from 'cors';
-import router from 'routes';
+import router from './routes/index.js';
 import httpStatus from 'http-status';
 import bodyParser from "body-parser";
 import ApiError from './utils/ApiError.js';
 import { errorHandler } from './middlewares/validate.js';
 import passport from 'passport';
 import { jwtStrategy } from './middlewares/passport.js';
-const path = require('path');
+import path from "path";
+//const path = require('path');
 
 const __filename = path.resolve();
 const __dirname = path.dirname(__filename);

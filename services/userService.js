@@ -1,4 +1,4 @@
-import db from '../models';
+import db from '../models/index.js';
 const userModel = db.Users;
 
 export async function createUser(body, options) {
