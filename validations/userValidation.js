@@ -1,29 +1,33 @@
 import Joi from 'joi';
 
 export const createUser = {
-    body: Joi.object({
-        full_name: Joi.string().required(),
-        profile_image: Joi.string().uri().allow(''),
-        email_id: Joi.string().email().required(),
-        contact_no: Joi.string().required(),
-        alt_contact_no: Joi.string().allow(''),
-        pan_no: Joi.string().required(),
-        adhar_no: Joi.string().required(),
-        qualifications: Joi.string().allow(''),
-        dob: Joi.date().required(),
-        pincode: Joi.string().required(),
-        district: Joi.string().required(),
-        taluk: Joi.string().allow(''),
-        village: Joi.string().allow(''),
-        address: Joi.string().required(),
-        account_no: Joi.string().required(),
-        branch: Joi.string().required(),
-        password: Joi.string(),
-        ifsc: Joi.string().required(),
-        bank_name: Joi.string().required(),
-        roleId: Joi.number().integer().required()
-    })
+  body: Joi.object({
+    full_name: Joi.string().required(),
+    email_id: Joi.string().email().required(),
+    contact_no: Joi.string().required(),
+    alt_contact_no: Joi.string().allow(''),
+    pan_no: Joi.string().required(),
+    adhar_no: Joi.string().required(),
+    qualifications: Joi.string().allow(''),
+    dob: Joi.date().required(),
+    pincode: Joi.string().required(),
+    district: Joi.string().required(),
+    taluk: Joi.string().allow(''),
+    village: Joi.string().allow(''),
+    address: Joi.string().required(),
+    account_no: Joi.string().required(),
+    branch: Joi.string().required(),
+    password: Joi.string(),
+    ifsc: Joi.string().required(),
+    bank_name: Joi.string().required(),
+    roleId: Joi.number().integer().required()
+  }),
+  file: Joi.object()
+    .keys({
+      profile_image: Joi.string().allow(''),
+  }),
 };
+
 
 export const updateUser = {
     params: Joi.object().keys({
@@ -31,7 +35,6 @@ export const updateUser = {
     }),
     body: Joi.object({
         full_name: Joi.string().allow(''),
-        profile_image: Joi.string().uri().allow(''),
         email_id: Joi.string().email().allow(''),
         contact_no: Joi.string().allow(''),
         alt_contact_no: Joi.string().allow(''),
@@ -50,7 +53,11 @@ export const updateUser = {
         ifsc: Joi.string().allow(''),
         bank_name: Joi.string().allow(''),
         roleId: Joi.number().integer().allow(null)
-    }).min(1)  // Ensure that at least one field is being updated
+    }), 
+    file: Joi.object()
+    .keys({
+      profile_image: Joi.string().allow(''),
+  }),
 };
 
 export const getOneUser = {

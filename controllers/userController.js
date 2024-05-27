@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
+import jwt from "jsonwebtoken";
 import { catchAsync } from '../utils/catchAsync.js';
 import { userService } from '../services/index.js';
 import httpStatus from 'http-status';
@@ -8,52 +9,96 @@ import db from '../models/index.js';
 import { genToken } from '../middlewares/passport.js';
 import mailService from "../utils/mailService.js";
 import { generateOTP } from "../utils/generateOtp.js";
+import { secretKey } from '../middlewares/passport.js'; 
+import dotenv from 'dotenv';
+dotenv.config();
 const userModel = db.Users;
 const roleModel = db.Roles;
 
 export const create = catchAsync(async (req, res, next) => {
-  try {
-    const { body } = req;
-    // console.log(req.user, "logged in user")
-    // body.created_by = req.user.id;
-    body.email_id = body.email_id.toLowerCase();
-    const user = await userModel.findOne({
-      where: {
-        [Op.or]: [
-          { email_id: body.email_id },
-          { contact_no: body.contact_no }
-        ]
+    try {
+      const { body } = req;
+      body.email_id = body.email_id.toLowerCase();
+  
+      const user = await userModel.findOne({
+        where: {
+          [Op.or]: [
+            { email_id: body.email_id },
+            { contact_no: body.contact_no }
+          ]
+        }
+      });
+  
+      if (user) {
+        if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
+          return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
+        }
+        if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
+          return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
+        }
+        if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
+          return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
+        }
       }
-    });
+  
+      const resetPasswordToken = genToken({ email: body.email_id });
+  
+      let profileImageUrl;
+      if (req.file) {
+        profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+      }
+  
+      const userData = { ...body, resetPasswordToken };
+      if (profileImageUrl) {
+        userData.profile_image = profileImageUrl;
+      }
+  
+      const createdUser = await userService.createUser(userData);
+  
+      const emailSubject = "Set Your Password";
+      const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
+      const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
+  
+      await mailService(body.email_id, emailSubject, emailText, emailHtml);
+  
+      return res.send({
+        msg: "User created successfully",
+        results: createdUser,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});  
 
-    if (user) {
-      if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
-      }
-      if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
-      }
-      if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
-      }
+export const set_password = catchAsync(async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    if (!password) {
+      return res.status(400).send("Password is required");
     }
 
-    const resetPasswordToken = genToken({ email: body.email_id });
-    const createdUser = await userService.createUser({ ...body, resetPasswordToken });
+    const decodedToken = jwt.verify(token, secretKey);
+    const email_id = decodedToken.email_id;
+    const user = await userModel.findOne({ email_id: email_id });
 
-    const emailSubject = "Set Your Password";
-    const emailText = `To set your password, use the following URL: http://localhost:8080/reset-password?token=${resetPasswordToken}`;
-    const emailHtml = `<p>To set your password, click <a href="http://localhost:8080/reset-password?token=${resetPasswordToken}">here</a>.</p>`;
+    if (!user) {
+      return res.status(404).send("User does not exist.");
+    }
 
-    await mailService(body.email_id, emailSubject, emailText, emailHtml);
+    const encryptedUserPassword = await bcrypt.hash(password, 10);
+    user.password = encryptedUserPassword;
+    await user.save();
 
-    return res.send({
-      msg: "User created successfully",
-      results: createdUser,
-    });
+    return res
+      .status(200)
+      .json({ user: user, msg: "Password reset successfully" });
   } catch (error) {
-    console.log(error);
-    return res.status(500).send({ error: 'Internal Server Error' });
+    console.error(error);
+    return res
+      .status(500)
+      .send({ error: error.message });
   }
 });
 
@@ -89,31 +134,34 @@ export const getAll = catchAsync(async (req, res) => {
     }
 });
 
-
 export const update = catchAsync(async (req, res, next) => {
     try {
-        // const { body } = req;
         const id = req.params.id;
         const updatedData = req.body;
-        // body.updated_by = req.user.id;
-        // const role = await roleModel.findByPk(req.user.roleId);
-       
-        // if(role){
-        //     if(role.type !== enumModel.EnumtypeOfRole.ADMIN){
-        //         return next(new ApiError(httpStatus.BAD_REQUEST, `Only Admin has access to edit user details!`));
-        //     }
-        // }
-        const [rowsUpdated, updatedUsers] = await userService.updateOneUser(id, updatedData);
+        
+        let profileImageUrl;
+        if (req.file) {
+            profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+        }
+
+        const userData = { ...updatedData };
+        if (profileImageUrl) {
+            userData.profile_image = profileImageUrl;
+        }
+
+        const [rowsUpdated, updatedUsers] = await userService.updateOneUser(id, userData);
 
         if (rowsUpdated === 0) {
             return next(new ApiError(httpStatus.BAD_REQUEST, `User with id ${id} doesn't exist!`));
         }
+        
         return res.send({ message: 'User updated successfully', rowsUpdated, updatedUsers });
     } catch (error) {
         console.log(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
+
 
 export const getUserById = catchAsync(async (req, res, next) => {
     try {
