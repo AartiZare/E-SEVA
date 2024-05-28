@@ -67,4 +67,3 @@ export const getAllBranches = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
-
