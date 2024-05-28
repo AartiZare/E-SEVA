@@ -9,7 +9,7 @@ const router = express.Router();
 
 router
 .route('/forgot_password')
-    .get(userController.forgotPassword);
+    .post(userController.forgotPassword);
 
 router
 .route('/reset_password')
@@ -21,7 +21,7 @@ router
 
 router
 .route('/verify_OTP')
-    .get(userController.verifyOTP);
+    .post(userController.verifyOTP);
 
 // router
 // .route('/')

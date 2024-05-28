@@ -40,8 +40,10 @@ export const create = catchAsync(async (req, res, next) => {
           return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
         }
       }
-  
-      const resetPasswordToken = genToken({ email: body.email_id });
+
+      const resetPasswordToken = jwt.sign({ email_id: body.email_id },  secretKey,
+        { expiresIn: '6h' }
+      );
   
       let profileImageUrl;
       if (req.file) {
@@ -81,8 +83,7 @@ export const set_password = catchAsync(async (req, res, next) => {
 
     const decodedToken = jwt.verify(token, secretKey);
     const email_id = decodedToken.email_id;
-    const user = await userModel.findOne({ email_id: email_id });
-
+    const user = await userModel.findOne({where: { email_id: email_id }});
     if (!user) {
       return res.status(404).send("User does not exist.");
     }
