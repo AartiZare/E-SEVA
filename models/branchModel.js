@@ -1,3 +1,5 @@
+import userBranchModel from './userBranchModel.js';
+
 const branchModel = (sequelize, DataTypes) => {
     const Branch = sequelize.define("branches", {
         name: {
