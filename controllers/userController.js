@@ -17,8 +17,11 @@ dotenv.config();
 const userModel = db.Users;
 const roleModel = db.Roles;
 const vendorModel = db.Vendor;
+const branchModel = db.Branch;
+const userBranchModel = db.UserBranch;
 
 export const create = catchAsync(async (req, res, next) => {
+
     try {
       const { body } = req;
       const branchId = body.branch[0];
@@ -59,15 +62,15 @@ export const create = catchAsync(async (req, res, next) => {
       }
   
       const createdUser = await userService.createUser(userData);
-  
+
       // Verify if the branch exists
       const branch = await branchModel.findByPk(parseInt(branchId));
       if (!branch) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Branch not found'));
       }
   
-      // Update the userBranchModel with the new branch
-      const existingUserBranch = await userBranchModel.findOne({
+    // Update the userBranchModel with the new branch
+    const existingUserBranch = await userBranchModel.findOne({
         where: {
           userId: createdUser.id,
           branchId: branchId,
@@ -81,7 +84,7 @@ export const create = catchAsync(async (req, res, next) => {
           status: true
         });
       }
-  
+
       const emailSubject = "Set Your Password";
       const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
       const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;

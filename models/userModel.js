@@ -1,4 +1,7 @@
 import Role from './roleModel.js';
+import userBranchModel from './userBranchModel.js';
+import branchModel from './branchModel.js';
+import { JSONB } from 'sequelize';
 
 const userModel = (sequelize, DataTypes) => {
     const User = sequelize.define("users", {
@@ -67,7 +70,8 @@ const userModel = (sequelize, DataTypes) => {
             allowNull: false,
         },
         branch: {
-            type: DataTypes.STRING,
+            type: DataTypes.ARRAY(DataTypes.INTEGER),
+            defaultValue: [],            
             allowNull: false,
         },
         ifsc: {
