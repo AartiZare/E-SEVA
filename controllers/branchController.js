@@ -81,6 +81,14 @@ export const assignBranchToUser = catchAsync(async (req, res, next) => {
   userId = parseInt(userId);
   branchId = parseInt(branchId);
 
+  if (!userId || !branchId) {
+    return res.status(400).send({
+      data : {userId: userId, branchId: branchId},
+      status: 'fail',
+      message: 'userId and branchId are required.',
+    });
+  }
+
   try {
     // Find the user
     const user = await userModel.findByPk(userId);

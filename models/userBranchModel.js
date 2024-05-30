@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/dbConfig.js';
 
 const userBranchModel = (sequelize, DataTypes) => {
-    const UserBranch = sequelize.define('UserBranch', {
+    const userBranch = sequelize.define('userBranches', {
         userId: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -17,7 +17,7 @@ const userBranchModel = (sequelize, DataTypes) => {
         },
     });
 
-    return UserBranch;
+    return userBranch;
 };
 
 export default userBranchModel;
