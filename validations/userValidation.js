@@ -16,7 +16,7 @@ export const createUser = {
     village: Joi.string().allow(''),
     address: Joi.string().required(),
     account_no: Joi.string().required(),
-    branch: Joi.string().required(),
+    branch: Joi.array().items(Joi.number()).required(),
     password: Joi.string(),
     ifsc: Joi.string().required(),
     bank_name: Joi.string().required(),
