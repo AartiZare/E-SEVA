@@ -10,4 +10,6 @@ router
   .post(validate(branchValidation.createBranch), branchController.createBranch)
   .get(branchController.getAllBranches);
 
+router.route('/assign-branch').post(branchController.assignBranchToUser);// assign branch to user with userId and branchId which is PK in their own table
+  
 export default router;

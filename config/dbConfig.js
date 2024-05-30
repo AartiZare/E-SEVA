@@ -19,9 +19,21 @@ export default {
     // logging: console.log,
     maxConcurrentQueries: 100,
     dialect: 'postgres',
-  USER: 'postgres',
+    USER: 'postgres',
     PASSWORD: 'Welcome123#',
     DB: 'e-sevadev',
     pool: { maxConnections: 5, maxIdleTime: 30},
     language: 'en'
 }
+
+// export default {
+//   HOST: 'localhost',
+//   port: 5432,
+//   logging: console.log,
+//   maxConcurrentQueries: 100,
+//   dialect: 'postgres',
+//   USER: 'postgres', 
+//   DB: 'test1',
+//   pool: { maxConnections: 5, maxIdleTime: 30},
+//   language: 'en'
+// }

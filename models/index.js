@@ -3,6 +3,7 @@ import dbConfig from "../config/dbConfig.js";
 import userModel from "./userModel.js";
 import roleModel from "./roleModel.js";
 import branchModel from "./branchModel.js";
+import userBranchModel from "./userBranchModel.js";
 import documentsModel from "./documentModel.js";
 import vendorModel from "./vendorModel.js";
 
@@ -25,6 +26,7 @@ const models = {
   Users: userModel(sequelize, DataTypes),
   Roles: roleModel(sequelize, DataTypes),
   Branch: branchModel(sequelize, DataTypes),
+  UserBranch: userBranchModel(sequelize, DataTypes),
   Document: documentsModel(sequelize, DataTypes),
   Vendor: vendorModel(sequelize, DataTypes)
 };
