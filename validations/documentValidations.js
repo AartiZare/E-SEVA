@@ -15,6 +15,7 @@ export const createDocument = {
         alternate_number: Joi.string().allow(null, ''),
         email_id: Joi.string().email().required(),
         designation: Joi.string().required(),
+        document_unique_id: Joi.string(),
         // created_by: Joi.number().integer().required()
     }),
     file: Joi.object()
