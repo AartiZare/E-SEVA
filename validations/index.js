@@ -1,9 +1,9 @@
 import * as userValidation from './userValidation.js';
 import * as roleValidation from './roleValidation.js';
+import * as documentValidation from './documentValidations.js'
+import * as vendorValidation from './vendorValidation.js';
 
 export { userValidation };
 export { roleValidation };
-
-//export const userValidation = require('./userValidation');
-//export const roleValidation = require('./roleValidation');
-// module.exports.moduleValidation = require('./moduleValidation');
+export { documentValidation };
+export { vendorValidation };
