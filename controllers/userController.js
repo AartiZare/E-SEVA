@@ -11,96 +11,98 @@ import mailService from "../utils/mailService.js";
 import { generateOTP } from "../utils/generateOtp.js";
 import { secretKey } from '../middlewares/passport.js'; 
 import dotenv from 'dotenv';
+
 dotenv.config();
+
 const userModel = db.Users;
 const roleModel = db.Roles;
+const vendorModel = db.Vendor;
 
 export const create = catchAsync(async (req, res, next) => {
     try {
-      const { body } = req;
-      body.email_id = body.email_id.toLowerCase();
-  
-      const user = await userModel.findOne({
-        where: {
-          [Op.or]: [
-            { email_id: body.email_id },
-            { contact_no: body.contact_no }
-          ]
-        }
-      });
-  
-      if (user) {
-        if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
-          return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
-        }
-        if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
-          return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
-        }
-        if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
-          return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
-        }
-      }
+        const { body } = req;
+        body.email_id = body.email_id.toLowerCase();
 
-      const resetPasswordToken = jwt.sign({ email_id: body.email_id },  secretKey,
-        { expiresIn: '6h' }
-      );
-  
-      let profileImageUrl;
-      if (req.file) {
-        profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
-      }
-  
-      const userData = { ...body, resetPasswordToken };
-      if (profileImageUrl) {
-        userData.profile_image = profileImageUrl;
-      }
-  
-      const createdUser = await userService.createUser(userData);
-  
-      const emailSubject = "Set Your Password";
-      const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
-      const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
-  
-      await mailService(body.email_id, emailSubject, emailText, emailHtml);
-  
-      return res.send({
-        msg: "User created successfully",
-        results: createdUser,
-      });
+        const user = await userModel.findOne({
+            where: {
+                [Op.or]: [
+                    { email_id: body.email_id },
+                    { contact_no: body.contact_no }
+                ]
+            }
+        });
+
+        if (user) {
+            if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
+            }
+            if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
+            }
+            if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
+            }
+        }
+
+        const resetPasswordToken = jwt.sign({ email_id: body.email_id }, secretKey, { expiresIn: '6h' });
+
+        let profileImageUrl;
+        if (req.file) {
+            profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+        }
+
+        const userData = { ...body, resetPasswordToken };
+        if (profileImageUrl) {
+            userData.profile_image = profileImageUrl;
+        }
+
+        const createdUser = await userService.createUser(userData);
+
+        const emailSubject = "Set Your Password";
+        const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
+        const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
+
+        await mailService(body.email_id, emailSubject, emailText, emailHtml);
+
+        return res.send({
+            msg: "User created successfully",
+            results: createdUser,
+        });
     } catch (error) {
-      console.log(error);
-      return res.status(500).send({ error: 'Internal Server Error' });
+        console.error(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
     }
 });  
 
 export const set_password = catchAsync(async (req, res, next) => {
-  try {
-    const { password } = req.body;
-    const token = req.headers.authorization.split(" ")[1];
-    if (!password) {
-      return res.status(400).send("Password is required");
+    try {
+        const { password } = req.body;
+        const token = req.headers.authorization.split(" ")[1];
+        if (!password) {
+            return res.status(400).send("Password is required");
+        }
+
+        const decodedToken = jwt.verify(token, secretKey);
+        const email_id = decodedToken.email_id;
+
+        let user = await userModel.findOne({ where: { email_id } });
+
+        if (!user) {
+            user = await vendorModel.findOne({ where: { email_id } });
+            if (!user) {
+                return res.status(404).send("User does not exist.");
+            }
+        }
+
+        const encryptedUserPassword = await bcrypt.hash(password, 10);
+        user.password = encryptedUserPassword;
+        await user.save();
+
+        return res.status(200).json({ user, msg: "Password reset successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: error.message });
     }
-
-    const decodedToken = jwt.verify(token, secretKey);
-    const email_id = decodedToken.email_id;
-    const user = await userModel.findOne({where: { email_id: email_id }});
-    if (!user) {
-      return res.status(404).send("User does not exist.");
-    }
-
-    const encryptedUserPassword = await bcrypt.hash(password, 10);
-    user.password = encryptedUserPassword;
-    await user.save();
-
-    return res
-      .status(200)
-      .json({ user: user, msg: "Password reset successfully" });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .send({ error: error.message });
-  }
 });
 
 export const getAll = catchAsync(async (req, res) => {
@@ -118,7 +120,7 @@ export const getAll = catchAsync(async (req, res) => {
             const searchTerm = req.query.search.trim();
             if (searchTerm !== '') {
                 filter = {
-                    name: {
+                    full_name: {
                         [Op.like]: `%${searchTerm}%`
                     }
                 };
@@ -158,11 +160,10 @@ export const update = catchAsync(async (req, res, next) => {
         
         return res.send({ message: 'User updated successfully', rowsUpdated, updatedUsers });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
-
 
 export const getUserById = catchAsync(async (req, res, next) => {
     try {
@@ -171,9 +172,9 @@ export const getUserById = catchAsync(async (req, res, next) => {
         if (!user) {
             return next(new ApiError(httpStatus.BAD_REQUEST, `User with id ${id} does not exist!`));
         }
-        return res.send(user)
+        return res.send(user);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
@@ -185,8 +186,15 @@ export const login = catchAsync(async (req, res, next) => {
         email_id = email_id.toLowerCase();
 
         const noUserErrorNext = () => next(new ApiError(httpStatus.BAD_REQUEST, 'Invalid Email ID or Password'));
-        let user = await userModel.findOne({ where: { email_id: req.body.email_id } });
-        console.log(user, "user")
+
+        let user = await userModel.findOne({ where: { email_id } });
+
+        if (!user) {
+            user = await vendorModel.findOne({ where: { email_id } });
+            if (user) {
+                user.isVendor = true;
+            }
+        }
 
         if (!user) {
             return noUserErrorNext();
@@ -197,19 +205,20 @@ export const login = catchAsync(async (req, res, next) => {
             return noUserErrorNext();
         }
 
-        // Check user role
         const userRole = await roleModel.findByPk(user.roleId);
-        console.log(userRole, "User roles");
-
         if (!userRole) {
             return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'User role not found'));
         }
 
-        // Generate token
         const token = genToken(user);
-        
-        // Return login response with user's role
-        return res.send({ status: true,  msg: "Logged in successfully", user: user, token: token, role: userRole.name });
+
+        return res.send({ 
+            status: true, 
+            msg: "Logged in successfully", 
+            user, 
+            token, 
+            role: userRole.name 
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).send({ error: 'Internal Server Error' });
@@ -219,21 +228,22 @@ export const login = catchAsync(async (req, res, next) => {
 export const forgotPassword = catchAsync(async (req, res, next) => {
     try {
         const { email_id } = req.body;
-        const user = await userModel.findOne({ where: { email_id } });
 
+        let user = await userModel.findOne({ where: { email_id } });
+        
         if (!user) {
-            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+            user = await vendorModel.findOne({ where: { email_id } });
+            if (!user) {
+                return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+            }
         }
 
-        // Generate OTP
         const otp = generateOTP();
 
-        // Store OTP and its expiration time in user document
         user.resetOTP = otp;
         user.resetOTPExpiration = new Date(Date.now() + 5 * 60000);
         await user.save();
 
-        // Send OTP via email
         const emailSubject = "Password Reset OTP";
         const emailHtml = `Your OTP for password reset is: ${otp}`;
         await mailService(user.email_id, emailSubject, null, emailHtml);
@@ -253,46 +263,51 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
             return res.status(400).json({ message: "OTP is required" });
         }
 
-        const user = await userModel.findOne({ where: { email_id } });
+        let user = await userModel.findOne({ where: { email_id } });
 
         if (!user) {
-            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+            user = await vendorModel.findOne({ where: { email_id } });
+            if (!user) {
+                    return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+                }
+            }
+    
+            if (user.resetOTP !== otp || user.resetOTPExpiration < new Date()) {
+                return res.status(400).json({ message: "Invalid or expired OTP" });
+            }
+    
+            return res.status(200).json({ message: "OTP verified successfully" });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ error: 'Internal Server Error' });
         }
-
-        if (user.resetOTP !== otp || user.resetOTPExpiration < new Date()) {
-            return res.status(400).json({ message: "Invalid or expired OTP" });
+    });
+    
+    export const resetPassword = catchAsync(async (req, res, next) => {
+        try {
+            const { email_id, password } = req.body;
+    
+            let user = await userModel.findOne({ where: { email_id } });
+    
+            if (!user) {
+                user = await vendorModel.findOne({ where: { email_id } });
+                if (!user) {
+                    return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+                }
+            }
+    
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+    
+            user.resetOTP = undefined;
+            user.resetOTPExpiration = undefined;
+    
+            await user.save();
+    
+            return res.send({ message: "Password reset successfully" });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ error: 'Internal Server Error' });
         }
-
-        return res.status(200).json({ message: "OTP verified successfully" });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({ error: 'Internal Server Error' });
-    }
-});
-
-
-export const resetPassword = catchAsync(async (req, res, next) => {
-    try {
-        const { email_id, password } = req.body;
-        const user = await userModel.findOne({ where: { email_id } });
-
-        if (!user) {
-            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
-        }
-
-        // Update user's password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        user.password = hashedPassword;
-
-        // Clear reset OTP fields
-        user.resetOTP = undefined;
-        user.resetOTPExpiration = undefined;
-
-        await user.save();
-
-        return res.send({ message: "Password reset successfully" });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({ error: 'Internal Server Error' });
-    }
-});
+    });
+    

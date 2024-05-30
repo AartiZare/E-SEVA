@@ -4,6 +4,7 @@ import userModel from "./userModel.js";
 import roleModel from "./roleModel.js";
 import branchModel from "./branchModel.js";
 import documentsModel from "./documentModel.js";
+import vendorModel from "./vendorModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -24,7 +25,8 @@ const models = {
   Users: userModel(sequelize, DataTypes),
   Roles: roleModel(sequelize, DataTypes),
   Branch: branchModel(sequelize, DataTypes),
-  Document: documentsModel(sequelize, DataTypes)
+  Document: documentsModel(sequelize, DataTypes),
+  Vendor: vendorModel(sequelize, DataTypes)
 };
 
 const db = {
