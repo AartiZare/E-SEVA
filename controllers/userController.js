@@ -16,8 +16,6 @@ dotenv.config();
 
 const userModel = db.Users;
 const roleModel = db.Roles;
-const branchModel = db.Branch;
-const userBranchModel = db.UserBranch;
 const vendorModel = db.Vendor;
 
 export const create = catchAsync(async (req, res, next) => {
