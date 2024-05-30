@@ -11,6 +11,8 @@ export const createDocument = catchAsync(async (req, res, next) => {
         const { body, file } = req;
         const userId = req.user.id;
 
+        console.log(userId, "user id")
+
         const isDocumentExist = await documentModel.findOne({
             where: {
                 [Op.and]: [
@@ -41,7 +43,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
         };
 
         if (file) {
-            documentData.image_pdf = `http://52.66.238.70/E-Seva/uploads/documents/${file.originalname}`;
+            documentData.image_pdf = `http://52.66.238.70/E-Seva/uploads/${file.originalname}`;
         }
 
         const newDocument = await documentModel.create(documentData);
