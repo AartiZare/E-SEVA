@@ -26,6 +26,8 @@ export default {
     language: 'en'
 }
 
+//test profile
+
 // export default {
 //   HOST: 'localhost',
 //   port: 5432,
