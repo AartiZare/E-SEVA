@@ -6,6 +6,7 @@ import branchModel from "./branchModel.js";
 import documentsModel from "./documentModel.js";
 import vendorModel from "./vendorModel.js";
 import userBranchModel from "./userBranchModel.js";
+import activityModel from "./activityModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -29,8 +30,9 @@ const models = {
   Document: documentsModel(sequelize, DataTypes),
   Vendor: vendorModel(sequelize, DataTypes),
   UserBranch: userBranchModel(sequelize, DataTypes),
+  Activity: activityModel(sequelize, DataTypes)
 };
-
+  
 const db = {
   Sequelize,
   sequelize,

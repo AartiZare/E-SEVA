@@ -19,6 +19,7 @@ export const createDocument = {
                 designation: Joi.string().required(),
             })
         ).required(),
+        document_unique_id: Joi.string(),
         // created_by: Joi.number().integer().required()
     }),
     file: Joi.object()

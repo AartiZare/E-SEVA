@@ -9,7 +9,8 @@ const router = express.Router();
 
 router
   .route('/')
-  .post(auth(), upload.single('image_pdf'), validate(documentValidation.createDocument), documentController.createDocument);
+  .post(auth(), upload.single('image_pdf'), validate(documentValidation.createDocument), documentController.createDocument)
+  .get(auth(), documentController.pendingDocumentListUser);
 
 router
   .route('/:documentId')

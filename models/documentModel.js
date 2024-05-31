@@ -49,9 +49,17 @@ const documentsModel = (sequelize, DataTypes) => {
                 model: 'users', // Name of the Users table
                 key: 'id'
             }
+        },
+        updated_by: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'users', // Name of the Users table
+                key: 'id'
+            }
         }
     }, {
-        timestamps: false
+        timestamps: true
     });
 
     return Documents;
