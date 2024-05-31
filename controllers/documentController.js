@@ -12,6 +12,10 @@ export const createDocument = catchAsync(async (req, res, next) => {
         const { body, file } = req;
         const userId = req.user.id;
 
+        console.log(userId, "user id")
+
+        console.log("Document body", body);
+
         const userRole = await roleModel.findByPk(req.user.roleId);
         const isDocumentExist = await documentModel.findOne({
             where: {
@@ -31,14 +35,18 @@ export const createDocument = catchAsync(async (req, res, next) => {
             document_reg_no: body.document_reg_no,
             approved_by_supervisor: body.approved_by_supervisor,
             approved_by_squad: body.approved_by_squad,
+            is_document_approved: body.is_document_approved, // assuming this field should also be included
             document_reg_date: body.document_reg_date,
             document_renewal_date: body.document_renewal_date,
+            total_no_of_page: body.total_no_of_page,
+            authorised_persons: body.authorised_persons.map(person => ({
+                authorised_person_name: person.authorised_person_name,
+                contact_number: person.contact_number,
+                alternate_number: person.alternate_number || null, // default to null if not provided
+                email_id: person.email_id,
+                designation: person.designation
+            })),
             total_no_of_date: body.total_no_of_date,
-            authorised_person_name: body.authorised_person_name,
-            contact_number: body.contact_number,
-            alternate_number: body.alternate_number,
-            email_id: body.email_id,
-            designation: body.designation,
             document_unique_id: body.document_unique_id,
             created_by: userId,
             updated_by: userId
@@ -50,7 +58,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
         const newDocument = await documentModel.create(documentData);
 
-            // Create activity entry after creating the document
+        // Create activity entry after creating the document
         const documentUniqueId = newDocument.document_unique_id ? newDocument.document_unique_id : 'not available';
 
         const activityData = {

@@ -10,11 +10,15 @@ export const createDocument = {
         document_reg_date: Joi.date().required(),
         document_renewal_date: Joi.date().required(),
         total_no_of_page: Joi.number().integer(),
-        authorised_person_name: Joi.string().required(),
-        contact_number: Joi.string().required(),
-        alternate_number: Joi.string().allow(null, ''),
-        email_id: Joi.string().email().required(),
-        designation: Joi.string().required(),
+        authorised_persons: Joi.array().items(
+            Joi.object({
+                authorised_person_name: Joi.string().required(),
+                contact_number: Joi.string().required(),
+                alternate_number: Joi.string().allow(null, ''),
+                email_id: Joi.string().email().required(),
+                designation: Joi.string().required(),
+            })
+        ).required(),
         document_unique_id: Joi.string(),
         // created_by: Joi.number().integer().required()
     }),
