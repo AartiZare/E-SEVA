@@ -13,6 +13,8 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
         console.log(userId, "user id")
 
+        console.log("Document body", body);
+
         const isDocumentExist = await documentModel.findOne({
             where: {
                 [Op.and]: [
@@ -26,19 +28,38 @@ export const createDocument = catchAsync(async (req, res, next) => {
             return next(new ApiError(httpStatus.BAD_REQUEST, `Document with name ${body.document_name} and registration number ${body.document_reg_no} already exists!`));
         }
 
+        // const documentData = {
+        //     document_name: body.document_name,
+        //     document_reg_no: body.document_reg_no,
+        //     approved_by_supervisor: body.approved_by_supervisor,
+        //     approved_by_squad: body.approved_by_squad,
+        //     document_reg_date: body.document_reg_date,
+        //     document_renewal_date: body.document_renewal_date,
+        //     total_no_of_date: body.total_no_of_date,
+        //     authorised_person_name: body.authorised_person_name,
+        //     contact_number: body.contact_number,
+        //     alternate_number: body.alternate_number,
+        //     email_id: body.email_id,
+        //     designation: body.designation,
+        //     created_by: userId
+        // };
+
         const documentData = {
             document_name: body.document_name,
             document_reg_no: body.document_reg_no,
             approved_by_supervisor: body.approved_by_supervisor,
             approved_by_squad: body.approved_by_squad,
+            is_document_approved: body.is_document_approved, // assuming this field should also be included
             document_reg_date: body.document_reg_date,
             document_renewal_date: body.document_renewal_date,
-            total_no_of_date: body.total_no_of_date,
-            authorised_person_name: body.authorised_person_name,
-            contact_number: body.contact_number,
-            alternate_number: body.alternate_number,
-            email_id: body.email_id,
-            designation: body.designation,
+            total_no_of_page: body.total_no_of_page,
+            authorised_persons: body.authorised_persons.map(person => ({
+                authorised_person_name: person.authorised_person_name,
+                contact_number: person.contact_number,
+                alternate_number: person.alternate_number || null, // default to null if not provided
+                email_id: person.email_id,
+                designation: person.designation
+            })),
             created_by: userId
         };
 
@@ -47,6 +68,8 @@ export const createDocument = catchAsync(async (req, res, next) => {
         }
 
         const newDocument = await documentModel.create(documentData);
+
+
         return res.send({ results: newDocument });
     } catch (error) {
         console.error(error.toString());

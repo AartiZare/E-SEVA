@@ -37,25 +37,10 @@ const documentsModel = (sequelize, DataTypes) => {
         total_no_of_page: {
             type: DataTypes.INTEGER,
         },
-        authorised_person_name: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        contact_number: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        alternate_number: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        email_id: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        designation: {
-            type: DataTypes.STRING,
-            allowNull: false
+        authorised_persons: {
+            type: DataTypes.JSONB,
+            allowNull: false,
+            defaultValue: []
         },
         created_by: {
             type: DataTypes.INTEGER,
