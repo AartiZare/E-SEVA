@@ -19,6 +19,7 @@ const roleModel = db.Roles;
 const vendorModel = db.Vendor;
 const branchModel = db.Branch;
 const userBranchModel = db.UserBranch;
+const contactUsModel = db.ContactUs;
 
 export const create = catchAsync(async (req, res, next) => {
 
@@ -310,31 +311,66 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
         }
     });
     
-    export const resetPassword = catchAsync(async (req, res, next) => {
-        try {
-            const { email_id, password } = req.body;
-    
-            let user = await userModel.findOne({ where: { email_id } });
-    
+export const resetPassword = catchAsync(async (req, res, next) => {
+    try {
+        const { email_id, password } = req.body;
+
+        let user = await userModel.findOne({ where: { email_id } });
+
+        if (!user) {
+            user = await vendorModel.findOne({ where: { email_id } });
             if (!user) {
-                user = await vendorModel.findOne({ where: { email_id } });
-                if (!user) {
-                    return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
-                }
+                return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
             }
-    
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user.password = hashedPassword;
-    
-            user.resetOTP = undefined;
-            user.resetOTPExpiration = undefined;
-    
-            await user.save();
-    
-            return res.send({ message: "Password reset successfully" });
-        } catch (error) {
-            console.error(error);
-            return res.status(500).send({ error: 'Internal Server Error' });
         }
-    });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+
+        user.resetOTP = undefined;
+        user.resetOTPExpiration = undefined;
+
+        await user.save();
+
+        return res.send({ message: "Password reset successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
     
+export const contactUs = catchAsync(async (req, res, next) => {
+    try {
+        const {userId, subject, type, message } = req.body; 
+
+        const { roleId, full_name, email_id,} = req.user.dataValues;
+       
+        console.log("req.body", req.body);
+        console.log("req.user.datavalues====", req.user.dataValues);
+
+      if (!subject || !type || !message) {
+        return res.status(400).send({ error: 'Subject, type, and message are required.' });
+      }
+
+      const x = await contactUsModel.create({
+        userId,
+        roleId,
+        full_name,
+        email_id,
+        type,
+        subject,
+        message
+      });
+  
+      const emailSubject = `Contact Us - ${subject}`;
+      const emailText = `Type: ${type}\n\nMessage: ${message}`;
+      const emailHtml = `<p>Type: ${type}</p><p>Message: ${message}</p>`;
+  
+        await mailService( `${process.env.USER_EMAIL}`, emailSubject, emailText, emailHtml);
+      
+        return res.send({ data: x, msg: "Your message has been sent successfully." });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ error: error.message });
+    }
+  });

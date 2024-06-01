@@ -41,3 +41,7 @@ router
 .route('/login')
     .post(validate(userValidation.login), userController.login);
 export default router;
+
+router
+  .route('/contact_us')
+  .post(auth(),userController.contactUs); 
