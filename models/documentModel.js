@@ -3,6 +3,26 @@ const documentsModel = (sequelize, DataTypes) => {
         image_pdf: {
             type: DataTypes.STRING,
         },
+        document_type: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        branch: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        rejected_by_supervisor: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        rejected_by_squad: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        is_document_rejected: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
         document_name: {
             type: DataTypes.STRING,
             allowNull: false

@@ -13,7 +13,16 @@ router
   .get(auth(), documentController.pendingDocumentListUser);
 
 router
+  .route('/rejectedList')
+  .get(auth(), documentController.rejectedDocumentListUser);
+
+router
   .route('/:documentId')
   .put(auth(), documentController.approveDocument);
+
+router
+  .route('/rejecteDoc/:documentId')
+  .put(auth(), documentController.rejectDocument);
+
 
 export default router;
