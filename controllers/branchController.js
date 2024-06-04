@@ -6,12 +6,13 @@ import db from '../models/index.js';
 const branchModel = db.Branch;
 const userModel = db.Users;
 const userBranchModel = db.UserBranch;
+const roleModel = db.Roles;
 
-//create a branch for the user
 export const createBranch = catchAsync(async (req, res, next) => {
   try {
     const { body } = req;
 
+    // Check if branch already exists
     const isBranchExist = await branchModel.findOne({
       where: {
         [Op.and]: [{ name: body.name }],
@@ -22,17 +23,25 @@ export const createBranch = catchAsync(async (req, res, next) => {
       return next(new ApiError(httpStatus.BAD_REQUEST, `Branch with name ${body.name} already exists!`));
     }
 
+    // Include all necessary fields
     const branchToBeCreated = {
       name: body.name,
+      branch_code: body.branch_code,
       address: body.address,
+      pincode: body.pincode,
+      stateId: body.stateId,
+      divisionId: body.divisionId,
+      districtId: body.districtId,
+      talukId: body.talukId,
+      createdBy: req.user.id,
       status: body.status,
     };
 
+    // Create new branch
     const newBranch = await branchModel.create(branchToBeCreated);
 
     return res.send({ results: newBranch });
-  }
-   catch (error) {
+  } catch (error) {
     console.error(error);
     return res.status(500).send({ error: 'Internal Server Error' });
   }
@@ -74,7 +83,7 @@ export const getAllBranches = catchAsync(async (req, res, next) => {
   }
 });
 
-//assign a branch to a user
+// assign a branch to a user
 export const assignBranchToUser = catchAsync(async (req, res, next) => {
   let { userId, branchId } = req.query;
 
@@ -135,3 +144,23 @@ export const assignBranchToUser = catchAsync(async (req, res, next) => {
   }
 });
 
+export const listBranchesByUser = catchAsync(async (req, res, next) => {
+  try {
+      // Find branch assignments for the given user
+      const userBranches = await userBranchModel.findAll({
+          where: { userId: req.user.id },
+      });
+
+      const branchIds = userBranches.map(userBranch => userBranch.branchId);
+      const branches = await branchModel.findAll({
+          where: {
+              id: branchIds
+          }
+      });
+
+      return res.send({ results: branches });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).send({ error: 'Internal Server Error' });
+  }
+});

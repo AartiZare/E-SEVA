@@ -5,6 +5,10 @@ import branchRoute from './branchRoute.js';
 import documentRoute from './documentRoute.js';
 import vendorRoute from './vendorRoute.js';
 import activityRoute from './activityRoute.js';
+import districtRoute from './disrictRoute.js';
+import divisionRoute from './divisionRoute.js';
+import stateRoute from './stateRoute.js';
+import talukRoute from './talukRoute.js';
 const router = express.Router();
 
 router.use('/user', userRoute);
@@ -13,5 +17,9 @@ router.use('/branch', branchRoute);
 router.use('/document', documentRoute);
 router.use('/vendor', vendorRoute);
 router.use('/activity', activityRoute);
+router.use('/district', districtRoute);
+router.use('/division', divisionRoute);
+router.use('/state', stateRoute);
+router.use('/taluk', talukRoute);
 
 export default router;
