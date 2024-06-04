@@ -80,7 +80,7 @@ const userModel = (sequelize, DataTypes) => {
         },
         bank_name: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         created_by: {
             type: DataTypes.INTEGER,
