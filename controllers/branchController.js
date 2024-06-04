@@ -88,7 +88,6 @@ export const getAllBranches = catchAsync(async (req, res, next) => {
   }
 });
 
-
 // assign a branch to a user
 export const assignBranchToUser = catchAsync(async (req, res, next) => {
   let { userId, branchId } = req.query;

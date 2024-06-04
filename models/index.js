@@ -12,6 +12,7 @@ import divisionModel from "./divisionModel.js";
 import districtModel from "./districtModel.js";
 import talukModel from "./talukModel.js";
 import documentTypeModel from "./documentTypeModel.js";
+import designationModel from "./designationModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -40,7 +41,8 @@ const models = {
   Division: divisionModel(sequelize, DataTypes),
   Taluk: talukModel(sequelize, DataTypes),
   District: districtModel(sequelize, DataTypes),
-  DocumentType: documentTypeModel(sequelize, DataTypes)
+  DocumentType: documentTypeModel(sequelize, DataTypes),
+  Designation: designationModel(sequelize, DataTypes)
 };
   
 const db = {
