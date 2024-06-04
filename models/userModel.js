@@ -80,6 +80,10 @@ const userModel = (sequelize, DataTypes) => {
         },
         bank_name: {
             type: DataTypes.STRING,
+            allowNull: false,
+        },
+        created_by: {
+            type: DataTypes.INTEGER,
             allowNull: true,
         },
         bank_branch:{

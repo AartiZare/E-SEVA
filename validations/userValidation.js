@@ -18,6 +18,10 @@ export const createUser = {
     account_no: Joi.string(),
     branch: Joi.array().items(Joi.number()).required(),
     password: Joi.string(),
+    ifsc: Joi.string().required(),
+    bank_name: Joi.string().required(),
+    roleId: Joi.number().integer().required(),
+    created_by: Joi.number().integer().required(),
     ifsc: Joi.string(),
     bank_name: Joi.string(),
     roleId: Joi.number().integer().required()
