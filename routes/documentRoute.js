@@ -25,4 +25,7 @@ router
   .put(auth(), documentController.rejectDocument);
 
 
+router.route('/updateDocument/:documentId')
+  .put(auth(), upload.single('image_pdf'), documentController.updateDocument)
+
 export default router;

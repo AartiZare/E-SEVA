@@ -7,6 +7,7 @@ import * as districtController from "./districtController.js";
 import * as divisionController from "./divisionController.js";
 import * as stateController from "./stateController.js";
 import * as talukController from "./talukController.js";
+import * as documetTypeController from "./documentTypeController.js"
 
 export { userController };
 export { roleController };
@@ -17,6 +18,7 @@ export { districtController };
 export { divisionController };
 export { stateController };
 export { talukController };
+export { documetTypeController };
 
 // export const userController = require('./userController');
 // export const roleController = require('./roleController');
