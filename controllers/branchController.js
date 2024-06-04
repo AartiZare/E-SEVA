@@ -88,66 +88,84 @@ export const getAllBranches = catchAsync(async (req, res, next) => {
   }
 });
 
-// assign a branch to a user
 export const assignBranchToUser = catchAsync(async (req, res, next) => {
-  let { userId, branchId } = req.query;
+  let { userId } = req.query;
+  let { branchId } = req.body;
 
-  userId = parseInt(userId);
-  branchId = parseInt(branchId);
+  console.log("userId", userId);
+  console.log("branchId", branchId);
 
-  if (!userId || !branchId) {
+  const parsedUserId = parseInt(userId);
+  const branchIds = branchId.split(',').map(id => parseInt(id));
+
+  if (!parsedUserId || branchIds.includes(NaN)) {
     return res.status(400).send({
-      data : {userId: userId, branchId: branchId},
+      data: { userId: parsedUserId, branchId: branchIds },
       status: 'fail',
-      message: 'userId and branchId are required.',
+      message: 'userId and branchId are required and should be numbers.',
     });
   }
 
   try {
     // Find the user
-    const user = await userModel.findByPk(userId);
+    const user = await userModel.findByPk(parsedUserId);
     if (!user) {
       return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
     }
 
-    // Find the branch
-    const branch = await branchModel.findByPk(branchId);
-    if (!branch) {
-      return next(new ApiError(httpStatus.NOT_FOUND, 'Branch not found'));
-    }
-
-    // Check if the userBranch entry already exists
-    const userBranchEntry = await userBranchModel.findOne({
+    // Find the branches
+    const branches = await branchModel.findAll({
       where: {
-        userId,
-        branchId,
-      },
+        id: branchIds
+      }
     });
 
-    if (userBranchEntry) {
-      return next(new ApiError(httpStatus.BAD_REQUEST, 'User is already assigned to this branch'));
+    if (branches.length !== branchIds.length) {
+      const foundBranchIds = branches.map(branch => branch.id);
+      const notFoundBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
+      return next(new ApiError(httpStatus.NOT_FOUND, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
     }
 
-    // Create a new entry in userBranchModel
-    const uesrBranchdata = await userBranchModel.create({
-      userId,
-      branchId,
+    // Check if the userBranch entries already exist
+    const existingUserBranchEntries = await userBranchModel.findAll({
+      where: {
+        userId: parsedUserId,
+        branchId: branchIds
+      }
     });
+
+    if (existingUserBranchEntries.length > 0) {
+      const existingBranchIds = existingUserBranchEntries.map(entry => entry.branchId);
+      return next(new ApiError(httpStatus.BAD_REQUEST, `User is already assigned to branches with IDs: ${existingBranchIds.join(', ')}`));
+    }
+
+    // Create new entries in userBranchModel
+    const userBranchData = await Promise.all(
+      branchIds.map(async (branchId) => {
+        return await userBranchModel.create({
+          userId: parsedUserId,
+          branchId: branchId,
+        });
+      })
+    );
 
     // Update the user's branch field
     const userBranches = user.branch ? user.branch : [];
-    if (!userBranches.includes(branchId)) {
-      userBranches.push( branchId );
-    }    
+    branchIds.forEach(branchId => {
+      if (!userBranches.includes(branchId)) {
+        userBranches.push(branchId);
+      }
+    });
 
-    await userModel.update({ branch: userBranches }, {where: { id: userId }});
+    await userModel.update({ branch: userBranches }, { where: { id: parsedUserId } });
 
-    res.status(200).send({ data: uesrBranchdata, message: 'Branch assigned to user successfully' });
+    res.status(200).send({ data: userBranchData, message: 'Branches assigned to user successfully' });
   } catch (error) {
     console.error(error);
-    return res.status(500).send({ error: 'Internal Server Error' });
+    return res.status(500).send({ error: error.message });
   }
 });
+
 
 export const listBranchesByUser = catchAsync(async (req, res, next) => {
   try {
@@ -166,6 +184,6 @@ export const listBranchesByUser = catchAsync(async (req, res, next) => {
       return res.send({ results: branches });
   } catch (error) {
       console.error(error);
-      return res.status(500).send({ error: 'Internal Server Error' });
+      return res.status(500).send({ error: error.message });
   }
 });
