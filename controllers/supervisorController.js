@@ -1,55 +1,47 @@
 import { Op } from 'sequelize';
 import { catchAsync } from '../utils/catchAsync.js';
-import httpStatus from 'http-status';
-import ApiError from '../utils/ApiError.js';
 import db from '../models/index.js';
-import { format, parseISO, startOfMonth, endOfDay, lastDayOfMonth } from 'date-fns';
+import { parseISO, startOfMonth, endOfDay } from 'date-fns';
 
 const documentModel = db.Document;
-const activityModel = db.Activity;
-const branchModel = db.Branch;
 const userModel = db.Users;
+const activityModel = db.Activity;
 
-// Function to fetch all records without filters
-export const fetchAllUserRecords = catchAsync(async (req, res) => {
+// Middleware to check if the user is a supervisor
+export const isSupervisor = (req, res, next) => {
+    if (req.user.dataValues.roleId === 3) {
+        next();
+    } else {
+        res.status(403).json({ error: 'User is not a supervisor' });
+    }
+};
+
+// Function to fetch evaluation data for all users (no filters)
+export const fetchAllUsersEvaluation = catchAsync(async (req, res) => {
+
     try {
-        const { userId } = req.query;
-
-        console.log("req.query", req.query); 
-
         const approvedDocuments = await documentModel.findAll({
             where: {
-                created_by: userId,
-                is_document_approved: true
+                approved_by_supervisor: true
             }
         });
 
         const rejectedDocuments = await documentModel.findAll({
             where: {
-                created_by: userId,
-                is_document_rejected: true
+                rejected_by_supervisor: true
             }
         });
 
         const pendingDocuments = await documentModel.findAll({
             where: {
-                created_by: userId,
-                is_document_approved: false,
-                is_document_rejected: false
+                approved_by_supervisor: false,
+                rejected_by_supervisor: false
             }
         });
-
-        console.log("approvedDocuments", approvedDocuments.length);
-        console.log("rejectedDocuments", rejectedDocuments.length);
-        console.log("pendingDocuments", pendingDocuments.length);  
 
         const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
         const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
         const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-
-        console.log("totalApprovedPages", totalApprovedPages);
-        console.log("totalRejectedPages", totalRejectedPages);
-        console.log("totalPendingPages", totalPendingPages);
 
         return res.send({
             approved: approvedDocuments.length,
@@ -57,7 +49,7 @@ export const fetchAllUserRecords = catchAsync(async (req, res) => {
             pending: pendingDocuments.length,
             totalApprovedPages,
             totalRejectedPages,
-            totalPendingPages,
+            totalPendingPages
         });
     } catch (error) {
         console.error(error.toString());
@@ -65,13 +57,12 @@ export const fetchAllUserRecords = catchAsync(async (req, res) => {
     }
 });
 
-// Function to fetch records with filters
-export const fetchUserRecords = catchAsync(async (req, res) => {
+// Function to fetch evaluation data with filters (branch, userId, date)
+export const fetchFilteredEvaluation = catchAsync(async (req, res) => {
     try {
         const { userId, fromDate, toDate, branch } = req.query;
 
-        console.log("req.query", req.query);   
-        console.log("req.query", req);
+        console.log("req.request", req.query)
 
         const parsedFromDate = parseISO(fromDate);
         const startDate = new Date(parsedFromDate);
@@ -81,53 +72,43 @@ export const fetchUserRecords = catchAsync(async (req, res) => {
         const endDate = new Date(parsedToDate);
         endDate.setHours(23, 59, 59, 999);
 
+        const filters = {};
 
-        const user = await userModel.findByPk(userId);
-        if (!user) {
-            return res.status(404).send({ status: false, message: 'User not found' });
+        if (userId) {
+            filters.created_by = userId;
         }
 
-        const userBranches = user.branch;
-
-        const filters = {
-            created_by: userId
-        };
-
-        if(fromDate && toDate) {
+        if (fromDate && toDate) {
             filters.createdAt = {
                 [Op.between]: [startDate, endDate]
             };
         }
 
-        if (branch && userBranches.includes(parseInt(branch, 10))) {
+        if (branch) {
             filters.branch = branch;
         }
 
         const approvedDocuments = await documentModel.findAll({
             where: {
                 ...filters,
-                is_document_approved: true
+                approved_by_supervisor: true
             }
         });
 
         const rejectedDocuments = await documentModel.findAll({
             where: {
                 ...filters,
-                is_document_rejected: true
+                rejected_by_supervisor: true
             }
         });
 
         const pendingDocuments = await documentModel.findAll({
             where: {
                 ...filters,
-                is_document_approved: false,
-                is_document_rejected: false
+                approved_by_supervisor: false,
+                rejected_by_supervisor: false
             }
         });
-
-        console.log("approvedDocuments", approvedDocuments.length);
-        console.log("pendingDocuments", pendingDocuments.length);
-        console.log("filters", filters);
 
         const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
         const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
@@ -139,7 +120,7 @@ export const fetchUserRecords = catchAsync(async (req, res) => {
             pending: pendingDocuments.length,
             totalApprovedPages,
             totalRejectedPages,
-            totalPendingPages,
+            totalPendingPages
         });
     } catch (error) {
         console.error(error.toString());
@@ -147,10 +128,10 @@ export const fetchUserRecords = catchAsync(async (req, res) => {
     }
 });
 
-// Function to get day activity
-export const getDayActivity = catchAsync(async (req, res) => {
+// Function to fetch daily wise page document/page
+export const fetchDailyWisePageDoc = catchAsync(async (req, res) => {
     try {
-        const { userId, date} = req.query;
+        const { date } = req.query;
 
         console.log("req.query", req.query);
 
@@ -163,50 +144,45 @@ export const getDayActivity = catchAsync(async (req, res) => {
         endDate.setHours(23, 59, 59, 999);
 
         const filters = {
-            created_by: userId,
             createdAt: {
                 [Op.between]: [startDate, endDate]
-            }
+            },
+            approved_by_supervisor: true
         };
 
-        const approvedCount = await documentModel.count({
+        const approvedDocuments = await documentModel.findAll({
             where: {
                 ...filters,
-                is_document_approved: true
+                approved_by_supervisor: true
             }
         });
 
-        const rejectedCount = await documentModel.count({
+        const rejectedDocuments = await documentModel.findAll({
             where: {
                 ...filters,
-                is_document_rejected: true
+                rejected_by_supervisor: true
             }
         });
 
-        const pendingCount = await documentModel.count({
+        const pendingDocuments = await documentModel.findAll({
             where: {
                 ...filters,
-                is_document_approved: false,
-                is_document_rejected: false
+                approved_by_supervisor: false,
+                rejected_by_supervisor: false
             }
         });
 
-        const allDocuments = await documentModel.findAll({
-            where: {
-                created_by: userId,
-                createdAt: {
-                    [Op.eq]: new Date(date).setHours(0, 0, 0, 0)
-                }
-            }
-        });
-        console.log("approvedCount", approvedCount);
-        console.log("rejectedCount", rejectedCount);
-        console.log("pendingCount", pendingCount);
+        const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+        const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+        const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
 
         return res.send({
-            approved: approvedCount,
-            rejected: rejectedCount,
-            pending: pendingCount
+            approved: approvedDocuments.length,
+            rejected: rejectedDocuments.length,
+            pending: pendingDocuments.length,
+            totalApprovedPages,
+            totalRejectedPages,
+            totalPendingPages
         });
     } catch (error) {
         console.error(error.toString());
@@ -214,12 +190,55 @@ export const getDayActivity = catchAsync(async (req, res) => {
     }
 });
 
-// Function to get user activity for a month
-export const getUserMonthlyActivity = catchAsync(async (req, res) => {
+// Function to fetch team data
+export const fetchTeamData = catchAsync(async (req, res) => {
     try {
-        const { userId, date } = req.query;
+        const { date } = req.query;
+        const supervisorId = req.user.id; // Assuming the supervisor's ID is stored in req.user.id
 
-        console.log("req.query", req.query);
+        const parsedDate = parseISO(date);
+
+        const startDate = startOfMonth(parsedDate);
+        const endDate = endOfDay(parsedDate);
+
+        const activities = await activityModel.findAll({
+            where: {
+                activity_created_by_id: supervisorId,
+                activity_created_at: {
+                    [Op.between]: [startDate, endDate]
+                }
+            },
+            attributes: [[db.sequelize.fn('DATE', db.sequelize.col('activity_created_at')), 'activity_date']],
+            group: ['activity_date']
+        });
+
+        const activityDates = activities.map(a => a.getDataValue('activity_date'));
+
+        const allDatesInMonth = [];
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            allDatesInMonth.push(new Date(d));
+        }
+
+        const activeDays = activityDates;
+        const inactiveDays = allDatesInMonth.filter(date => !activityDates.includes(date.toISOString().split('T')[0]));
+
+        return res.send({
+            activeDays,
+            inactiveDays
+        });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: error.message });
+    }
+});
+
+// Function to get user's activity dates
+export const getSupvervisorActivity = catchAsync(async (req, res) => {
+    try {
+        const { date } = req.query;
+        const supervisorId = req.user.id; // Assuming the supervisor's ID is stored in req.user.id
+
+        console.log("supervisorId", req.user);
 
         const monthDay = new Date(date);
         monthDay.setUTCHours(0, 0, 0, 0);
@@ -232,7 +251,7 @@ export const getUserMonthlyActivity = catchAsync(async (req, res) => {
 
         const activities = await activityModel.findAll({
             where: {
-                activity_created_by_id: userId,
+                activity_created_by_id: supervisorId,
                 activity_created_at: {
                     [Op.between]: [startDate, monthDay]
                 }
@@ -260,6 +279,7 @@ export const getUserMonthlyActivity = catchAsync(async (req, res) => {
             activeDays,
             inactiveDays
         });
+
     } catch (error) {
         console.error(error.toString());
         return res.status(500).send({ error: error.message });

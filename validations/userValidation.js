@@ -20,7 +20,8 @@ export const createUser = {
     password: Joi.string(),
     ifsc: Joi.string().required(),
     bank_name: Joi.string().required(),
-    roleId: Joi.number().integer().required()
+    roleId: Joi.number().integer().required(),
+    created_by: Joi.number().integer().required()
   }),
   file: Joi.object()
     .keys({

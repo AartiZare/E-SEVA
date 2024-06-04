@@ -6,6 +6,7 @@ import documentRoute from './documentRoute.js';
 import vendorRoute from './vendorRoute.js';
 import activityRoute from './activityRoute.js';
 import dashboardRoute from './dashboardRoute.js';
+import supervisorRoute from './supervisorRoute.js';
 const router = express.Router();
 
 router.use('/user', userRoute);
@@ -15,5 +16,6 @@ router.use('/document', documentRoute);
 router.use('/vendor', vendorRoute);
 router.use('/activity', activityRoute);
 router.use('/dashboard', dashboardRoute);
+router.use('/supervisor', supervisorRoute);
 
 export default router;
