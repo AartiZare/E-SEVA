@@ -275,4 +275,62 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
     }
 });
 
+export const updateDocument = catchAsync(async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const documentId = req.params.documentId;
+        const updatedData = req.body;
 
+        // Find the document created by the user
+        const document = await documentModel.findOne({
+            where: {
+                created_by: userId,
+                id: documentId
+            }
+        });
+
+        // If document not found, return error
+        if (!document) {
+            return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
+        }
+
+        // Handle file upload if present
+        let documentFileUrl;
+        if (req.file) {
+            documentFileUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+        }
+
+        // Update document data
+        const documentData = { ...updatedData };
+        if (documentFileUrl) {
+            documentData.image_pdf = documentFileUrl;
+        }
+
+        // Update the document in the database
+        const rowsUpdated = await documentModel.update(documentData, {
+            where: {
+                created_by: userId,
+                id: documentId
+            }
+        });
+
+        // If no rows were updated, return error
+        if (rowsUpdated[0] === 0) {
+            return next(new ApiError(httpStatus.BAD_REQUEST, `Document with id ${documentId} doesn't exist or no changes were made`));
+        }
+
+        // Fetch the updated document
+        const updatedDocument = await documentModel.findOne({
+            where: {
+                created_by: userId,
+                id: documentId
+            }
+        });
+
+        // Send the updated document as response
+        return res.send({ message: 'Document updated successfully', updatedDocument });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
