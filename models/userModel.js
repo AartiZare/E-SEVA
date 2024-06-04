@@ -67,7 +67,7 @@ const userModel = (sequelize, DataTypes) => {
         },
         account_no: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         branch: {
             type: DataTypes.ARRAY(DataTypes.INTEGER),
@@ -76,11 +76,15 @@ const userModel = (sequelize, DataTypes) => {
         },
         ifsc: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         bank_name: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
+        },
+        bank_branch:{
+            type: DataTypes.STRING,
+            allowNull: true,
         }
     }, { timestamps: true });
 

@@ -47,28 +47,33 @@ export const createBranch = catchAsync(async (req, res, next) => {
   }
 });
 
-//get all the branches for a user
 export const getAllBranches = catchAsync(async (req, res, next) => {
   try {
-    const { qFilter } = req.query;
+    const { qFilter, talukId } = req.query;
     let filter = {};
+
     if (qFilter) {
         filter = {
             ...JSON.parse(qFilter),
         };
     }
+
+    if (talukId) {
+        filter.talukId = talukId;
+    }
+
     let page = parseInt(req.query.page) || 1;
     let pageSize = parseInt(req.query.pageSize) || 10;
+
     if (req.query.search) {
       const searchTerm = req.query.search.trim();
       if (searchTerm !== '') {
-          filter = {
-              name: {
-                  [Op.like]: `%${searchTerm}%`
-              }
+          filter.name = {
+              [Op.like]: `%${searchTerm}%`
           };
       }
     }
+
     const query = {
       where: filter,
       limit: pageSize,
@@ -77,11 +82,12 @@ export const getAllBranches = catchAsync(async (req, res, next) => {
 
     const branches = await branchModel.findAll(query);
     return res.send(branches);
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
+
 
 // assign a branch to a user
 export const assignBranchToUser = catchAsync(async (req, res, next) => {
