@@ -5,6 +5,12 @@ import * as vendorController from "./vendorController.js";
 import * as activityController from "./activityController.js";
 import * as dashboardController from "./dashboardController.js";
 import * as supervisorController from "./supervisorController.js";
+import * as districtController from "./districtController.js";
+import * as divisionController from "./divisionController.js";
+import * as stateController from "./stateController.js";
+import * as talukController from "./talukController.js";
+import * as documetTypeController from "./documentTypeController.js";
+import * as designationController from "./designationController.js";
 
 export { userController };
 export { roleController };
@@ -13,6 +19,12 @@ export { vendorController };
 export { activityController };
 export { dashboardController };
 export {supervisorController};
+export { districtController };
+export { divisionController };
+export { stateController };
+export { talukController };
+export { documetTypeController };
+export { designationController };
 
 // export const userController = require('./userController');
 // export const roleController = require('./roleController');

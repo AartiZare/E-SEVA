@@ -7,6 +7,12 @@ import vendorRoute from './vendorRoute.js';
 import activityRoute from './activityRoute.js';
 import dashboardRoute from './dashboardRoute.js';
 import supervisorRoute from './supervisorRoute.js';
+import districtRoute from './disrictRoute.js';
+import divisionRoute from './divisionRoute.js';
+import stateRoute from './stateRoute.js';
+import talukRoute from './talukRoute.js';
+import documentTypeRoute from './documentTypeRoute.js';
+import designationRoute from './designationRoute.js';
 const router = express.Router();
 
 router.use('/user', userRoute);
@@ -17,5 +23,11 @@ router.use('/vendor', vendorRoute);
 router.use('/activity', activityRoute);
 router.use('/dashboard', dashboardRoute);
 router.use('/supervisor', supervisorRoute);
+router.use('/district', districtRoute);
+router.use('/division', divisionRoute);
+router.use('/state', stateRoute);
+router.use('/taluk', talukRoute);
+router.use('/documentType', documentTypeRoute);
+router.use('/designation', designationRoute);
 
 export default router;
