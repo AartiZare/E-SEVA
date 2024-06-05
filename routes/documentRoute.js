@@ -18,6 +18,7 @@ router
 
 router
   .route('/:documentId')
+  .get(auth(), documentController.getDocumentById)
   .put(auth(), documentController.approveDocument);
 
 router
