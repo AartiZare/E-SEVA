@@ -20,9 +20,9 @@ const router = express.Router();
 //     .route('/activity-dates')
 //     .get(auth(), supervisorController.isSupervisor, supervisorController.fetchSupervisorActivity);
 
-router
-    .route('/branches')
-    .get(auth(), supervisorController.isSupervisor, supervisorController.fetchBranchesForSupervisor);
+// router
+//     .route('/branches')
+//     .get(auth(), supervisorController.isSupervisor, supervisorController.fetchBranchesForSupervisor);
 
 router
     .route('/users')

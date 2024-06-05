@@ -250,7 +250,7 @@ const fetchMonthlyActivity = async (req) => {
 };
 
 // Function to fetch branches for the supervisor
-export const fetchBranchesForSupervisor = async (req,res,next) => {
+const fetchBranchesForSupervisor = async (req,res,next) => {
     try {
         const supervisorId = req.user.dataValues.id;
 
@@ -280,7 +280,7 @@ export const fetchBranchesForSupervisor = async (req,res,next) => {
             name: branch.name
         }));
 
-        return res.send({ supervisorBranches: branchData });
+        return { supervisorBranches: branchData }
     } catch (error) {
         console.error(error.toString());
         throw new Error(error.message);
@@ -346,17 +346,18 @@ export const fetchAllSupervisorData = catchAsync(async (req, res) => {
         const monthlyActivityPromise = fetchMonthlyActivity(req);
 
         // Fetch branches for supervisor
-       // const fetchBranchesForSupervisorPromise = fetchBranchesForSupervisor(req);
+        const fetchBranchesForSupervisorPromise = fetchBranchesForSupervisor(req);
 
         // Fetch users for branch
       //  const fetchUsersForBranchPromise = fetchUsersForBranch(req);
 
         // Wait for all promises to resolve
-        const [totalEvaluation, dailyWisePageDoc, teamData, monthlyActivity, supervisorBranches, users] = await Promise.all([
+        const [totalEvaluation, dailyWisePageDoc, teamData, monthlyActivity, supervisorBranches] = await Promise.all([
             totalEvaluationPromise,
             dailyWisePageDocPromise,
             teamDataPromise,
             monthlyActivityPromise,
+            fetchBranchesForSupervisorPromise
         ]);
 
         return res.send({
@@ -364,6 +365,7 @@ export const fetchAllSupervisorData = catchAsync(async (req, res) => {
             supervisorDailyWisePageDoc: dailyWisePageDoc.dailySupervisorData,
             supervisorTeamData: teamData.supervisorTeamData,
             supervisorMonthlyActivity: monthlyActivity.supervisorActivityDays,
+            supervisorBranches: supervisorBranches.supervisorBranches,
         });
     } catch (error) {
         console.error(error.toString());
