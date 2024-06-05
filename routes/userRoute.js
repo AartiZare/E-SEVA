@@ -29,7 +29,7 @@ router
 //     .get(validate(userValidation.getAllUsers), userController.getAll);
 router
   .route('/')
-  .post(upload.single('profile_image'), validate(userValidation.createUser), userController.create)
+  .post(auth(), upload.single('profile_image'), validate(userValidation.createUser), userController.create)
   .get(validate(userValidation.getAllUsers), userController.getAll);
 
 router
