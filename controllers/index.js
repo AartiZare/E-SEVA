@@ -4,14 +4,14 @@ import * as documentController from "./documentController.js";
 import * as vendorController from "./vendorController.js";
 import * as activityController from "./activityController.js";
 import * as dashboardController from "./dashboardController.js";
-import * as supervisorController from "./supervisorController.js";
+import * as supervisorController from "./supervisorDashboardController.js";
 import * as districtController from "./districtController.js";
 import * as divisionController from "./divisionController.js";
 import * as stateController from "./stateController.js";
 import * as talukController from "./talukController.js";
 import * as documetTypeController from "./documentTypeController.js";
 import * as designationController from "./designationController.js";
-import * as squadController from "./squadController.js";
+import * as squadController from "./squadDashboardController.js";
 
 export { userController };
 export { roleController };
