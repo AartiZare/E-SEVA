@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import { Op } from 'sequelize';
 import { catchAsync } from '../utils/catchAsync.js';
 import db from '../models/index.js';
@@ -9,7 +11,7 @@ const activityModel = db.Activity;
 
 // Middleware to check if the user is a supervisor
 export const isSupervisor = (req, res, next) => {
-    if (req.user.dataValues.roleId === 3) {
+    if (req.user.dataValues.roleId === parseInt(process.env.SUPERVISOR)) {
         next();
     } else {
         res.status(403).json({ error: 'User is not a supervisor' });
