@@ -19,87 +19,6 @@ const roleModel = db.Roles;
 const vendorModel = db.Vendor;
 const branchModel = db.Branch;
 const userBranchModel = db.UserBranch;
-
-// export const create = catchAsync(async (req, res, next) => {
-
-//     try {
-//       const { body } = req;
-//       const branchId = body.branch[0];
-  
-//       body.email_id = body.email_id.toLowerCase();
-  
-//       const user = await userModel.findOne({
-//         where: {
-//           [Op.or]: [
-//             { email_id: body.email_id },
-//             { contact_no: body.contact_no }
-//           ]
-//         }
-//       });
-  
-//       if (user) {
-//         if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
-//           return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
-//         }
-//         if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
-//           return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
-//         }
-//         if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
-//           return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
-//         }
-//       }
-  
-//       const resetPasswordToken = jwt.sign({ email_id: body.email_id }, secretKey, { expiresIn: '6h' });
-  
-//       let profileImageUrl;
-//       if (req.file) {
-//         profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
-//       }
-  
-//       const userData = { ...body, resetPasswordToken };
-//       if (profileImageUrl) {
-//         userData.profile_image = profileImageUrl;
-//       }
-  
-//       const createdUser = await userService.createUser(userData);
-
-//       // Verify if the branch exists
-//       const branch = await branchModel.findByPk(parseInt(branchId));
-//       if (!branch) {
-//         return next(new ApiError(httpStatus.BAD_REQUEST, 'Branch not found'));
-//       }
-  
-//     // Update the userBranchModel with the new branch
-//     const existingUserBranch = await userBranchModel.findOne({
-//         where: {
-//           userId: createdUser.id,
-//           branchId: branchId,
-//         }
-//       });
-  
-//       if (!existingUserBranch) {
-//         await userBranchModel.create({
-//           userId: createdUser.id,
-//           branchId: branchId,
-//           status: true
-//         });
-//       }
-
-//       const emailSubject = "Set Your Password";
-//       const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
-//       const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
-  
-//       await mailService(body.email_id, emailSubject, emailText, emailHtml);
-  
-//       return res.send({
-//         msg: "User created successfully",
-//         results: createdUser,
-//       });
-//     } catch (error) {
-//       console.error(error);
-//       return res.status(500).send({ error: 'Internal Server Error' });
-//     }
-//   });  
 const saltRounds = 10;
 
 export const create = catchAsync(async (req, res, next) => {
@@ -108,6 +27,7 @@ export const create = catchAsync(async (req, res, next) => {
     const branchIds = body.branch.map(id => parseInt(id));
 
     body.email_id = body.email_id.toLowerCase();
+    body.created_by = req.user.id;
 
     const user = await userModel.findOne({
       where: {
@@ -155,49 +75,44 @@ export const create = catchAsync(async (req, res, next) => {
 
     // Verify if the branch exists
     const branches = await branchModel.findAll({
-    where: {
+      where: {
         id: branchIds
-    }
+      }
     });
-
-    // Update the userBranchModel with the new branch
-    // const existingUserBranch = await userBranchModel.findOne({
-    //   where: {
-    //     userId: createdUser.id,
-    //     branchId: branchId,
-    //   }
-    // });
 
     const foundBranchIds = branches.map(branch => branch.id);
     const notFoundBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
 
     if (notFoundBranchIds.length > 0) {
-    return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
+      return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
     }
 
     // Update the userBranchModel with the new branches
     await Promise.all(branchIds.map(async (branchId) => {
-    const existingUserBranch = await userBranchModel.findOne({
-    where: {
-    userId: createdUser.id,
-    branchId: branchId,
+      const existingUserBranch = await userBranchModel.findOne({
+        where: {
+          userId: createdUser.id,
+          branchId: branchId,
+        }
+      });
+
+      if (!existingUserBranch) {
+        await userBranchModel.create({
+          userId: createdUser.id,
+          branchId: branchId,
+          status: true
+        });
+      }
+    }));
+
+    // Send the email only if the password is not provided
+    if (!body.password) {
+      const emailSubject = "Set Your Password";
+      const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
+      const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
+
+      await mailService(body.email_id, emailSubject, emailText, emailHtml);
     }
-    });
-
-    if (!existingUserBranch) {
-    await userBranchModel.create({
-    userId: createdUser.id,
-    branchId: branchId,
-    status: true
-    });
-    }
-    }));  
-
-    const emailSubject = "Set Your Password";
-    const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
-    const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
-
-    await mailService(body.email_id, emailSubject, emailText, emailHtml);
 
     return res.send({
       msg: "User created successfully",
