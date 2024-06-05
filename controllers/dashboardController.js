@@ -11,254 +11,311 @@ const branchModel = db.Branch;
 const userModel = db.Users;
 
 // Function to fetch all records without filters
-export const fetchAllUserRecords = catchAsync(async (req, res) => {
-    try {
-        const { userId } = req.query;
+// export const fetchAllUserRecords = catchAsync(async (req, res) => {
+//     try {
+//         const userId = req.user.dataValues.id; // Get userId from req.user
+//         const { fromDate, toDate, branch} = req.query; // Extract fromDate, toDate, and branch from the query parameters
 
-        console.log("req.query", req.query); 
+//         let filters = { created_by: userId };
 
-        const approvedDocuments = await documentModel.findAll({
-            where: {
-                created_by: userId,
-                is_document_approved: true
-            }
-        });
+//         if (fromDate && toDate) {
+//             const parsedFromDate = new Date(fromDate);
+//             const parsedToDate = new Date(toDate);
 
-        const rejectedDocuments = await documentModel.findAll({
-            where: {
-                created_by: userId,
-                is_document_rejected: true
-            }
-        });
+//             const startDate = new Date(parsedFromDate);
+//             startDate.setUTCHours(0, 0, 0, 0);
 
-        const pendingDocuments = await documentModel.findAll({
-            where: {
-                created_by: userId,
-                is_document_approved: false,
-                is_document_rejected: false
-            }
-        });
+//             const endDate = new Date(parsedToDate);
+//             endDate.setUTCHours(23, 59, 59, 999);
 
-        console.log("approvedDocuments", approvedDocuments.length);
-        console.log("rejectedDocuments", rejectedDocuments.length);
-        console.log("pendingDocuments", pendingDocuments.length);  
+//             filters.createdAt = {
+//                 [Op.between]: [startDate, endDate]
+//             };
+//         }
 
-        const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+//          if (branch) {
+//              filters.branch = branch;
+//          }
 
-        console.log("totalApprovedPages", totalApprovedPages);
-        console.log("totalRejectedPages", totalRejectedPages);
-        console.log("totalPendingPages", totalPendingPages);
+//         const approvedDocuments = await documentModel.findAll({
+//             where: {
+//                 ...filters,
+//                 is_document_approved: true
+//             }
+//         });
 
-        return res.send({
-            approved: approvedDocuments.length,
-            rejected: rejectedDocuments.length,
-            pending: pendingDocuments.length,
-            totalApprovedPages,
-            totalRejectedPages,
-            totalPendingPages,
-        });
-    } catch (error) {
-        console.error(error.toString());
-        return res.status(500).send({ error: error.message });
-    }
-});
+//         const rejectedDocuments = await documentModel.findAll({
+//             where: {
+//                 ...filters,
+//                 is_document_rejected: true
+//             }
+//         });
 
-// Function to fetch records with filters
-export const fetchUserRecords = catchAsync(async (req, res) => {
-    try {
-        const { userId, fromDate, toDate, branch } = req.query;
+//         const pendingDocuments = await documentModel.findAll({
+//             where: {
+//                 ...filters,
+//                 is_document_approved: false,
+//                 is_document_rejected: false
+//             }
+//         });
 
-        console.log("req.query", req.query);   
-        console.log("req.query", req);
+//         const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+//         const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+//         const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
 
-        const parsedFromDate = parseISO(fromDate);
-        const startDate = new Date(parsedFromDate);
-        startDate.setHours(0, 0, 0, 0);
-
-        const parsedToDate = parseISO(toDate);
-        const endDate = new Date(parsedToDate);
-        endDate.setHours(23, 59, 59, 999);
-
-
-        const user = await userModel.findByPk(userId);
-        if (!user) {
-            return res.status(404).send({ status: false, message: 'User not found' });
-        }
-
-        const userBranches = user.branch;
-
-        const filters = {
-            created_by: userId
-        };
-
-        if(fromDate && toDate) {
-            filters.createdAt = {
-                [Op.between]: [startDate, endDate]
-            };
-        }
-
-        if (branch && userBranches.includes(parseInt(branch, 10))) {
-            filters.branch = branch;
-        }
-
-        const approvedDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                is_document_approved: true
-            }
-        });
-
-        const rejectedDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                is_document_rejected: true
-            }
-        });
-
-        const pendingDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                is_document_approved: false,
-                is_document_rejected: false
-            }
-        });
-
-        console.log("approvedDocuments", approvedDocuments.length);
-        console.log("pendingDocuments", pendingDocuments.length);
-        console.log("filters", filters);
-
-        const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-
-        return res.send({
-            approved: approvedDocuments.length,
-            rejected: rejectedDocuments.length,
-            pending: pendingDocuments.length,
-            totalApprovedPages,
-            totalRejectedPages,
-            totalPendingPages,
-        });
-    } catch (error) {
-        console.error(error.toString());
-        return res.status(500).send({ error: error.message });
-    }
-});
+//         return res.send({
+//             userData:{approved: approvedDocuments.length,
+//             rejected: rejectedDocuments.length,
+//             pending: pendingDocuments.length,
+//             totalApprovedPages,
+//             totalRejectedPages,
+//             totalPendingPages,}
+//         });
+//     } catch (error) {
+//         console.error(error.toString());
+//         return res.status(500).send({ error: error.message });
+//     }
+// });
 
 // Function to get day activity
-export const getDayActivity = catchAsync(async (req, res) => {
-    try {
-        const { userId, date} = req.query;
+// export const getDayActivity = catchAsync(async (req, res) => {
+//     try {
+//         const userId = req.user.dataValues.id; // Get userId from req.user
 
-        console.log("req.query", req.query);
+//         const currentDate = new Date();
+//         currentDate.setUTCHours(0, 0, 0, 0);
 
-        const parsedDate = parseISO(date);
+//         const startDate = new Date(currentDate);
+//         const endDate = new Date(currentDate);
+//         endDate.setUTCHours(23, 59, 59, 999);
 
-        const startDate = new Date(parsedDate);
-        startDate.setHours(0, 0, 0, 0);
+//         const filters = {
+//             created_by: userId,
+//             createdAt: {
+//                 [Op.between]: [startDate, endDate]
+//             }
+//         };
 
-        const endDate = new Date(parsedDate);
-        endDate.setHours(23, 59, 59, 999);
+//         const approvedCount = await documentModel.count({
+//             where: {
+//                 ...filters,
+//                 is_document_approved: true
+//             }
+//         });
 
-        const filters = {
-            created_by: userId,
-            createdAt: {
-                [Op.between]: [startDate, endDate]
-            }
-        };
+//         const rejectedCount = await documentModel.count({
+//             where: {
+//                 ...filters,
+//                 is_document_rejected: true
+//             }
+//         });
 
-        const approvedCount = await documentModel.count({
-            where: {
-                ...filters,
-                is_document_approved: true
-            }
-        });
+//         const pendingCount = await documentModel.count({
+//             where: {
+//                 ...filters,
+//                 is_document_approved: false,
+//                 is_document_rejected: false
+//             }
+//         });
 
-        const rejectedCount = await documentModel.count({
-            where: {
-                ...filters,
-                is_document_rejected: true
-            }
-        });
-
-        const pendingCount = await documentModel.count({
-            where: {
-                ...filters,
-                is_document_approved: false,
-                is_document_rejected: false
-            }
-        });
-
-        const allDocuments = await documentModel.findAll({
-            where: {
-                created_by: userId,
-                createdAt: {
-                    [Op.eq]: new Date(date).setHours(0, 0, 0, 0)
-                }
-            }
-        });
-        console.log("approvedCount", approvedCount);
-        console.log("rejectedCount", rejectedCount);
-        console.log("pendingCount", pendingCount);
-
-        return res.send({
-            approved: approvedCount,
-            rejected: rejectedCount,
-            pending: pendingCount
-        });
-    } catch (error) {
-        console.error(error.toString());
-        return res.status(500).send({ error: error.message });
-    }
-});
+//         return res.send({
+//             userDayActivity: {approved: approvedCount,
+//             rejected: rejectedCount,
+//             pending: pendingCount}
+//         });
+//     } catch (error) {
+//         console.error(error.toString());
+//         return res.status(500).send({ error: error.message });
+//     }
+// });
 
 // Function to get user activity for a month
-export const getUserMonthlyActivity = catchAsync(async (req, res) => {
-    try {
-        const { userId, date } = req.query;
+// export const getUserMonthlyActivity = catchAsync(async (req, res) => {
+//     try {
+//         const userId = req.user.dataValues.id; // Get userId from req.user
 
-        console.log("req.query", req.query);
+//         const currentDate = new Date();
+//         currentDate.setUTCHours(23, 59, 59, 999); // Set current date to end of the day
 
-        const monthDay = new Date(date);
-        monthDay.setUTCHours(0, 0, 0, 0);
+//         const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+//         firstDayOfMonth.setUTCHours(0, 0, 0, 0); // Set first day of the month to start of the day
 
-        const startDate = new Date(monthDay.getFullYear(), monthDay.getMonth(), 1);
+//         const activities = await activityModel.findAll({
+//             where: {
+//                 activity_created_by_id: userId,
+//                 activity_created_at: { [Op.between]: [firstDayOfMonth, currentDate] }
+//             },
+//             attributes: ['activity_created_at']
+//         });
+
+//         const activeDates = [...new Set(activities.map(activity => activity.activity_created_at.toISOString().split('T')[0]))];
+
+//         const allDates = [];
+//         for (let d = new Date(firstDayOfMonth); d <= currentDate; d.setDate(d.getDate() + 1)) {
+//             allDates.push(new Date(d).toISOString().split('T')[0]);
+//         }
+
+//         const inactiveDates = allDates.filter(date => !activeDates.includes(date));
+
+//         return res.send({
+//            userMontlyActivity:{activeDates,
+//             inactiveDates}
+//         });
+//     } catch (error) {
+//         console.error(error.toString());
+//         return res.status(500).send({ error: error.message });
+//     }
+// });
+
+const fetchUserRecords = async (req) => {
+    const userId = req.user.dataValues.id;
+    const { fromDate, toDate, branch } = req.query;
+
+    let filters = { created_by: userId };
+
+
+    if (fromDate && toDate) {
+        const startDate = new Date(fromDate);
         startDate.setUTCHours(0, 0, 0, 0);
 
-        console.log('monthDay', monthDay);  
-        console.log("startDate", startDate);
+        const endDate = new Date(toDate);
+        endDate.setUTCHours(23, 59, 59, 999);
 
-        const activities = await activityModel.findAll({
-            where: {
-                activity_created_by_id: userId,
-                activity_created_at: {
-                    [Op.between]: [startDate, monthDay]
-                }
-            },
-            attributes: ['activity_created_at']
-        });
+        filters.createdAt = {
+            [Op.between]: [startDate, endDate]
+        };
+    }
 
-        console.log('Raw activities:', activities);
+//     if (branch) {
+//         filters.branch = branch;
+//   }
 
-        const activityDates = activities.map(a => {
-            const activityDate = a.activity_created_at;
-            console.log('activity_created_at:', activityDate);
-            return activityDate.toISOString().split('T')[0];
-        });
-
-        const allDatesInMonth = [];
-        for (let d = new Date(startDate); d <= monthDay; d.setDate(d.getDate() + 1)) {
-            allDatesInMonth.push(new Date(d).toISOString().split('T')[0]);
+    const approvedDocuments = await documentModel.findAll({
+        where: {
+            ...filters,
+            is_document_approved: true
         }
+    });
 
-        const activeDays = activityDates;
-        const inactiveDays = allDatesInMonth.filter(date => !activeDays.includes(date));
+    const rejectedDocuments = await documentModel.findAll({
+        where: {
+            ...filters,
+            is_document_rejected: true
+        }
+    });
+
+    const pendingDocuments = await documentModel.findAll({
+        where: {
+            ...filters,
+            is_document_approved: false,
+            is_document_rejected: false
+        }
+    });
+
+    const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+    const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+    const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+
+    return {
+        approved: approvedDocuments.length,
+        rejected: rejectedDocuments.length,
+        pending: pendingDocuments.length,
+        totalApprovedPages,
+        totalRejectedPages,
+        totalPendingPages
+    };
+};
+
+// Function to fetch user's daily activity
+const fetchUserDailyActivity = async (req) => {
+    const userId = req.user.dataValues.id;
+
+    const currentDate = new Date();
+    currentDate.setUTCHours(0, 0, 0, 0);
+
+    const startDate = new Date(currentDate);
+    const endDate = new Date(currentDate);
+    endDate.setUTCHours(23, 59, 59, 999);
+
+    const filters = {
+        created_by: userId,
+        createdAt: {
+            [Op.between]: [startDate, endDate]
+        }
+    };
+
+    const approvedCount = await documentModel.count({
+        where: {
+            ...filters,
+            is_document_approved: true
+        }
+    });
+
+    const rejectedCount = await documentModel.count({
+        where: {
+            ...filters,
+            is_document_rejected: true
+        }
+    });
+
+    const pendingCount = await documentModel.count({
+        where: {
+            ...filters,
+            is_document_approved: false,
+            is_document_rejected: false
+        }
+    });
+
+    return { approved: approvedCount, rejected: rejectedCount, pending: pendingCount };
+};
+
+// Function to fetch user's monthly activity
+const fetchUserMonthlyActivity = async (req) => {
+    const userId = req.user.dataValues.id;
+
+    const currentDate = new Date();
+    currentDate.setUTCHours(23, 59, 59, 999); // Set current date to end of the day
+
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    firstDayOfMonth.setUTCHours(0, 0, 0, 0); // Set first day of the month to start of the day
+
+    const activities = await activityModel.findAll({
+        where: {
+            activity_created_by_id: userId,
+            activity_created_at: { [Op.between]: [firstDayOfMonth, currentDate] }
+        },
+        attributes: ['activity_created_at']
+    });
+
+    const activeDates = [...new Set(activities.map(activity => activity.activity_created_at.toISOString().split('T')[0]))];
+
+    const allDates = [];
+    for (let d = new Date(firstDayOfMonth); d <= currentDate; d.setDate(d.getDate() + 1)) {
+        allDates.push(new Date(d).toISOString().split('T')[0]);
+    }
+
+    const inactiveDates = allDates.filter(date => !activeDates.includes(date));
+
+    return { activeDates, inactiveDates };
+};
+
+// Combined data API for user
+export const fetchAllUserData = catchAsync(async (req, res) => {
+    try {
+        const userRecordsPromise = fetchUserRecords(req);
+        const userDailyActivityPromise = fetchUserDailyActivity(req);
+        const userMonthlyActivityPromise = fetchUserMonthlyActivity(req);
+
+        const [userRecords, userDailyActivity, userMonthlyActivity] = await Promise.all([
+            userRecordsPromise,
+            userDailyActivityPromise,
+            userMonthlyActivityPromise
+        ]);
 
         return res.send({
-            activeDays,
-            inactiveDays
+            userRecords,
+            userDailyActivity,
+            userMonthlyActivity
         });
     } catch (error) {
         console.error(error.toString());

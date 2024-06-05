@@ -226,7 +226,9 @@ const fetchMonthlyActivity = async (req) => {
             attributes: ['activity_created_at']
         });
 
-        const activeDates = activities.map(activity => activity.activity_created_at.toISOString().split('T')[0]);
+       // const activeDates = activities.map(activity => activity.activity_created_at.toISOString().split('T')[0]);
+
+        const activeDates = [...new Set(activities.map(activity => activity.activity_created_at.toISOString().split('T')[0]))];
 
         const activeDatesSet = new Set(activeDates);
 
