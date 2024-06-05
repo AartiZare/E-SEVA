@@ -381,3 +381,12 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
+
+export const getDocumentById = catchAsync(async (req, res, next) => {
+    const documentId = req.params.documentId;
+    const document = await documentModel.findByPk(documentId);
+    if (!document) {
+        return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
+    }
+    return res.send({ msg: "Document fetched successfully", data: document });
+});
