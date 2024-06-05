@@ -494,6 +494,10 @@ export const fetchTeamData = async (req) => {
         const currentDate = new Date();
         currentDate.setUTCHours(0, 0, 0, 0);
 
+        const startDate = new Date(currentDate);
+        const endDate = new Date(currentDate);
+        endDate.setUTCHours(23, 59, 59, 999);
+
         const supervisors = await userModel.findAll({
             where: { created_by: squadId },
             attributes: ['id', 'full_name']
@@ -509,12 +513,13 @@ export const fetchTeamData = async (req) => {
             where: {
                 activity_created_by_id: { [Op.in]: supervisorIds },
                 activity_created_at: {
-                    [Op.between]: [currentDate, new Date(currentDate.getTime() + 86399999)]
+                    [Op.between]: [startDate, endDate]
                 }
             }
         });
 
-        const activeSupervisorIds = activities.map(activity => activity.activity_created_by_id);
+        const activeSupervisorIdsSet = new Set(activities.map(activity => activity.activity_created_by_id));
+        const activeSupervisorIds = Array.from(activeSupervisorIdsSet);
         const totalSupervisors = supervisors.length;
         const activeSupervisors = activeSupervisorIds.length;
         const inactiveSupervisors = totalSupervisors - activeSupervisors;
@@ -577,6 +582,26 @@ export const fetchMonthlyActivity = async (req) => {
     }
 };
 
+export const fetchSupervisorsForSquad = async (req) => {
+    try {
+        const squadId = req.user.dataValues.id;
+
+        // Fetch supervisors created by the squad member
+        const supervisors = await userModel.findAll({
+            where: { created_by: squadId },
+            attributes: ['id', 'full_name', 'email_id']
+        });
+
+        if (supervisors.length === 0) {
+            return res.status(404).send({ error: 'No supervisors found for this squad' });
+        }
+
+        return { supervisors }
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: error.message });
+    }
+};
 
 export const fetchAllData = catchAsync(async (req, res) => {
     try {
@@ -594,19 +619,23 @@ export const fetchAllData = catchAsync(async (req, res) => {
         // Fetch monthly activity data
         const monthlyActivityPromise = fetchMonthlyActivity(req);
 
+        const fetchSupervisorsPromise = fetchSupervisorsForSquad(req);
+
         // Wait for all promises to resolve
-        const [totalEvaluation, dailyWisePageDoc, teamData, monthlyActivity] = await Promise.all([
+        const [totalEvaluation, dailyWisePageDoc, teamData, monthlyActivity, fetchSupervisors] = await Promise.all([
             totalEvaluationPromise,
             dailyWisePageDocPromise,
             teamDataPromise,
-            monthlyActivityPromise
+            monthlyActivityPromise,
+            fetchSupervisorsPromise
         ]);
 
         return res.send({
-            totalEvaluation: totalEvaluation.evalutionData,
-            dailyWisePageDoc: dailyWisePageDoc.dailySquadData,
-            teamData: teamData.squadTeamActivity,
-            monthlyActivity: monthlyActivity.squadActiveDays
+            squadTotalEvaluation: totalEvaluation.evalutionData,
+            squadDailyWisePageDoc: dailyWisePageDoc.dailySquadData,
+            squadTeamData: teamData.squadTeamActivity,
+            squadmonthlyActivity: monthlyActivity.squadActiveDays,
+            supervisors: fetchSupervisors.supervisors
         });
     } catch (error) {
         console.error(error.toString());

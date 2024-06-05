@@ -19,7 +19,7 @@ export { documentController };
 export { vendorController };
 export { activityController };
 export { dashboardController };
-export {supervisorController};
+export { supervisorController };
 export { districtController };
 export { divisionController };
 export { stateController };

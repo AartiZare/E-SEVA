@@ -20,6 +20,10 @@ const router = express.Router();
 //     .route('/monthly-activity')
 //     .get(auth(), squadController.isSquad, squadController.fetchMonthlyActivity);
 
+// router
+//     .route('/supervisors')
+//     .get(auth(), squadController.isSquad, squadController.fetchSupervisorsForSquad);
+
 router
     .route('/dashboard')
     .get(auth(), squadController.isSquad, squadController.fetchAllData);
