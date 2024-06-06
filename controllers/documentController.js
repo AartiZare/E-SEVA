@@ -306,14 +306,14 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         } else if (userRole.name === 'Supervisor') {
             rejectedDoc = await documentModel.findAll({
                 where: {
-                    // created_by: user.id,
+                    updated_by: user.id,
                     rejected_by_supervisor: true
                 }
             });
         } else if (userRole.name === 'Squad') {
             rejectedDoc = await documentModel.findAll({
                 where: {
-                    // created_by: user.id,
+                    updated_by: user.id,
                     rejected_by_squad: true
                 }
             });
