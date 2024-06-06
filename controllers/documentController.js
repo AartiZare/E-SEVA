@@ -6,6 +6,7 @@ import db from '../models/index.js';
 const documentModel = db.Document;
 const roleModel = db.Roles;
 const activityModel = db.Activity;
+const userModel = db.Users;
 
 export const createDocument = catchAsync(async (req, res, next) => {
     try {
@@ -200,7 +201,8 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         const userRole = await roleModel.findByPk(user.roleId);
 
         let pendingDoc;
-        if (userRole.name === 'User' || userRole.name === 'Supervisor') {
+
+        if (userRole.name === 'User') {
             pendingDoc = await documentModel.findAll({
                 where: {
                     created_by: user.id,
@@ -213,16 +215,61 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
                     ]
                 }
             });
-        } else if (userRole.name === 'Squad') {
+        } else if (userRole.name === 'Supervisor') {
+            // Find users created by the supervisor
+            const supervisorCreatedUsers = await userModel.findAll({
+                where: {
+                    created_by: user.id
+                },
+                attributes: ['id']
+            });
+
+            const supervisorCreatedUserIds = supervisorCreatedUsers.map(u => u.id);
+
             pendingDoc = await documentModel.findAll({
                 where: {
+                    created_by: supervisorCreatedUserIds,
+                    is_document_approved: false,
+                    rejected_by_supervisor: false,
+                    rejected_by_squad: false,
+                    [Op.or]: [
+                        { approved_by_supervisor: false },
+                        { approved_by_squad: false }
+                    ]
+                }
+            });
+        } else if (userRole.name === 'Squad') {
+            // Find supervisors created by the squad
+            const squadCreatedSupervisors = await userModel.findAll({
+                where: {
                     created_by: user.id,
+                    roleId: await roleModel.findOne({ where: { name: 'Supervisor' } }).then(role => role.id)
+                },
+                attributes: ['id']
+            });
+
+            const supervisorIds = squadCreatedSupervisors.map(supervisor => supervisor.id);
+
+            // Find users created by these supervisors
+            const supervisorCreatedUsers = await userModel.findAll({
+                where: {
+                    created_by: supervisorIds
+                },
+                attributes: ['id']
+            });
+
+            const supervisorCreatedUserIds = supervisorCreatedUsers.map(u => u.id);
+
+            pendingDoc = await documentModel.findAll({
+                where: {
+                    created_by: supervisorCreatedUserIds,
                     is_document_approved: false,
                     approved_by_supervisor: true,
                     rejected_by_supervisor: false,
                     rejected_by_squad: false
                 }
             });
+
         } else {
             return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized role'));
         }
@@ -333,4 +380,13 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         console.error(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
+});
+
+export const getDocumentById = catchAsync(async (req, res, next) => {
+    const documentId = req.params.documentId;
+    const document = await documentModel.findByPk(documentId);
+    if (!document) {
+        return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
+    }
+    return res.send({ msg: "Document fetched successfully", data: document });
 });

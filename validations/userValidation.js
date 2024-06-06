@@ -15,16 +15,13 @@ export const createUser = {
     taluk: Joi.string().allow(''),
     village: Joi.string().allow(''),
     address: Joi.string().required(),
-    account_no: Joi.string(),
+    account_no: Joi.string().allow(''),
     branch: Joi.array().items(Joi.number()).required(),
-    password: Joi.string(),
-    ifsc: Joi.string().required(),
-    bank_name: Joi.string().required(),
+    password: Joi.string().allow(''),
     roleId: Joi.number().integer().required(),
-    created_by: Joi.number().integer().required(),
-    ifsc: Joi.string(),
-    bank_name: Joi.string(),
-    roleId: Joi.number().integer().required()
+    created_by: Joi.number().integer(),
+    ifsc: Joi.string().allow(''),
+    bank_name: Joi.string().allow(''),
   }),
   file: Joi.object()
     .keys({
