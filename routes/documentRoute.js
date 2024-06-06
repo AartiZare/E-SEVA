@@ -13,7 +13,20 @@ router
   .get(auth(), documentController.pendingDocumentListUser);
 
 router
+  .route('/rejectedList')
+  .get(auth(), documentController.rejectedDocumentListUser);
+
+router
   .route('/:documentId')
+  .get(auth(), documentController.getDocumentById)
   .put(auth(), documentController.approveDocument);
+
+router
+  .route('/rejecteDoc/:documentId')
+  .put(auth(), documentController.rejectDocument);
+
+
+router.route('/updateDocument/:documentId')
+  .put(auth(), upload.single('image_pdf'), documentController.updateDocument)
 
 export default router;

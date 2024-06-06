@@ -6,6 +6,7 @@ import db from '../models/index.js';
 const documentModel = db.Document;
 const roleModel = db.Roles;
 const activityModel = db.Activity;
+const userModel = db.Users;
 
 export const createDocument = catchAsync(async (req, res, next) => {
     try {
@@ -136,31 +137,139 @@ export const approveDocument = catchAsync(async (req, res, next) => {
     }
 });
 
+export const rejectDocument = catchAsync(async (req, res, next) => {
+    try {
+        const { documentId } = req.params; // Assuming documentId is passed in the request params
+        const userId = req.user.id; // Fetch user ID
+        const userRole = await roleModel.findByPk(req.user.roleId); // Fetch user role
+
+        // Find the document by ID
+        const document = await documentModel.findByPk(documentId);
+
+        // Check if the document exists
+        if (!document) {
+            return next(new ApiError(httpStatus.NOT_FOUND, 'Document not found'));
+        }
+
+        // Check if the logged-in user is authorized to reject the document
+        let activityDescription = '';
+        if (userRole.name === 'Supervisor') {
+            // Update rejected_by_supervisor field to true
+            document.rejected_by_supervisor = true;
+            activityDescription = 'rejected by Supervisor';
+        } else if (userRole.name === 'Squad') {
+            // Update rejected_by_squad field to true
+            document.rejected_by_squad = true;
+            activityDescription = 'rejected by Squad';
+        } else {
+            // If user role is neither supervisor nor squad, return unauthorized
+            return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized'));
+        }
+
+        // Save the updated document
+        document.updated_by = userId;
+
+        // Set is_document_rejected to true if either supervisor or squad rejects the document
+        if (document.rejected_by_supervisor || document.rejected_by_squad) {
+            document.is_document_rejected = true;
+        }
+
+        await document.save();
+
+        // Create activity entry after rejecting the document
+        const activityData = {
+            Activity_title: 'Document Rejected',
+            activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
+            activity_created_at: document.updatedAt,
+            activity_created_by_id: userId,
+            activity_created_by_type: userRole.name,
+            activity_document_id: document.id
+        };
+
+        await activityModel.create(activityData);
+
+        return res.send({ status: true, data: document, message: 'Document rejected successfully' });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
 export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
     try {
         const user = req.user;
         const userRole = await roleModel.findByPk(user.roleId);
 
         let pendingDoc;
-        if (userRole.name === 'User' || userRole.name === 'Supervisor') {
+
+        if (userRole.name === 'User') {
             pendingDoc = await documentModel.findAll({
                 where: {
                     created_by: user.id,
+                    is_document_approved: false,
+                    rejected_by_supervisor: false,
+                    rejected_by_squad: false,
                     [Op.or]: [
-                        { is_document_approved: false },
+                        { approved_by_supervisor: false },
+                        { approved_by_squad: false }
+                    ]
+                }
+            });
+        } else if (userRole.name === 'Supervisor') {
+            // Find users created by the supervisor
+            const supervisorCreatedUsers = await userModel.findAll({
+                where: {
+                    created_by: user.id
+                },
+                attributes: ['id']
+            });
+
+            const supervisorCreatedUserIds = supervisorCreatedUsers.map(u => u.id);
+
+            pendingDoc = await documentModel.findAll({
+                where: {
+                    created_by: supervisorCreatedUserIds,
+                    is_document_approved: false,
+                    rejected_by_supervisor: false,
+                    rejected_by_squad: false,
+                    [Op.or]: [
                         { approved_by_supervisor: false },
                         { approved_by_squad: false }
                     ]
                 }
             });
         } else if (userRole.name === 'Squad') {
-            pendingDoc = await documentModel.findAll({
+            // Find supervisors created by the squad
+            const squadCreatedSupervisors = await userModel.findAll({
                 where: {
                     created_by: user.id,
+                    roleId: await roleModel.findOne({ where: { name: 'Supervisor' } }).then(role => role.id)
+                },
+                attributes: ['id']
+            });
+
+            const supervisorIds = squadCreatedSupervisors.map(supervisor => supervisor.id);
+
+            // Find users created by these supervisors
+            const supervisorCreatedUsers = await userModel.findAll({
+                where: {
+                    created_by: supervisorIds
+                },
+                attributes: ['id']
+            });
+
+            const supervisorCreatedUserIds = supervisorCreatedUsers.map(u => u.id);
+
+            pendingDoc = await documentModel.findAll({
+                where: {
+                    created_by: supervisorCreatedUserIds,
                     is_document_approved: false,
-                    approved_by_supervisor: true
+                    approved_by_supervisor: true,
+                    rejected_by_supervisor: false,
+                    rejected_by_squad: false
                 }
             });
+
         } else {
             return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized role'));
         }
@@ -170,4 +279,114 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         console.error(error.toString());
         return res.status(500).send({ error: 'Internal Server Error' });
     }
+});
+
+export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
+    try {
+        const user = req.user;
+        const userRole = await roleModel.findByPk(user.roleId);
+
+        let rejectedDoc;
+        if (userRole.name === 'User') {
+            rejectedDoc = await documentModel.findAll({
+                where: {
+                    // created_by: user.id,
+                    [Op.or]: [
+                        { rejected_by_supervisor: true },
+                        { rejected_by_squad: true }
+                    ]
+                }
+            });
+        } else if (userRole.name === 'Supervisor') {
+            rejectedDoc = await documentModel.findAll({
+                where: {
+                    // created_by: user.id,
+                    rejected_by_supervisor: true
+                }
+            });
+        } else if (userRole.name === 'Squad') {
+            rejectedDoc = await documentModel.findAll({
+                where: {
+                    // created_by: user.id,
+                    rejected_by_squad: true
+                }
+            });
+        } else {
+            return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized role'));
+        }
+
+        return res.send({ status: true, data: rejectedDoc });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+export const updateDocument = catchAsync(async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const documentId = req.params.documentId;
+        const updatedData = req.body;
+
+        // Find the document created by the user
+        const document = await documentModel.findOne({
+            where: {
+                created_by: userId,
+                id: documentId
+            }
+        });
+
+        // If document not found, return error
+        if (!document) {
+            return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
+        }
+
+        // Handle file upload if present
+        let documentFileUrl;
+        if (req.file) {
+            documentFileUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+        }
+
+        // Update document data
+        const documentData = { ...updatedData };
+        if (documentFileUrl) {
+            documentData.image_pdf = documentFileUrl;
+        }
+
+        // Update the document in the database
+        const rowsUpdated = await documentModel.update(documentData, {
+            where: {
+                created_by: userId,
+                id: documentId
+            }
+        });
+
+        // If no rows were updated, return error
+        if (rowsUpdated[0] === 0) {
+            return next(new ApiError(httpStatus.BAD_REQUEST, `Document with id ${documentId} doesn't exist or no changes were made`));
+        }
+
+        // Fetch the updated document
+        const updatedDocument = await documentModel.findOne({
+            where: {
+                created_by: userId,
+                id: documentId
+            }
+        });
+
+        // Send the updated document as response
+        return res.send({ message: 'Document updated successfully', updatedDocument });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+export const getDocumentById = catchAsync(async (req, res, next) => {
+    const documentId = req.params.documentId;
+    const document = await documentModel.findByPk(documentId);
+    if (!document) {
+        return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
+    }
+    return res.send({ msg: "Document fetched successfully", data: document });
 });

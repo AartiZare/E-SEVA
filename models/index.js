@@ -8,6 +8,12 @@ import vendorModel from "./vendorModel.js";
 import userBranchModel from "./userBranchModel.js";
 import activityModel from "./activityModel.js";
 import contactUsModel from "./contactUsModel.js";
+import stateModel from "./stateModel.js";
+import divisionModel from "./divisionModel.js";
+import districtModel from "./districtModel.js";
+import talukModel from "./talukModel.js";
+import documentTypeModel from "./documentTypeModel.js";
+import designationModel from "./designationModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -33,6 +39,12 @@ const models = {
   UserBranch: userBranchModel(sequelize, DataTypes),
   Activity: activityModel(sequelize, DataTypes),
   ContactUs: contactUsModel(sequelize, DataTypes),
+  State: stateModel(sequelize, DataTypes),
+  Division: divisionModel(sequelize, DataTypes),
+  Taluk: talukModel(sequelize, DataTypes),
+  District: districtModel(sequelize, DataTypes),
+  DocumentType: documentTypeModel(sequelize, DataTypes),
+  Designation: designationModel(sequelize, DataTypes)
 };
   
 const db = {
