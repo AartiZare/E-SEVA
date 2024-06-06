@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+import path from 'path';
+import crypto from 'crypto';
+dotenv.config();
 import { Op } from 'sequelize';
 import { catchAsync } from '../utils/catchAsync.js';
 import httpStatus from 'http-status';
@@ -51,11 +55,12 @@ export const createDocument = catchAsync(async (req, res, next) => {
             document_unique_id: body.document_unique_id,
             document_type: body.document_type,
             created_by: userId,
-            updated_by: userId
+            updated_by: userId,
         };
 
+        // const id = crypto.randomBytes(16).toString('hex')
         if (file) {
-            documentData.image_pdf = `http://52.66.238.70/E-Seva/uploads/${file.originalname}`;
+            documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${file.originalname}`;
         }
 
         const newDocument = await documentModel.create(documentData);
@@ -345,7 +350,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         // Handle file upload if present
         let documentFileUrl;
         if (req.file) {
-            documentFileUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+            documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
         }
 
         // Update document data
@@ -390,4 +395,38 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
         return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
     }
     return res.send({ msg: "Document fetched successfully", data: document });
+});
+
+// export const getDocFileByDocId = catchAsync(async(req, res, next) => {
+//     const documentId = req.params.documentId;
+//     const document = await documentModel.findByPk(documentId);
+
+//     console.log(document, "document")
+//     res.sendFile(document.image_pdf);
+
+    // res.sendFile(`C:\\Users\\INTEL\\Desktop\\E-SEVA\\E-SEVA\\public\\uploads\\dummy pdf.pdf`)
+// });
+export const getDocFileByDocId = catchAsync(async (req, res, next) => {
+    try {
+        const documentId = req.query.documentId;
+        // const document = await documentModel.findByPk(documentId);
+
+        // if (!document || !document.image_pdf) {
+        //     return next(new ApiError(httpStatus.NOT_FOUND, 'Document or file not found'));
+        // }
+
+        // console.log(document.image_pdf, "pdf path")
+        const filePath = path.join(`public/uploads/`+documentId);
+
+        console.log(filePath, "uploaded file");
+
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error sending file'));
+            }
+        });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
 });
