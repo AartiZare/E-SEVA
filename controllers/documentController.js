@@ -296,7 +296,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         if (userRole.name === 'User') {
             rejectedDoc = await documentModel.findAll({
                 where: {
-                    // created_by: user.id,
+                    created_by: user.id,
                     [Op.or]: [
                         { rejected_by_supervisor: true },
                         { rejected_by_squad: true }
@@ -416,7 +416,7 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
         // }
 
         // console.log(document.image_pdf, "pdf path")
-        const filePath = path.join(`public/uploads/`+documentId);
+        const filePath = path.join(`/home/ubuntu/Apis/E-SEVA-development/public/uploads/`+documentId);
 
         console.log(filePath, "uploaded file");
 
