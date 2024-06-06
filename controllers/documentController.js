@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-
+import path from 'path';
+import crypto from 'crypto';
 dotenv.config();
 import { Op } from 'sequelize';
 import { catchAsync } from '../utils/catchAsync.js';
@@ -53,11 +54,12 @@ export const createDocument = catchAsync(async (req, res, next) => {
             total_no_of_date: body.total_no_of_date,
             document_unique_id: body.document_unique_id,
             created_by: userId,
-            updated_by: userId
+            updated_by: userId,
         };
 
+        // const id = crypto.randomBytes(16).toString('hex')
         if (file) {
-            documentData.image_pdf = `${process.env.FILE_PATH}${file.originalname}`;
+            documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${file.originalname}`;
         }
 
         const newDocument = await documentModel.create(documentData);
@@ -392,4 +394,38 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
         return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
     }
     return res.send({ msg: "Document fetched successfully", data: document });
+});
+
+// export const getDocFileByDocId = catchAsync(async(req, res, next) => {
+//     const documentId = req.params.documentId;
+//     const document = await documentModel.findByPk(documentId);
+
+//     console.log(document, "document")
+//     res.sendFile(document.image_pdf);
+
+    // res.sendFile(`C:\\Users\\INTEL\\Desktop\\E-SEVA\\E-SEVA\\public\\uploads\\dummy pdf.pdf`)
+// });
+export const getDocFileByDocId = catchAsync(async (req, res, next) => {
+    try {
+        const documentId = req.query.documentId;
+        // const document = await documentModel.findByPk(documentId);
+
+        // if (!document || !document.image_pdf) {
+        //     return next(new ApiError(httpStatus.NOT_FOUND, 'Document or file not found'));
+        // }
+
+        // console.log(document.image_pdf, "pdf path")
+        const filePath = path.join(`public/uploads/`+documentId);
+
+        console.log(filePath, "uploaded file");
+
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error sending file'));
+            }
+        });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
 });

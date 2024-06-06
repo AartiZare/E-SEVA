@@ -7,6 +7,9 @@ import upload from '../middlewares/multer.js';
 
 const router = express.Router();
 
+router.route('/file')
+    .get(documentController.getDocFileByDocId);
+
 router
   .route('/')
   .post(auth(), upload.single('image_pdf'), validate(documentValidation.createDocument), documentController.createDocument)
@@ -28,5 +31,6 @@ router
 
 router.route('/updateDocument/:documentId')
   .put(auth(), upload.single('image_pdf'), documentController.updateDocument)
+
 
 export default router;
