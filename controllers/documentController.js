@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
 import { Op } from 'sequelize';
 import { catchAsync } from '../utils/catchAsync.js';
 import httpStatus from 'http-status';
@@ -54,7 +57,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
         };
 
         if (file) {
-            documentData.image_pdf = `http://52.66.238.70/E-Seva/uploads/${file.originalname}`;
+            documentData.image_pdf = `${process.env.FILE_PATH}${file.originalname}`;
         }
 
         const newDocument = await documentModel.create(documentData);
@@ -344,7 +347,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         // Handle file upload if present
         let documentFileUrl;
         if (req.file) {
-            documentFileUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+            documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
         }
 
         // Update document data
