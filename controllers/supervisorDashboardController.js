@@ -215,17 +215,22 @@ const fetchMonthlyActivity = async (req) => {
         const supervisorId = req.user.dataValues.id;
 
         const currentDate = new Date();
-        const firstDayOfMonth = startOfMonth(currentDate);
-        const endDate = endOfDay(currentDate);
+        const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        firstDayOfMonth.setUTCHours(0, 0, 0, 0);
+
+        const startDate = firstDayOfMonth;
+        const endDate = new Date(currentDate);
+        endDate.setUTCHours(23, 59, 59, 999);
 
         const activities = await activityModel.findAll({
             where: {
                 activity_created_by_id: supervisorId,
-                activity_created_at: { [Op.between]: [firstDayOfMonth, endDate] }
+                activity_created_at: {
+                    [Op.between]: [startDate, endDate]
+                }
             },
             attributes: ['activity_created_at']
         });
-
        // const activeDates = activities.map(activity => activity.activity_created_at.toISOString().split('T')[0]);
 
         const activeDates = [...new Set(activities.map(activity => activity.activity_created_at.toISOString().split('T')[0]))];

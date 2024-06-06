@@ -279,10 +279,14 @@ const fetchUserMonthlyActivity = async (req) => {
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     firstDayOfMonth.setUTCHours(0, 0, 0, 0); // Set first day of the month to start of the day
 
+    const startDate = firstDayOfMonth;
+    const endDate = new Date(currentDate);
+    endDate.setUTCHours(23, 59, 59, 999);
+
     const activities = await activityModel.findAll({
         where: {
             activity_created_by_id: userId,
-            activity_created_at: { [Op.between]: [firstDayOfMonth, currentDate] }
+            activity_created_at: { [Op.between]: [startDate, endDate] }
         },
         attributes: ['activity_created_at']
     });
