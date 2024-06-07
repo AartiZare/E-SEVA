@@ -361,3 +361,12 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
         }
     });
     
+
+export const getMyTeamUserList = catchAsync(async (req, res, next) => {
+    const users = await userModel.findAll({
+        where: {
+            created_by: req.user.id,
+        }
+    });
+    return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
+});
