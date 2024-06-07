@@ -23,6 +23,9 @@ router
 .route('/verify_OTP')
     .post(userController.verifyOTP);
 
+router
+.route('/myTeamUserList')
+    .get(auth(), userController.getMyTeamUserList)
 // router
 // .route('/')
 //     .post(validate(userValidation.createUser), userController.create)
