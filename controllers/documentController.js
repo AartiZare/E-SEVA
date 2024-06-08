@@ -430,3 +430,40 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
+
+export const getDocumentList = catchAsync(async (req, res, next) => {
+    try {
+        const { from_date, to_date, document_type } = req.query;
+
+        // Build the query conditions
+        let conditions = {};
+
+        if (from_date && to_date) {
+            conditions.document_reg_date = {
+                [Op.between]: [new Date(from_date), new Date(to_date)]
+            };
+        } else if (from_date) {
+            conditions.document_reg_date = {
+                [Op.gte]: new Date(from_date)
+            };
+        } else if (to_date) {
+            conditions.document_reg_date = {
+                [Op.lte]: new Date(to_date)
+            };
+        }
+
+        if (document_type) {
+            conditions.document_type = document_type;
+        }
+
+        // Fetch the documents from the database
+        const documents = await documentModel.findAll({
+            where: conditions
+        });
+
+        return res.send({ results: documents, total: documents.length });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});

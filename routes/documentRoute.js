@@ -11,6 +11,10 @@ router.route('/file')
     .get(documentController.getDocFileByDocId);
 
 router
+  .route('/completeDocList')
+  .get(documentController.getDocumentList);
+
+router
   .route('/')
   .post(auth(), upload.single('image_pdf'), validate(documentValidation.createDocument), documentController.createDocument)
   .get(auth(), documentController.pendingDocumentListUser);
