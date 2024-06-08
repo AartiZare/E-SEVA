@@ -22,6 +22,7 @@ export const createUser = {
     created_by: Joi.number().integer(),
     ifsc: Joi.string().allow(''),
     bank_name: Joi.string().allow(''),
+    status: Joi.boolean(),
   }),
   file: Joi.object()
     .keys({

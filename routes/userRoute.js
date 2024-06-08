@@ -43,4 +43,12 @@ router
 router
 .route('/login')
     .post(validate(userValidation.login), userController.login);
+
+router
+.route('/activate/:userId')
+    .put(userController.activateUser);
+
+router
+.route('/deactivate/:userId')
+    .put(userController.deactivateUser);
 export default router;

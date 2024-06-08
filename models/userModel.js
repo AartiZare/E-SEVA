@@ -9,6 +9,10 @@ const userModel = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        status: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
         profile_image: {
             type: DataTypes.STRING,
         },
