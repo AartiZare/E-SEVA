@@ -11,7 +11,7 @@ const documentModel = db.Document;
 const roleModel = db.Roles;
 const activityModel = db.Activity;
 const userModel = db.Users;
-
+ 
 export const createDocument = catchAsync(async (req, res, next) => {
     try {
         const { body, file } = req;
@@ -416,7 +416,7 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
         // }
 
         // console.log(document.image_pdf, "pdf path")
-        const filePath = path.join(`/home/ubuntu/Apis/E-SEVA-development/public/uploads/`+documentId);
+        const filePath = path.join(`${process.env.FILE_PATH}`+documentId);
 
         console.log(filePath, "uploaded file");
 
