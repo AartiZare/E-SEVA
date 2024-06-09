@@ -77,7 +77,19 @@ const documentsModel = (sequelize, DataTypes) => {
                 model: 'users', // Name of the Users table
                 key: 'id'
             }
-        }
+        },
+        supervisor_verification_status: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        squad_verification_status: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        final_verification_status: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
     }, {
         timestamps: true
     });

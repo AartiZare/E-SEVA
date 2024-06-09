@@ -38,9 +38,10 @@ export const createDocument = catchAsync(async (req, res, next) => {
         const documentData = {
             document_name: body.document_name,
             document_reg_no: body.document_reg_no,
-            approved_by_supervisor: body.approved_by_supervisor,
-            approved_by_squad: body.approved_by_squad,
-            is_document_approved: body.is_document_approved, // assuming this field should also be included
+            // TODO: Ask Aarti, why these are coming from the client, if they can be set it to default values at document creation time.
+            supervisor_verification_status: body.supervisor_verification_status,
+            squad_verification_status: body.squad_verification_status,
+            final_verification_status: body.final_verification_status, // assuming this field should also be included
             document_reg_date: body.document_reg_date,
             document_renewal_date: body.document_renewal_date,
             total_no_of_page: body.total_no_of_page,
@@ -102,12 +103,13 @@ export const approveDocument = catchAsync(async (req, res, next) => {
         // Check if the logged-in user is authorized to approve the document
         let activityDescription = '';
         if (userRole.name === 'Supervisor') {
-            // Update approved_by_supervisor field to true
-            document.approved_by_supervisor = true;
+            // Update supervisor_verification_status for approved
+            document.supervisor_verification_status = 1;
             activityDescription = 'approved by Supervisor';
         } else if (userRole.name === 'Squad') {
-            // Update approved_by_squad field to true
-            document.approved_by_squad = true;
+            // Update squad_verification_status for approved
+            document.squad_verification_status = 1;
+            document.final_verification_status = 1;
             activityDescription = 'approved by Squad';
         } else {
             // If user role is neither supervisor nor squad, return unauthorized
@@ -117,12 +119,6 @@ export const approveDocument = catchAsync(async (req, res, next) => {
         // Save the updated document
         document.updated_by = userId;
         await document.save();
-
-        // Check if both supervisor and squad have approved, then update is_document_approved to true
-        if (document.approved_by_supervisor && document.approved_by_squad) {
-            document.is_document_approved = true;
-            await document.save();
-        }
 
         // Create activity entry after approving the document
         const activityData = {
@@ -160,12 +156,13 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
         // Check if the logged-in user is authorized to reject the document
         let activityDescription = '';
         if (userRole.name === 'Supervisor') {
-            // Update rejected_by_supervisor field to true
-            document.rejected_by_supervisor = true;
+            // Update supervisor_verification_status for rejection
+            document.supervisor_verification_status = 2;
             activityDescription = 'rejected by Supervisor';
         } else if (userRole.name === 'Squad') {
-            // Update rejected_by_squad field to true
-            document.rejected_by_squad = true;
+            // Update squad_verification_status for rejection
+            document.squad_verification_status = 2;
+            document.final_verification_status = 2;
             activityDescription = 'rejected by Squad';
         } else {
             // If user role is neither supervisor nor squad, return unauthorized
@@ -175,10 +172,11 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
         // Save the updated document
         document.updated_by = userId;
 
-        // Set is_document_rejected to true if either supervisor or squad rejects the document
-        if (document.rejected_by_supervisor || document.rejected_by_squad) {
-            document.is_document_rejected = true;
-        }
+        // TODO: To ask Bapu, Do we need to update the document_verification_status also to 2? if it is rejected by squad. Because, if you want to show the rejected & pendings seperately. We need to update this.
+        // Set final_verification_status to rejected only if either supervisor or squad rejects the document
+        // if (document.supervisor_verification_status === 2 || document.squad_verification_status === 2) {
+        //     document.final_verification_status = 2;
+        // }
 
         await document.save();
 
@@ -212,13 +210,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             pendingDoc = await documentModel.findAll({
                 where: {
                     created_by: user.id,
-                    is_document_approved: false,
-                    rejected_by_supervisor: false,
-                    rejected_by_squad: false,
-                    [Op.or]: [
-                        { approved_by_supervisor: false },
-                        { approved_by_squad: false }
-                    ]
+                    final_verification_status: 0,
                 }
             });
         } else if (userRole.name === 'Supervisor') {
@@ -235,13 +227,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             pendingDoc = await documentModel.findAll({
                 where: {
                     created_by: supervisorCreatedUserIds,
-                    is_document_approved: false,
-                    rejected_by_supervisor: false,
-                    rejected_by_squad: false,
-                    [Op.or]: [
-                        { approved_by_supervisor: false },
-                        { approved_by_squad: false }
-                    ]
+                    supervisor_verification_status: 0
                 }
             });
         } else if (userRole.name === 'Squad') {
@@ -269,10 +255,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             pendingDoc = await documentModel.findAll({
                 where: {
                     created_by: supervisorCreatedUserIds,
-                    is_document_approved: false,
-                    approved_by_supervisor: true,
-                    rejected_by_supervisor: false,
-                    rejected_by_squad: false
+                    squad_verification_status: 0
                 }
             });
 
@@ -297,24 +280,21 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
             rejectedDoc = await documentModel.findAll({
                 where: {
                     created_by: user.id,
-                    [Op.or]: [
-                        { rejected_by_supervisor: true },
-                        { rejected_by_squad: true }
-                    ]
+                    final_verification_status: 2
                 }
             });
         } else if (userRole.name === 'Supervisor') {
             rejectedDoc = await documentModel.findAll({
                 where: {
                     updated_by: user.id,
-                    rejected_by_supervisor: true
+                    supervisor_verification_status: 2
                 }
             });
         } else if (userRole.name === 'Squad') {
             rejectedDoc = await documentModel.findAll({
                 where: {
                     updated_by: user.id,
-                    rejected_by_squad: true
+                    squad_verification_status: 2
                 }
             });
         } else {
@@ -354,7 +334,12 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         }
 
         // Update document data
-        const documentData = { ...updatedData };
+        const documentData = { 
+            ...updatedData,
+            supervisor_verification_status: 0, // Reseting to make it as a fresh verification
+            squad_verification_status: 0, // Reseting to make it as a fresh verification
+            final_verification_status: 0, // Reseting to make it as a fresh verification
+        };
         if (documentFileUrl) {
             documentData.image_pdf = documentFileUrl;
         }
