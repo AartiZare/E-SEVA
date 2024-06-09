@@ -158,6 +158,7 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
         if (userRole.name === 'Supervisor') {
             // Update supervisor_verification_status for rejection
             document.supervisor_verification_status = 2;
+            document.final_verification_status = 2;
             activityDescription = 'rejected by Supervisor';
         } else if (userRole.name === 'Squad') {
             // Update squad_verification_status for rejection
@@ -171,12 +172,6 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
 
         // Save the updated document
         document.updated_by = userId;
-
-        // TODO: To ask Bapu, Do we need to update the document_verification_status also to 2? if it is rejected by squad. Because, if you want to show the rejected & pendings seperately. We need to update this.
-        // Set final_verification_status to rejected only if either supervisor or squad rejects the document
-        // if (document.supervisor_verification_status === 2 || document.squad_verification_status === 2) {
-        //     document.final_verification_status = 2;
-        // }
 
         await document.save();
 
