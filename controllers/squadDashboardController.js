@@ -8,6 +8,7 @@ import { parseISO, startOfDay, endOfDay } from 'date-fns';
 const documentModel = db.Document;
 const userModel = db.Users;
 const activityModel = db.Activity;
+const verificationStatus = { 'p': 0, 'a': 1, 'r': 2 };
 
 // Middleware to check if the user is part of the squad
 export const isSquad = (req, res, next) => {
@@ -17,6 +18,10 @@ export const isSquad = (req, res, next) => {
         res.status(403).json({ error: 'User is not part of the squad' });
     }
 };
+
+const addVerificationFilter = (filters, vs) => {
+    return { ...filters, supervisor_verification_status: verificationStatus[vs]};
+}
 
 // Function to fetch total evaluation data
 // export const fetchTotalEvaluation = catchAsync(async (req, res) => {
@@ -363,25 +368,15 @@ export const fetchTotalEvaluation = async (req) => {
         }
 
         const approvedDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                approved_by_squad: true
-            }
+            where: addVerificationFilter(filters, 'a')
         });
 
         const rejectedDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                rejected_by_squad: true
-            }
+            where: addVerificationFilter(filters, 'r')
         });
 
         const pendingDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                approved_by_squad: false,
-                rejected_by_squad: false
-            }
+            where: addVerificationFilter(filters, 'p')
         });
 
         const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
@@ -447,25 +442,15 @@ export const fetchDailyWisePageDoc = async (req) => {
         };
 
         const approvedDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                approved_by_squad: true
-            }
+            where: addVerificationFilter(filters, 'a')
         });
 
         const rejectedDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                rejected_by_squad: true
-            }
+            where: addVerificationFilter(filters, 'r')
         });
 
         const pendingDocuments = await documentModel.findAll({
-            where: {
-                ...filters,
-                approved_by_squad: false,
-                rejected_by_squad: false
-            }
+            where: addVerificationFilter(filters, 'p')
         });
 
         const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);

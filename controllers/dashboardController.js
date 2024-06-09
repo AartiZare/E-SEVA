@@ -193,22 +193,21 @@ const fetchUserRecords = async (req) => {
     const approvedDocuments = await documentModel.findAll({
         where: {
             ...filters,
-            is_document_approved: true
+            final_verification_status: 1
         }
     });
 
     const rejectedDocuments = await documentModel.findAll({
         where: {
             ...filters,
-            is_document_rejected: true
+            final_verification_status: 2
         }
     });
 
     const pendingDocuments = await documentModel.findAll({
         where: {
             ...filters,
-            is_document_approved: false,
-            is_document_rejected: false
+            final_verification_status: 0
         }
     });
 
@@ -247,22 +246,21 @@ const fetchUserDailyActivity = async (req) => {
     const approvedCount = await documentModel.count({
         where: {
             ...filters,
-            is_document_approved: true
+            final_verification_status: 1
         }
     });
 
     const rejectedCount = await documentModel.count({
         where: {
             ...filters,
-            is_document_rejected: true
+            final_verification_status: 2
         }
     });
 
     const pendingCount = await documentModel.count({
         where: {
             ...filters,
-            is_document_approved: false,
-            is_document_rejected: false
+            final_verification_status: 0
         }
     });
 
