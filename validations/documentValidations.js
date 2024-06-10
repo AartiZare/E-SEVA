@@ -6,6 +6,7 @@ export const createDocument = {
         document_reg_no: Joi.string().required(),
         document_type: Joi.string().allow(null, ''),
         branch: Joi.number().integer().allow(null),
+        branch_name: Joi.string(),
         approved_by_supervisor: Joi.boolean().default(false),
         approved_by_squad: Joi.boolean().default(false),
         rejected_by_supervisor: Joi.boolean().default(false),

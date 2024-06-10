@@ -61,7 +61,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
         // const id = crypto.randomBytes(16).toString('hex')
         if (file) {
-            documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${file.originalname}`;
+            documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}${path.extname(file.originalname)}`;
         }
 
         const newDocument = await documentModel.create(documentData);
