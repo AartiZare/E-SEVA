@@ -9,7 +9,7 @@ export const createVendor = {
     pan_no: Joi.string().required(),
     adhar_no: Joi.string().required(),
     qualifications: Joi.string().allow(''),
-    dob: Joi.date().required(),
+    company_name: Joi.string().allow(''),
     pincode: Joi.string().required(),
     district: Joi.string().required(),
     taluk: Joi.string().allow(''),

@@ -40,10 +40,6 @@ const vendorModel = (sequelize, DataTypes) => {
         resetOTPExpiration: {
             type: DataTypes.DATE
         },
-        dob: {
-            type: DataTypes.DATE,
-            allowNull: false,
-        },
         pincode: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -77,6 +73,10 @@ const vendorModel = (sequelize, DataTypes) => {
         bank_name: {
             type: DataTypes.STRING,
             allowNull: false,
+        },
+        company_name: {
+            type: DataTypes.STRING,
+            allowNull: true,
         }
     }, { timestamps: true });
 
