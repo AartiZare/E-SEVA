@@ -76,7 +76,7 @@ const userModel = (sequelize, DataTypes) => {
         branch: {
             type: DataTypes.ARRAY(DataTypes.INTEGER),
             defaultValue: [],            
-            allowNull: false,
+            allowNull: true,
         },
         ifsc: {
             type: DataTypes.STRING,

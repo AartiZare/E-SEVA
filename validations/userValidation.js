@@ -16,7 +16,7 @@ export const createUser = {
     village: Joi.string().allow(''),
     address: Joi.string().required(),
     account_no: Joi.string().allow(''),
-    branch: Joi.array().items(Joi.number()).required(),
+    branch: Joi.array().items(Joi.number()).allow(null, ''), // Changed to optional
     password: Joi.string().allow(''),
     roleId: Joi.number().integer().required(),
     created_by: Joi.number().integer(),
@@ -26,7 +26,7 @@ export const createUser = {
   }),
   file: Joi.object()
     .keys({
-      profile_image: Joi.string().allow(''),
+    profile_image: Joi.string().allow(''),
   }),
 };
 
