@@ -57,6 +57,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
             document_type: body.document_type,
             created_by: userId,
             updated_by: userId,
+            branch: body.branch,
         };
 
         // const id = crypto.randomBytes(16).toString('hex')
