@@ -26,6 +26,9 @@ export const createDocument = {
         ).required(),
         document_unique_id: Joi.string().allow(null, ''),
         // created_by and updated_by are not included here as they are set automatically based on the authenticated user
+        supervisor_verification_status: Joi.number().default(0),
+        squad_verification_status: Joi.number().default(0),
+        final_verification_status: Joi.number().default(0),
     }),
     file: Joi.object().keys({
         image_pdf: Joi.string().allow('')

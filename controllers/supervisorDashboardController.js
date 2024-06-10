@@ -10,6 +10,7 @@ const userModel = db.Users;
 const activityModel = db.Activity; // Import the role model
 const userBranchModel = db.UserBranch;
 const branchModel = db.Branch;
+const verificationStatus = { 'p': 0, 'a': 1, 'r': 2 };
 
 // Middleware to check if the user is a supervisor
 export const isSupervisor = (req, res, next) => {
@@ -18,6 +19,10 @@ export const isSupervisor = (req, res, next) => {
     } else {
         res.status(403).json({ error: 'User is not a supervisor' });
     }
+}
+
+const addVerificationFilter = (filters, vs) => {
+    return { ...filters, supervisor_verification_status: verificationStatus[vs]};
 }
 
 // Function to fetch total evaluation
@@ -69,20 +74,20 @@ const fetchTotalEvaluation = async (req) => {
         }
 
         const approvedDocuments = await documentModel.findAll({
-            where: { ...filters, approved_by_supervisor: true }
+            where: addVerificationFilter(filters, 'a')
         });
 
         const rejectedDocuments = await documentModel.findAll({
-            where: { ...filters, rejected_by_supervisor: true }
+            where: addVerificationFilter(filters, 'r')
         });
 
         const pendingDocuments = await documentModel.findAll({
-            where: { ...filters, approved_by_supervisor: false, rejected_by_supervisor: false }
+            where: addVerificationFilter(filters, 'p')
         });
 
-        const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+        const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page * 1, 0);
+        const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page * 1, 0);
+        const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page * 1, 0);
 
         return {
             evalutionData: {
@@ -129,20 +134,20 @@ const fetchDailyWisePageDoc = async (req) => {
         };
 
         const approvedDocuments = await documentModel.findAll({
-            where: { ...filters, approved_by_supervisor: true }
+            where: addVerificationFilter(filters, 'a')
         });
 
         const rejectedDocuments = await documentModel.findAll({
-            where: { ...filters, rejected_by_supervisor: true }
+            where: addVerificationFilter(filters, 'r')
         });
 
         const pendingDocuments = await documentModel.findAll({
-            where: { ...filters, approved_by_supervisor: false, rejected_by_supervisor: false }
+            where: addVerificationFilter(filters, 'p')
         });
 
-        const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
-        const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page, 0);
+        const totalApprovedPages = approvedDocuments.reduce((total, doc) => total + doc.total_no_of_page * 1, 0);
+        const totalRejectedPages = rejectedDocuments.reduce((total, doc) => total + doc.total_no_of_page * 1, 0);
+        const totalPendingPages = pendingDocuments.reduce((total, doc) => total + doc.total_no_of_page * 1, 0);
 
         return {
             dailySupervisorData: {
