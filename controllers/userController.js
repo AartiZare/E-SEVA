@@ -23,109 +23,110 @@ const saltRounds = 10;
 
 export const create = catchAsync(async (req, res, next) => {
     try {
-      const { body } = req;
-  
-      // Ensure branch is an array if it is defined, otherwise default to an empty array
-      const branchIds = Array.isArray(body.branch) ? body.branch.map(id => parseInt(id)) : [];
-  
-      body.email_id = body.email_id.toLowerCase();
-      body.created_by = req.user.id;
-  
-      const user = await userModel.findOne({
-        where: {
-          [Op.or]: [
-            { email_id: body.email_id },
-            { contact_no: body.contact_no }
-          ]
-        }
-      });
-  
-      if (user) {
-        if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
-          return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
-        }
-        if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
-          return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
-        }
-        if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
-          return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
-        }
-      }
-  
-      const resetPasswordToken = jwt.sign({ email_id: body.email_id }, secretKey, { expiresIn: '6h' });
-  
-      let profileImageUrl;
-      if (req.file) {
-        profileImageUrl = `${process.env.FILE_ACCESS_PATH}${req.file.filename}`;
-      }
-  
-      // Encrypt the password if it exists in the request body
-      let hashedPassword;
-      if (body.password) {
-        hashedPassword = await bcrypt.hash(body.password, saltRounds);
-      }
-  
-      const userData = { ...body, resetPasswordToken };
-      if (hashedPassword) {
-        userData.password = hashedPassword;
-        userData.status = true;
-      }
-      if (profileImageUrl) {
-        userData.profile_image = profileImageUrl;
-      }
-  
-      const createdUser = await userService.createUser(userData);
-  
-      // Verify if the branch exists
-      const branches = await branchModel.findAll({
-        where: {
-          id: branchIds
-        }
-      });
-  
-      const foundBranchIds = branches.map(branch => branch.id);
-      const notFoundBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
-  
-      if (notFoundBranchIds.length > 0) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
-      }
-  
-      // Update the userBranchModel with the new branches
-      await Promise.all(branchIds.map(async (branchId) => {
-        const existingUserBranch = await userBranchModel.findOne({
-          where: {
-            userId: createdUser.id,
-            branchId: branchId,
-          }
+        const { body, file } = req;
+
+        // Ensure branch is an array if it is defined, otherwise default to an empty array
+        const branchIds = Array.isArray(body.branch) ? body.branch.map(id => parseInt(id)) : [];
+
+        body.email_id = body.email_id.toLowerCase();
+        body.created_by = req.user.id;
+
+        const user = await userModel.findOne({
+            where: {
+                [Op.or]: [
+                    { email_id: body.email_id },
+                    { contact_no: body.contact_no }
+                ]
+            }
         });
-  
-        if (!existingUserBranch) {
-          await userBranchModel.create({
-            userId: createdUser.id,
-            branchId: branchId,
-            status: true
-          });
+
+        if (user) {
+            if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
+            }
+            if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
+            }
+            if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
+            }
         }
-      }));
-  
-      // Send the email only if the password is not provided
-      if (!body.password) {
-        const emailSubject = "Set Your Password";
-        const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
-        const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
-  
-        await mailService(body.email_id, emailSubject, emailText, emailHtml);
-      }
-  
-      return res.send({
-        msg: "User created successfully",
-        results: createdUser,
-      });
+
+        const resetPasswordToken = jwt.sign({ email_id: body.email_id }, secretKey, { expiresIn: '6h' });
+
+        let profileImageUrl;
+        if (file) {
+            // Save profile image in the profileImages directory
+            profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
+        }
+
+        // Encrypt the password if it exists in the request body
+        let hashedPassword;
+        if (body.password) {
+            hashedPassword = await bcrypt.hash(body.password, saltRounds);
+        }
+
+        const userData = { ...body, resetPasswordToken };
+        if (hashedPassword) {
+            userData.password = hashedPassword;
+            userData.status = true;
+        }
+        if (profileImageUrl) {
+            userData.profile_image = profileImageUrl;
+        }
+
+        const createdUser = await userService.createUser(userData);
+
+        // Verify if the branch exists
+        const branches = await branchModel.findAll({
+            where: {
+                id: branchIds
+            }
+        });
+
+        const foundBranchIds = branches.map(branch => branch.id);
+        const notFoundBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
+
+        if (notFoundBranchIds.length > 0) {
+            return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
+        }
+
+        // Update the userBranchModel with the new branches
+        await Promise.all(branchIds.map(async (branchId) => {
+            const existingUserBranch = await userBranchModel.findOne({
+                where: {
+                    userId: createdUser.id,
+                    branchId: branchId,
+                }
+            });
+
+            if (!existingUserBranch) {
+                await userBranchModel.create({
+                    userId: createdUser.id,
+                    branchId: branchId,
+                    status: true
+                });
+            }
+        }));
+
+        // Send the email only if the password is not provided
+        if (!body.password) {
+            const emailSubject = "Set Your Password";
+            const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
+            const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
+
+            await mailService(body.email_id, emailSubject, emailText, emailHtml);
+        }
+
+        return res.send({
+            msg: "User created successfully",
+            results: createdUser,
+        });
     } catch (error) {
-      console.error(error);
-      return res.status(500).send({ error: error.message });
+        console.error(error);
+        return res.status(500).send({ error: error.message });
     }
-  });  
+});
 
 export const set_password = catchAsync(async (req, res, next) => {
     try {
@@ -194,11 +195,13 @@ export const getAll = catchAsync(async (req, res) => {
 export const update = catchAsync(async (req, res, next) => {
     try {
         const id = req.params.id;
+        const { file } = req;
         const updatedData = req.body;
         
         let profileImageUrl;
         if (req.file) {
-            profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+            // profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+            profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
         }
 
         const userData = { ...updatedData };
