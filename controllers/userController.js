@@ -162,32 +162,53 @@ export const set_password = catchAsync(async (req, res, next) => {
 
 export const getAll = catchAsync(async (req, res) => {
     try {
-        const { qFilter } = req.query;
+        const { qFilter, page, pageSize, search } = req.query;
         let filter = {};
+
         if (qFilter) {
             filter = {
                 ...JSON.parse(qFilter),
             };
         }
-        let page = parseInt(req.query.page) || 1;
-        let pageSize = parseInt(req.query.pageSize) || 10;
-        if (req.query.search) {
-            const searchTerm = req.query.search.trim();
+
+        if (search) {
+            const searchTerm = search.trim();
             if (searchTerm !== '') {
                 filter = {
+                    ...filter,
                     full_name: {
                         [Op.like]: `%${searchTerm}%`
                     }
                 };
             }
         }
-        const query = {
-            ...filter,
+
+        const pageNumber = parseInt(page) || 1;
+        const limit = parseInt(pageSize) || 10;
+        const offset = (pageNumber - 1) * limit;
+
+        const users = await userModel.findAll({
+            where: filter,
+            offset: offset,
+            limit: limit,
+            order: [['createdAt', 'DESC']],
+        });
+
+        const totalCount = await userModel.count({
+            where: filter,
+        });
+
+        const response = {
+            users,
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: pageNumber,
+            pageSize: limit,
         };
 
-        const users = await userService.getAll(query, page, pageSize);
-        return res.send({data: users, total: users.length});
+        return res.send(response);
     } catch (error) {
+        console.error(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
@@ -369,15 +390,43 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
     });
     
 
-export const getMyTeamUserList = catchAsync(async (req, res, next) => {
-    const users = await userModel.findAll({
-        where: {
-            created_by: req.user.id,
-            status: true
+    export const getMyTeamUserList = catchAsync(async (req, res, next) => {
+        try {
+            const { qFilter, search } = req.query;
+            let filter = {
+                created_by: req.user.id,
+                status: true
+            };
+    
+            if (qFilter) {
+                filter = {
+                    ...filter,
+                    ...JSON.parse(qFilter),
+                };
+            }
+    
+            if (search) {
+                const searchTerm = search.trim();
+                if (searchTerm !== '') {
+                    filter = {
+                        ...filter,
+                        full_name: {
+                            [Op.like]: `%${searchTerm}%`
+                        }
+                    };
+                }
+            }
+    
+            const users = await userModel.findAll({
+                where: filter,
+                order: [['createdAt', 'DESC']]
+            });
+    
+            return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
+        } catch (error) {
+            return res.status(500).send({ error: 'Internal Server Error' });
         }
     });
-    return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
-});
 
 export const activateUser = catchAsync(async (req, res, next) => {
     try {
