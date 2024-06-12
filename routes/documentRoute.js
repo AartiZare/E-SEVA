@@ -12,7 +12,7 @@ router.route('/file')
 
 router
   .route('/completeDocList')
-  .get(documentController.getDocumentList);
+  .get(auth(), documentController.getDocumentList);
 
 router
   .route('/')

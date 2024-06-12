@@ -11,6 +11,7 @@ const documentModel = db.Document;
 const roleModel = db.Roles;
 const activityModel = db.Activity;
 const userModel = db.Users;
+const branchModel = db.Branch;
  
 export const createDocument = catchAsync(async (req, res, next) => {
     try {
@@ -309,6 +310,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         const userId = req.user.id;
         const documentId = req.params.documentId;
         const updatedData = req.body;
+        const { file } = req;
 
         // Find the document created by the user
         const document = await documentModel.findOne({
@@ -318,15 +320,17 @@ export const updateDocument = catchAsync(async (req, res, next) => {
             }
         });
 
+        const branch = await branchModel.findByPk(document.branch);
         // If document not found, return error
         if (!document) {
             return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
         }
-
+      
         // Handle file upload if present
         let documentFileUrl;
         if (req.file) {
-            documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
+            // documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
+            documentFileUrl = `${process.env.FILE_ACCESS_PATH}${branch.name}/${document.document_reg_no}${path.extname(file.originalname)}`;
         }
 
         // Update document data
@@ -378,25 +382,10 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
     return res.send({ msg: "Document fetched successfully", data: document });
 });
 
-// export const getDocFileByDocId = catchAsync(async(req, res, next) => {
-//     const documentId = req.params.documentId;
-//     const document = await documentModel.findByPk(documentId);
-
-//     console.log(document, "document")
-//     res.sendFile(document.image_pdf);
-
-    // res.sendFile(`C:\\Users\\INTEL\\Desktop\\E-SEVA\\E-SEVA\\public\\uploads\\dummy pdf.pdf`)
-// });
 export const getDocFileByDocId = catchAsync(async (req, res, next) => {
     try {
         const documentId = req.query.documentId;
-        // const document = await documentModel.findByPk(documentId);
 
-        // if (!document || !document.image_pdf) {
-        //     return next(new ApiError(httpStatus.NOT_FOUND, 'Document or file not found'));
-        // }
-
-        // console.log(document.image_pdf, "pdf path")
         const filePath = path.join(`${process.env.FILE_PATH}`+documentId);
 
         console.log(filePath, "uploaded file");
@@ -412,12 +401,26 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
     }
 });
 
-export const getDocumentList = catchAsync(async (req, res, next) => {
+export const getDocumentList = catchAsync(async (req, res) => {
     try {
-        const { from_date, to_date, document_type } = req.query;
+        const { qFilter, search, from_date, to_date, document_type } = req.query;
 
-        // Build the query conditions
         let conditions = {};
+
+        if (qFilter) {
+            conditions = {
+                ...JSON.parse(qFilter),
+            };
+        }
+
+        if (search) {
+            const searchTerm = search.trim();
+            if (searchTerm !== '') {
+                conditions.document_name = {
+                    [Op.like]: `%${searchTerm}%`
+                };
+            }
+        }
 
         if (from_date && to_date) {
             conditions.document_reg_date = {
@@ -437,14 +440,19 @@ export const getDocumentList = catchAsync(async (req, res, next) => {
             conditions.document_type = document_type;
         }
 
-        // Fetch the documents from the database
         const documents = await documentModel.findAll({
-            where: conditions
+            where: {
+                ...conditions,
+                is_document_approved: true
+            }
         });
 
-        return res.send({ results: documents, total: documents.length });
+        return res.send({
+            results: documents,
+            total: documents.length
+        });
     } catch (error) {
-        console.error(error.toString());
+        console.log(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });

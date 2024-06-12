@@ -186,7 +186,7 @@ export const getAll = catchAsync(async (req, res) => {
         };
 
         const users = await userService.getAll(query, page, pageSize);
-        return res.send(users);
+        return res.send({data: users, total: users.length});
     } catch (error) {
         return res.status(500).send({ error: 'Internal Server Error' });
     }
