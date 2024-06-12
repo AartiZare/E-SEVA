@@ -13,6 +13,14 @@ const userModel = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
+        vendor_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'vendors', // name of the States table
+                key: 'id',
+            },
+        },
         profile_image: {
             type: DataTypes.STRING,
         },

@@ -15,7 +15,8 @@ export const userActivityList = catchAsync(async (req, res, next) => {
             where: {
                 activity_created_by_id: user.id,
                 activity_created_by_type: userRole.name
-            }
+            },
+            order: [['activity_created_at', 'DESC']]  // Order by creation date in descending order
         });
 
         if (!userActivity.length) {
