@@ -23,6 +23,10 @@ export const createUser = {
     ifsc: Joi.string().allow(''),
     bank_name: Joi.string().allow(''),
     status: Joi.boolean(),
+    assignedStateId: Joi.string().allow(''),
+    assignedDistrictId: Joi.string().allow(''),
+    assignedDivisionId: Joi.string().allow(''),
+    assignedTalukId: Joi.string().allow(''),
   }),
   file: Joi.object()
     .keys({

@@ -25,16 +25,17 @@ export const createBranch = catchAsync(async (req, res, next) => {
 
     // Include all necessary fields
     const branchToBeCreated = {
-      name: body.name,
-      branch_code: body.branch_code,
-      address: body.address,
-      pincode: body.pincode,
-      stateId: body.stateId,
-      divisionId: body.divisionId,
-      districtId: body.districtId,
-      talukId: body.talukId,
+      // name: body.name,
+      // branch_code: body.branch_code,
+      // address: body.address,
+      // pincode: body.pincode,
+      // stateId: body.stateId,
+      // divisionId: body.divisionId,
+      // districtId: body.districtId,
+      // talukId: body.talukId,
+      ...body, 
       createdBy: req.user.id,
-      status: body.status,
+      // status: body.status,
     };
 
     // Create new branch

@@ -63,3 +63,58 @@ export const createVendor = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
+
+export const getAllVendors = catchAsync(async (req, res) => {
+  try {
+
+      const { qFilter, page, pageSize, search } = req.query;
+      let filter = {};
+
+      if (qFilter) {
+          filter = {
+              ...JSON.parse(qFilter),
+          };
+      }
+
+      if (search) {
+          const searchTerm = search.trim();
+          if (searchTerm !== '') {
+              filter = {
+                  ...filter,
+                  full_name: {
+                      [Op.like]: `%${searchTerm}%`
+                  }
+              };
+          }
+      }
+
+      const pageNumber = parseInt(page) || 1;
+      const limit = parseInt(pageSize) || 10;
+      const offset = (pageNumber - 1) * limit;
+
+      const vendors = await vendorModel.findAll({
+          where: filter,
+          offset: offset,
+          limit: limit,
+      });
+
+      const totalCount = await vendorModel.count({
+          where: filter,
+      });
+
+      // Prepare response object with paginated results
+      const response = {
+          vendors,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          currentPage: pageNumber,
+          pageSize: limit,
+      };
+
+      // Send response
+      return res.send(response);
+  } catch (error) {
+      console.log(error);
+      return res.status(500).send({ error: 'Internal Server Error' });
+  }
+});
