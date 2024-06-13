@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import path from 'path';
 import { Op } from 'sequelize';
 import jwt from "jsonwebtoken";
 import { catchAsync } from '../utils/catchAsync.js';
@@ -54,7 +55,7 @@ export const create = catchAsync(async (req, res, next) => {
 
     let profileImageUrl;
     if (req.file) {
-      profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+      profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${body.contact_no}${path.extname(req.file.originalname)}`;
     }
 
     // Encrypt the password if it exists in the request body
