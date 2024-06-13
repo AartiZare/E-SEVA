@@ -19,6 +19,7 @@ const roleModel = db.Roles;
 const vendorModel = db.Vendor;
 const branchModel = db.Branch;
 const userBranchModel = db.UserBranch;
+const activityModel = db.Activity;
 const saltRounds = 10;
 
 export const create = catchAsync(async (req, res, next) => {
@@ -31,7 +32,12 @@ export const create = catchAsync(async (req, res, next) => {
         body.email_id = body.email_id.toLowerCase();
         body.created_by = req.user.id;
 
-        const user = await userModel.findOne({
+        const userRole = await roleModel.findByPk(req.user.roleId);
+        if (!userRole) {
+            return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'User role not found'));
+        }
+
+        const existingUser = await userModel.findOne({
             where: {
                 [Op.or]: [
                     { email_id: body.email_id },
@@ -40,14 +46,14 @@ export const create = catchAsync(async (req, res, next) => {
             }
         });
 
-        if (user) {
-            if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
+        if (existingUser) {
+            if (existingUser.email_id === body.email_id && existingUser.contact_no !== body.contact_no) {
                 return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
             }
-            if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
+            if (existingUser.contact_no === body.contact_no && existingUser.email_id !== body.email_id) {
                 return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
             }
-            if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
+            if (existingUser.email_id === body.email_id && existingUser.contact_no === body.contact_no) {
                 return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
             }
         }
@@ -56,11 +62,9 @@ export const create = catchAsync(async (req, res, next) => {
 
         let profileImageUrl;
         if (file) {
-            // Save profile image in the profileImages directory
             profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
         }
 
-        // Encrypt the password if it exists in the request body
         let hashedPassword;
         if (body.password) {
             hashedPassword = await bcrypt.hash(body.password, saltRounds);
@@ -77,7 +81,6 @@ export const create = catchAsync(async (req, res, next) => {
 
         const createdUser = await userService.createUser(userData);
 
-        // Verify if the branch exists
         const branches = await branchModel.findAll({
             where: {
                 id: branchIds
@@ -91,7 +94,6 @@ export const create = catchAsync(async (req, res, next) => {
             return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
         }
 
-        // Update the userBranchModel with the new branches
         await Promise.all(branchIds.map(async (branchId) => {
             const existingUserBranch = await userBranchModel.findOne({
                 where: {
@@ -109,7 +111,16 @@ export const create = catchAsync(async (req, res, next) => {
             }
         }));
 
-        // Send the email only if the password is not provided
+        const activityData = {
+            Activity_title: 'User Created',
+            activity_description: `User ${createdUser.full_name} was created.`,
+            activity_created_by_id: req.user.id,
+            activity_created_by_type: userRole.name,
+            activity_created_at: new Date(),
+        };
+
+        await activityModel.create(activityData);
+
         if (!body.password) {
             const emailSubject = "Set Your Password";
             const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
@@ -165,8 +176,7 @@ export const getAll = catchAsync(async (req, res) => {
         const { qFilter, page, pageSize, search } = req.query;
         const userId = req.user.id;
         const userRole = await roleModel.findByPk(req.user.roleId);
-        console.log(userRole, "userRole");
-        
+
         let filter = {};
 
         if (qFilter) {
@@ -187,13 +197,24 @@ export const getAll = catchAsync(async (req, res) => {
             }
         }
 
+        // Exclude 'Admin' role for non-admin users
         if (userRole.name !== 'Admin') {
+            filter = {
+                ...filter,
+                '$role.name$': {
+                    [Op.ne]: 'Admin',
+                },
+            };
+
             if (['RCS', 'ARCS', 'Assistant Registrar', 'Deputy Registrar', 'Branch Registrar'].includes(userRole.name)) {
                 filter = {
                     ...filter,
                     created_by: userId,
                     '$role.name$': {
-                        [Op.notIn]: ['Squad', 'Supervisor', 'User', 'Vendor']
+                        [Op.and]: [
+                            { [Op.ne]: 'Admin' },
+                            { [Op.notIn]: ['Squad', 'Supervisor', 'User', 'Vendor'] }
+                        ],
                     },
                 };
             } else if (['Squad', 'Supervisor', 'User'].includes(userRole.name)) {
@@ -296,8 +317,10 @@ export const login = catchAsync(async (req, res, next) => {
 
         const noUserErrorNext = () => next(new ApiError(httpStatus.BAD_REQUEST, 'Invalid Email ID or Password'));
 
+        // Find user by email in user model
         let user = await userModel.findOne({ where: { email_id } });
 
+        // If user not found, find user in vendor model
         if (!user) {
             user = await vendorModel.findOne({ where: { email_id } });
             if (user) {
@@ -305,22 +328,46 @@ export const login = catchAsync(async (req, res, next) => {
             }
         }
 
+        // If no user found in both models
         if (!user) {
             return noUserErrorNext();
         }
 
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return noUserErrorNext();
-        }
-
+        // Retrieve user role
         const userRole = await roleModel.findByPk(user.roleId);
         if (!userRole) {
             return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'User role not found'));
         }
 
+        // Check if user is active
+        if (!user.status) {
+            return next(new ApiError(httpStatus.FORBIDDEN, 'User is inactive'));
+        }
+
+        // Check password validity
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return noUserErrorNext();
+        }
+
+        // Log user activity
+        const userActivity = await activityModel.create({
+            Activity_title: 'Login',
+            activity_description: 'User logged in',
+            activity_created_by_id: user.id,
+            activity_created_by_type: userRole.name,
+            activity_created_at: new Date()
+        });
+
+        // Check if activity was successfully logged
+        if (!userActivity) {
+            return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to create activity'));
+        }
+
+        // Generate token
         const token = genToken(user);
 
+        // Send response
         return res.send({ 
             status: true, 
             msg: "Logged in successfully", 
