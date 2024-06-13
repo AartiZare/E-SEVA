@@ -163,6 +163,10 @@ export const set_password = catchAsync(async (req, res, next) => {
 export const getAll = catchAsync(async (req, res) => {
     try {
         const { qFilter, page, pageSize, search } = req.query;
+        const userId = req.user.id;
+        const userRole = await roleModel.findByPk(req.user.roleId);
+        console.log(userRole, "userRole");
+        
         let filter = {};
 
         if (qFilter) {
@@ -177,8 +181,25 @@ export const getAll = catchAsync(async (req, res) => {
                 filter = {
                     ...filter,
                     full_name: {
-                        [Op.like]: `%${searchTerm}%`
-                    }
+                        [Op.like]: `%${searchTerm}%`,
+                    },
+                };
+            }
+        }
+
+        if (userRole.name !== 'Admin') {
+            if (['RCS', 'ARCS', 'Assistant Registrar', 'Deputy Registrar', 'Branch Registrar'].includes(userRole.name)) {
+                filter = {
+                    ...filter,
+                    created_by: userId,
+                    '$role.name$': {
+                        [Op.notIn]: ['Squad', 'Supervisor', 'User', 'Vendor']
+                    },
+                };
+            } else if (['Squad', 'Supervisor', 'User'].includes(userRole.name)) {
+                filter = {
+                    ...filter,
+                    created_by: userId,
                 };
             }
         }
@@ -192,10 +213,20 @@ export const getAll = catchAsync(async (req, res) => {
             offset: offset,
             limit: limit,
             order: [['createdAt', 'DESC']],
+            include: [{
+                model: roleModel,
+                as: 'role',
+                attributes: ['name']
+            }]
         });
 
         const totalCount = await userModel.count({
             where: filter,
+            include: [{
+                model: roleModel,
+                as: 'role',
+                attributes: ['name']
+            }]
         });
 
         const response = {
