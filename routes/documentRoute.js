@@ -36,5 +36,9 @@ router
 router.route('/updateDocument/:documentId')
   .put(auth(), upload.single('image_pdf'), documentController.updateDocument)
 
+router
+  .route('/webDashboard')
+  .post(auth(), documentController.webDashboard)
+
 
 export default router;

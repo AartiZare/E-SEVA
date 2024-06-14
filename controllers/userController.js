@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import path from 'path';
 import { Op } from 'sequelize';
 import jwt from "jsonwebtoken";
 import { catchAsync } from '../utils/catchAsync.js';
@@ -28,6 +29,11 @@ export const create = catchAsync(async (req, res, next) => {
 
         // Ensure branch is an array if it is defined, otherwise default to an empty array
         const branchIds = Array.isArray(body.branch) ? body.branch.map(id => parseInt(id)) : [];
+
+        let profileImageUrl;
+        if (req.file) {
+          profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${body.contact_no}${path.extname(req.file.originalname)}`;
+        }
 
         body.email_id = body.email_id.toLowerCase();
         body.created_by = req.user.id;

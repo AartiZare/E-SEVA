@@ -401,6 +401,193 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
     }
 });
 
+export const webDashboard = catchAsync(async (req, res, next) => {
+    try {
+        let where = {};
+        if(req.body?.fromDate) {
+            where = {
+                ...where,
+                createdAt: {
+                    [Op.gte]: req.body?.fromDate
+                }
+            }
+        }
+        if(req.body?.toDate) {
+            where = {
+                ...where,
+                createdAt: {
+                    [Op.lte]: req.body?.toDate
+                }
+            }
+        }
+        if(req.body?.documentType) {
+            where = {
+                ...where,
+                document_type: req.body?.documentType
+            }
+        }
+
+        // Add where condition based on the user role
+        // We need to find the user role by the auth token
+        // RCS => ARCS => Deputy Registrar => Assistant Registrar => Branch Registrar
+        if (req.user.roleId === 8) {
+            // RCS
+            const userStateId = req.user.assignedStateId;
+            const userDivisions = await db.Division.findAll({
+                where: {
+                    stateId: userStateId
+                },
+                attributes: ['id']
+            });
+            const userDistricts = await db.District.findAll({
+                where: {
+                    divisionId: userDivisions.map(division => division.id)
+                },
+                attributes: ['id']
+            });
+            const userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: userDistricts.map(district => district.id)
+                },
+                attributes: ['id']
+            });
+            const userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            where = {
+                ...where,
+                branch: userBranches.map(branch => branch.id)
+            }
+        } else if (req.user.roleId === 9) {
+            // ARCS
+            const userCreatedDRs = await db.Users.findAll({
+                where: {
+                    created_by: req.user.id
+                },
+                attributes: ['id']
+            });
+            const userCreatedARs = await db.Users.findAll({
+                where: {
+                    created_by: userCreatedDRs.map(dr => dr.id)
+                },
+                attributes: ['id']
+            });
+            const userBranches = await db.Users.findAll({
+                where: {
+                    created_by: userCreatedARs.map(ar => ar.id)
+                },
+                attributes: ['branch']
+            });
+            where = {
+                ...where,
+                branch: userBranches.map(branch => branch.id)
+            }
+        } else if (req.user.roleId === 7) {
+            // Deputy Registrar
+            const userCreatedARs = await db.Users.findAll({
+                where: {
+                    created_by: req.user.id
+                },
+                attributes: ['id']
+            });
+            const userBranches = await db.Users.findAll({
+                where: {
+                    created_by: userCreatedARs.map(ar => ar.id)
+                },
+                attributes: ['branch']
+            });
+            where = {
+                ...where,
+                branch: userBranches.map(branch => branch.id)
+            }
+        } else if (req.user.roleId === 6) {
+            // Assistant Registrar
+            const userBranches = await db.Users.findAll({
+                where: {
+                    created_by: req.user.id
+                },
+                attributes: ['branch']
+            });
+            where = {
+                ...where,
+                branch: userBranches.map(branch => branch.id)
+            }
+        } else if (req.user.roleId === 10) {
+            // Branch Registrar
+            where = {
+                ...where,
+                branch: req.user.branch
+            }
+        } else {
+            // return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized role'));
+        }
+
+        const responseData = {
+            uploads: 0,
+            pages: 0,
+            downloads: 0,
+            renewables: 0,
+            uploadsByDateAndType: {},
+            uploadsByDate: {}
+        }
+
+        const uploads = await documentModel.count({ where });
+        const pages = await documentModel.sum('total_no_of_page', { where });
+        const downloads = 0;
+        const renewables = await documentModel.count({ where: { ...where, document_renewal_date: { [Op.lte]: new Date() } } });
+        const uploadsByDateAndType = await documentModel.findAll({
+            where,
+            attributes: [
+                'document_type', 
+                [db.sequelize.fn('DATE', db.sequelize.col('createdAt')), 'createdAt'],
+                [db.sequelize.fn('COUNT', 'document_type'), 'count']
+            ],
+            group: [
+                'document_type',
+                [db.sequelize.fn('DATE', db.sequelize.col('createdAt'))]
+            ]
+        });
+        const uploadsByDate = await documentModel.findAll({
+            where,
+            attributes: [
+                [db.sequelize.fn('DATE', db.sequelize.col('createdAt')), 'createdAt'],
+                [db.sequelize.fn('COUNT', 'createdAt'), 'count']
+            ],
+            group: [[db.sequelize.fn('DATE', db.sequelize.col('createdAt'))]]
+        });
+
+        const documentTypeNames = await db.DocumentType
+        .findAll({
+            attributes: ['id', 'name']
+        });
+
+        responseData.uploads = uploads;
+        responseData.pages = pages;
+        responseData.downloads = downloads;
+        responseData.renewables = renewables;
+        responseData.uploadsByDateAndType = uploadsByDateAndType.map(upload => {
+            const documentTypeName = documentTypeNames.find(type => {
+                return parseInt(type.id, 10) === parseInt(upload.document_type, 10);
+            });
+            return {
+                ...upload.toJSON(),
+                document_type_name: documentTypeName ? documentTypeName.name : null
+            };
+        });
+        responseData.uploadsByDate = uploadsByDate;
+
+        return res.send({ status: true, data: responseData });
+
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+      
+
 export const getDocumentList = catchAsync(async (req, res) => {
     try {
         const { qFilter, search, from_date, to_date, document_type } = req.query;

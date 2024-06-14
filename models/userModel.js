@@ -137,7 +137,11 @@ const userModel = (sequelize, DataTypes) => {
         bank_branch:{
             type: DataTypes.STRING,
             allowNull: true,
-        }
+        },
+        assignedStateId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
     }, { timestamps: true });
 
     User.belongsTo(Role(sequelize, DataTypes), { foreignKey: 'roleId' });
