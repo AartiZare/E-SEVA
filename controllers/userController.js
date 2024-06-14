@@ -20,109 +20,129 @@ const roleModel = db.Roles;
 const vendorModel = db.Vendor;
 const branchModel = db.Branch;
 const userBranchModel = db.UserBranch;
+const activityModel = db.Activity;
 const saltRounds = 10;
 
 export const create = catchAsync(async (req, res, next) => {
-  try {
-    const { body } = req;
-    const branchIds = body.branch.map(id => parseInt(id));
+    try {
+        const { body, file } = req;
 
-    body.email_id = body.email_id.toLowerCase();
-    body.created_by = req.user.id;
+        // Ensure branch is an array if it is defined, otherwise default to an empty array
+        const branchIds = Array.isArray(body.branch) ? body.branch.map(id => parseInt(id)) : [];
 
-    const user = await userModel.findOne({
-      where: {
-        [Op.or]: [
-          { email_id: body.email_id },
-          { contact_no: body.contact_no }
-        ]
-      }
-    });
-
-    if (user) {
-      if (user.email_id === body.email_id && user.contact_no !== body.contact_no) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
-      }
-      if (user.contact_no === body.contact_no && user.email_id !== body.email_id) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
-      }
-      if (user.email_id === body.email_id && user.contact_no === body.contact_no) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
-      }
-    }
-
-    const resetPasswordToken = jwt.sign({ email_id: body.email_id }, secretKey, { expiresIn: '6h' });
-
-    let profileImageUrl;
-    if (req.file) {
-      profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${body.contact_no}${path.extname(req.file.originalname)}`;
-    }
-
-    // Encrypt the password if it exists in the request body
-    let hashedPassword;
-    if (body.password) {
-      hashedPassword = await bcrypt.hash(body.password, saltRounds);
-    }
-
-    const userData = { ...body, resetPasswordToken };
-    if (hashedPassword) {
-      userData.password = hashedPassword;
-    }
-    if (profileImageUrl) {
-      userData.profile_image = profileImageUrl;
-    }
-
-    const createdUser = await userService.createUser(userData);
-
-    // Verify if the branch exists
-    const branches = await branchModel.findAll({
-      where: {
-        id: branchIds
-      }
-    });
-
-    const foundBranchIds = branches.map(branch => branch.id);
-    const notFoundBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
-
-    if (notFoundBranchIds.length > 0) {
-      return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
-    }
-
-    // Update the userBranchModel with the new branches
-    await Promise.all(branchIds.map(async (branchId) => {
-      const existingUserBranch = await userBranchModel.findOne({
-        where: {
-          userId: createdUser.id,
-          branchId: branchId,
+        let profileImageUrl;
+        if (req.file) {
+          profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${body.contact_no}${path.extname(req.file.originalname)}`;
         }
-      });
 
-      if (!existingUserBranch) {
-        await userBranchModel.create({
-          userId: createdUser.id,
-          branchId: branchId,
-          status: true
+        body.email_id = body.email_id.toLowerCase();
+        body.created_by = req.user.id;
+
+        const userRole = await roleModel.findByPk(req.user.roleId);
+        if (!userRole) {
+            return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'User role not found'));
+        }
+
+        const existingUser = await userModel.findOne({
+            where: {
+                [Op.or]: [
+                    { email_id: body.email_id },
+                    { contact_no: body.contact_no }
+                ]
+            }
         });
-      }
-    }));
 
-    // Send the email only if the password is not provided
-    if (!body.password) {
-      const emailSubject = "Set Your Password";
-      const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
-      const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
+        if (existingUser) {
+            if (existingUser.email_id === body.email_id && existingUser.contact_no !== body.contact_no) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, `Email ${body.email_id} is already in use!`));
+            }
+            if (existingUser.contact_no === body.contact_no && existingUser.email_id !== body.email_id) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, `Phone number ${body.contact_no} is already in use!`));
+            }
+            if (existingUser.email_id === body.email_id && existingUser.contact_no === body.contact_no) {
+                return next(new ApiError(httpStatus.BAD_REQUEST, 'User already exists'));
+            }
+        }
 
-      await mailService(body.email_id, emailSubject, emailText, emailHtml);
+        const resetPasswordToken = jwt.sign({ email_id: body.email_id }, secretKey, { expiresIn: '6h' });
+
+        let profileImageUrl;
+        if (file) {
+            profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
+        }
+
+        let hashedPassword;
+        if (body.password) {
+            hashedPassword = await bcrypt.hash(body.password, saltRounds);
+        }
+
+        const userData = { ...body, resetPasswordToken };
+        if (hashedPassword) {
+            userData.password = hashedPassword;
+            userData.status = true;
+        }
+        if (profileImageUrl) {
+            userData.profile_image = profileImageUrl;
+        }
+
+        const createdUser = await userService.createUser(userData);
+
+        const branches = await branchModel.findAll({
+            where: {
+                id: branchIds
+            }
+        });
+
+        const foundBranchIds = branches.map(branch => branch.id);
+        const notFoundBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
+
+        if (notFoundBranchIds.length > 0) {
+            return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
+        }
+
+        await Promise.all(branchIds.map(async (branchId) => {
+            const existingUserBranch = await userBranchModel.findOne({
+                where: {
+                    userId: createdUser.id,
+                    branchId: branchId,
+                }
+            });
+
+            if (!existingUserBranch) {
+                await userBranchModel.create({
+                    userId: createdUser.id,
+                    branchId: branchId,
+                    status: true
+                });
+            }
+        }));
+
+        const activityData = {
+            Activity_title: 'User Created',
+            activity_description: `User ${createdUser.full_name} was created.`,
+            activity_created_by_id: req.user.id,
+            activity_created_by_type: userRole.name,
+            activity_created_at: new Date(),
+        };
+
+        await activityModel.create(activityData);
+
+        if (!body.password) {
+            const emailSubject = "Set Your Password";
+            const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
+            const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
+
+            await mailService(body.email_id, emailSubject, emailText, emailHtml);
+        }
+
+        return res.send({
+            msg: "User created successfully",
+            results: createdUser,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: error.message });
     }
-
-    return res.send({
-      msg: "User created successfully",
-      results: createdUser,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ error: error.message });
-  }
 });
 
 export const set_password = catchAsync(async (req, res, next) => {
@@ -147,6 +167,7 @@ export const set_password = catchAsync(async (req, res, next) => {
 
         const encryptedUserPassword = await bcrypt.hash(password, 10);
         user.password = encryptedUserPassword;
+        user.status = true;
         await user.save();
 
         return res.status(200).json({ user, msg: "Password reset successfully" });
@@ -158,32 +179,94 @@ export const set_password = catchAsync(async (req, res, next) => {
 
 export const getAll = catchAsync(async (req, res) => {
     try {
-        const { qFilter } = req.query;
+        const { qFilter, page, pageSize, search } = req.query;
+        const userId = req.user.id;
+        const userRole = await roleModel.findByPk(req.user.roleId);
+
         let filter = {};
+
         if (qFilter) {
             filter = {
                 ...JSON.parse(qFilter),
             };
         }
-        let page = parseInt(req.query.page) || 1;
-        let pageSize = parseInt(req.query.pageSize) || 10;
-        if (req.query.search) {
-            const searchTerm = req.query.search.trim();
+
+        if (search) {
+            const searchTerm = search.trim();
             if (searchTerm !== '') {
                 filter = {
+                    ...filter,
                     full_name: {
-                        [Op.like]: `%${searchTerm}%`
-                    }
+                        [Op.like]: `%${searchTerm}%`,
+                    },
                 };
             }
         }
-        const query = {
-            ...filter,
+
+        // Exclude 'Admin' role for non-admin users
+        if (userRole.name !== 'Admin') {
+            filter = {
+                ...filter,
+                '$role.name$': {
+                    [Op.ne]: 'Admin',
+                },
+            };
+
+            if (['RCS', 'ARCS', 'Assistant Registrar', 'Deputy Registrar', 'Branch Registrar'].includes(userRole.name)) {
+                filter = {
+                    ...filter,
+                    created_by: userId,
+                    '$role.name$': {
+                        [Op.and]: [
+                            { [Op.ne]: 'Admin' },
+                            { [Op.notIn]: ['Squad', 'Supervisor', 'User', 'Vendor'] }
+                        ],
+                    },
+                };
+            } else if (['Squad', 'Supervisor', 'User'].includes(userRole.name)) {
+                filter = {
+                    ...filter,
+                    created_by: userId,
+                };
+            }
+        }
+
+        const pageNumber = parseInt(page) || 1;
+        const limit = parseInt(pageSize) || 10;
+        const offset = (pageNumber - 1) * limit;
+
+        const users = await userModel.findAll({
+            where: filter,
+            offset: offset,
+            limit: limit,
+            order: [['createdAt', 'DESC']],
+            include: [{
+                model: roleModel,
+                as: 'role',
+                attributes: ['name']
+            }]
+        });
+
+        const totalCount = await userModel.count({
+            where: filter,
+            include: [{
+                model: roleModel,
+                as: 'role',
+                attributes: ['name']
+            }]
+        });
+
+        const response = {
+            users,
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: pageNumber,
+            pageSize: limit,
         };
 
-        const users = await userService.getAll(query, page, pageSize);
-        return res.send(users);
+        return res.send(response);
     } catch (error) {
+        console.error(error);
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
@@ -191,11 +274,13 @@ export const getAll = catchAsync(async (req, res) => {
 export const update = catchAsync(async (req, res, next) => {
     try {
         const id = req.params.id;
+        const { file } = req;
         const updatedData = req.body;
         
         let profileImageUrl;
         if (req.file) {
-            profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+            // profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
+            profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
         }
 
         const userData = { ...updatedData };
@@ -238,8 +323,10 @@ export const login = catchAsync(async (req, res, next) => {
 
         const noUserErrorNext = () => next(new ApiError(httpStatus.BAD_REQUEST, 'Invalid Email ID or Password'));
 
+        // Find user by email in user model
         let user = await userModel.findOne({ where: { email_id } });
 
+        // If user not found, find user in vendor model
         if (!user) {
             user = await vendorModel.findOne({ where: { email_id } });
             if (user) {
@@ -247,22 +334,46 @@ export const login = catchAsync(async (req, res, next) => {
             }
         }
 
+        // If no user found in both models
         if (!user) {
             return noUserErrorNext();
         }
 
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return noUserErrorNext();
-        }
-
+        // Retrieve user role
         const userRole = await roleModel.findByPk(user.roleId);
         if (!userRole) {
             return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'User role not found'));
         }
 
+        // Check if user is active
+        if (!user.status) {
+            return next(new ApiError(httpStatus.FORBIDDEN, 'User is inactive'));
+        }
+
+        // Check password validity
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return noUserErrorNext();
+        }
+
+        // Log user activity
+        const userActivity = await activityModel.create({
+            Activity_title: 'Login',
+            activity_description: 'User logged in',
+            activity_created_by_id: user.id,
+            activity_created_by_type: userRole.name,
+            activity_created_at: new Date()
+        });
+
+        // Check if activity was successfully logged
+        if (!userActivity) {
+            return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to create activity'));
+        }
+
+        // Generate token
         const token = genToken(user);
 
+        // Send response
         return res.send({ 
             status: true, 
             msg: "Logged in successfully", 
@@ -363,11 +474,94 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
     });
     
 
-export const getMyTeamUserList = catchAsync(async (req, res, next) => {
-    const users = await userModel.findAll({
-        where: {
-            created_by: req.user.id,
+    export const getMyTeamUserList = catchAsync(async (req, res, next) => {
+        try {
+            const { qFilter, search } = req.query;
+            let filter = {
+                created_by: req.user.id,
+                status: true
+            };
+    
+            if (qFilter) {
+                filter = {
+                    ...filter,
+                    ...JSON.parse(qFilter),
+                };
+            }
+    
+            if (search) {
+                const searchTerm = search.trim();
+                if (searchTerm !== '') {
+                    filter = {
+                        ...filter,
+                        full_name: {
+                            [Op.like]: `%${searchTerm}%`
+                        }
+                    };
+                }
+            }
+    
+            const users = await userModel.findAll({
+                where: filter,
+                order: [['createdAt', 'DESC']]
+            });
+    
+            return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
+        } catch (error) {
+            return res.status(500).send({ error: 'Internal Server Error' });
         }
     });
-    return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
+
+export const activateUser = catchAsync(async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+
+        console.log(userId, "userId");
+
+        const user = await userModel.findOne({
+            where: {
+                id: userId,
+                status: false
+            }
+        });
+
+        if (!user) {
+            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+        }
+
+        user.status = true;
+        await user.save();
+
+        return res.send({ status: true, message: 'User activated successfully', user });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+export const deactivateUser = catchAsync(async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+
+        console.log(userId, "userId");
+
+        const user = await userModel.findOne({
+            where: {
+                id: userId,
+                status: true
+            }
+        });
+
+        if (!user) {
+            return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+        }
+
+        user.status = false;
+        await user.save();
+
+        return res.send({ status: true, message: 'User deactivated successfully', user });
+    } catch (error) {
+        console.error(error.toString());
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
 });

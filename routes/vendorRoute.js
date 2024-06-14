@@ -10,5 +10,5 @@ const router = express.Router();
 router
   .route('/')
   .post(upload.single('profile_image'), validate(vendorValidation.createVendor), vendorController.createVendor)
-
+  .get(vendorController.getAllVendors);
 export default router;

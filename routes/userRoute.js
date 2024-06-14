@@ -26,14 +26,11 @@ router
 router
 .route('/myTeamUserList')
     .get(auth(), userController.getMyTeamUserList)
-// router
-// .route('/')
-//     .post(validate(userValidation.createUser), userController.create)
-//     .get(validate(userValidation.getAllUsers), userController.getAll);
+
 router
   .route('/')
   .post(auth(), upload.single('profile_image'), validate(userValidation.createUser), userController.create)
-  .get(validate(userValidation.getAllUsers), userController.getAll);
+  .get(auth(), validate(userValidation.getAllUsers), userController.getAll);
 
 router
 .route('/:id')
@@ -43,4 +40,12 @@ router
 router
 .route('/login')
     .post(validate(userValidation.login), userController.login);
+
+router
+.route('/activate/:userId')
+    .put(userController.activateUser);
+
+router
+.route('/deactivate/:userId')
+    .put(userController.deactivateUser);
 export default router;

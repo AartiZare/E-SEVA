@@ -9,6 +9,18 @@ const userModel = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        status: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        vendor_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'vendors', // name of the States table
+                key: 'id',
+            },
+        },
         profile_image: {
             type: DataTypes.STRING,
         },
@@ -55,6 +67,38 @@ const userModel = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        assignedStateId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'states', // name of the States table
+                key: 'id',
+            },
+        },
+        assignedDivisionId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'divisions', // name of the Divisions table
+                key: 'id',
+            },
+        },
+        assignedDistrictId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'districts', // name of the Districts table
+                key: 'id',
+            },
+        },
+        assignedTalukId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'taluks', // name of the Taluks table
+                key: 'id',
+            },
+        },
         taluk: {
             type: DataTypes.STRING,
         },
@@ -72,7 +116,11 @@ const userModel = (sequelize, DataTypes) => {
         branch: {
             type: DataTypes.ARRAY(DataTypes.INTEGER),
             defaultValue: [],            
-            allowNull: false,
+            allowNull: true,
+        },
+        is_deleted: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
         },
         ifsc: {
             type: DataTypes.STRING,

@@ -18,30 +18,6 @@ const branchModel = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true,
         },
-        stateId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'states', // name of the States table
-                key: 'id',
-            },
-        },
-        divisionId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'divisions', // name of the Divisions table
-                key: 'id',
-            },
-        },
-        districtId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'districts', // name of the Districts table
-                key: 'id',
-            },
-        },
         talukId: {
             type: DataTypes.INTEGER,
             allowNull: true,

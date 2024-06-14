@@ -15,12 +15,17 @@ export async function deleteUser(id) {
 export async function getById(id) {
     return await userModel.findByPk(id);
 }
-export async function getAll(filter, page = 1, pageSize = 10) {
+export const getAll = async (query, page, pageSize, order) => {
     const offset = (page - 1) * pageSize;
-    return await userModel.findAll({
-        where: filter,
-        offset,
+    const { count, rows } = await userModel.findAndCountAll({
+        where: query,
         limit: pageSize,
+        offset: offset,
+        order: order,
     });
-}
+    return {
+        users: rows,
+        total: count
+    };
+};
 
