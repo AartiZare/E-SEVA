@@ -65,12 +65,7 @@ export const create = catchAsync(async (req, res, next) => {
         }
 
         const resetPasswordToken = jwt.sign({ email_id: body.email_id }, secretKey, { expiresIn: '6h' });
-
-        let profileImageUrl;
-        if (file) {
-            profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
-        }
-
+        
         let hashedPassword;
         if (body.password) {
             hashedPassword = await bcrypt.hash(body.password, saltRounds);
