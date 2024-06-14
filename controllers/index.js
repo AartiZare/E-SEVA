@@ -12,6 +12,7 @@ import * as talukController from "./talukController.js";
 import * as documetTypeController from "./documentTypeController.js";
 import * as designationController from "./designationController.js";
 import * as squadController from "./squadDashboardController.js";
+import * as feedbackController from "./feedbackController.js";
 
 export { userController };
 export { roleController };
@@ -27,6 +28,7 @@ export { talukController };
 export { documetTypeController };
 export { designationController };
 export { squadController };
+export { feedbackController };
 
 // export const userController = require('./userController');
 // export const roleController = require('./roleController');

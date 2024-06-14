@@ -14,6 +14,7 @@ import talukRoute from './talukRoute.js';
 import documentTypeRoute from './documentTypeRoute.js';
 import designationRoute from './designationRoute.js';
 import squadRoute from './squadRoute.js';
+import feedbackRoute from './feedbackRoute.js';
 const router = express.Router();
 
 router.use('/user', userRoute);
@@ -31,5 +32,6 @@ router.use('/taluk', talukRoute);
 router.use('/documentType', documentTypeRoute);
 router.use('/designation', designationRoute);
 router.use('/squad', squadRoute);
+router.use('/feedback', feedbackRoute);
 
 export default router;
