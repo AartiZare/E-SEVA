@@ -310,7 +310,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         const userId = req.user.id;
         const documentId = req.params.documentId;
         const updatedData = req.body;
-        const { file } = req;
+        const { file, body } = req;
 
         // Find the document created by the user
         const document = await documentModel.findOne({
@@ -320,7 +320,6 @@ export const updateDocument = catchAsync(async (req, res, next) => {
             }
         });
 
-        const branch = await branchModel.findByPk(document.branch);
         // If document not found, return error
         if (!document) {
             return next(new ApiError(httpStatus.NOT_FOUND, `Document with id ${documentId} not found`));
@@ -330,7 +329,8 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         let documentFileUrl;
         if (req.file) {
             // documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
-            documentFileUrl = `${process.env.FILE_ACCESS_PATH}${branch.name}/${document.document_reg_no}${path.extname(file.originalname)}`;
+            documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}${path.extname(file.originalname)}`;
+            // documentFileUrl = `${process.env.FILE_ACCESS_PATH}${branch.name}/${document.document_reg_no}${path.extname(file.originalname)}`;
         }
 
         // Update document data
