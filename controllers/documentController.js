@@ -387,12 +387,13 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
         const documentId = req.query.documentId;
 
         const filePath = path.join(`${process.env.FILE_PATH}`+documentId);
+        // `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}${path.extname(file.originalname)}`;
 
         console.log(filePath, "uploaded file");
 
         res.sendFile(filePath, (err) => {
             if (err) {
-                next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error sending file'));
+                next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, JSON.stringify(err)));
             }
         });
     } catch (error) {

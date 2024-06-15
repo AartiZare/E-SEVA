@@ -27,6 +27,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/", express.static(path.join(__dirname, "public")));
 
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
 app.get('/', (req, res) => {
     res.json({ message: "First API Added" });
 });
@@ -38,6 +40,8 @@ passport.use('jwt', jwtStrategy);
 app.use('/', router);
 
 app.use((req, res, next) => {
+    console.log(req.url);
+
     next(new ApiError(httpStatus.NOT_FOUND, 'Not found'));
 });
 
