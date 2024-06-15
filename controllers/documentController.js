@@ -330,7 +330,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
         let documentFileUrl;
         if (req.file) {
             // documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
-            documentFileUrl = `${process.env.FILE_ACCESS_PATH}${branch.name}/${document.document_reg_no}${path.extname(file.originalname)}`;
+            documentFileUrl = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}${path.extname(file.originalname)}`;
         }
 
         // Update document data
@@ -392,7 +392,8 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
 
         res.sendFile(filePath, (err) => {
             if (err) {
-                next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error sending file'));
+                next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, JSON.stringify(err)));
+                // next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error sending file'));
             }
         });
     } catch (error) {

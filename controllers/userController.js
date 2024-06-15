@@ -474,7 +474,7 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
             const { qFilter, search } = req.query;
             let filter = {
                 created_by: req.user.id,
-                status: true
+                // status: true
             };
     
             if (qFilter) {
