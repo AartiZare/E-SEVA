@@ -1,21 +1,30 @@
 import { Op } from 'sequelize';
 import { catchAsync } from '../utils/catchAsync.js';
-import httpStatus from 'http-status';
-import ApiError from '../utils/ApiError.js';
 import db from '../models/index.js';
 const roleModel = db.Roles;
 const activityModel = db.Activity;
 
 export const userActivityList = catchAsync(async (req, res, next) => {
     try {
-        const { page, pageSize, search } = req.query;
+        const { qFilter, page, pageSize, search } = req.query;
         const user = req.user;
         const userRole = await roleModel.findByPk(user.roleId);
+
         let filter = {
             activity_created_by_id: user.id,
             activity_created_by_type: userRole.name
         };
 
+        // Merge qFilter into the filter object if qFilter is provided
+        if (qFilter) {
+            const parsedQFilter = JSON.parse(qFilter);
+            filter = {
+                ...filter,
+                ...parsedQFilter
+            };
+        }
+
+        // Add search term to the filter if provided
         if (search) {
             const searchTerm = search.trim();
             if (searchTerm !== '') {
@@ -25,24 +34,42 @@ export const userActivityList = catchAsync(async (req, res, next) => {
             }
         }
 
-        let pageNumber = parseInt(page) || 1;
-        let size = parseInt(pageSize) || 10;
+        const pageNumber = parseInt(page) || 1;
+        const limit = parseInt(pageSize) || 10;
+        const offset = (pageNumber - 1) * limit;
 
-        const query = {
+        const { rows: activities, count: totalCount } = await activityModel.findAndCountAll({
             where: filter,
             order: [['activity_created_at', 'DESC']],
-            limit: size,
-            offset: (pageNumber - 1) * size,
-        };
+            limit,
+            offset,
+        });
 
-        const userActivity = await activityModel.findAll(query);
-
-        if (!userActivity.length) {
-            // Return success response with appropriate message when no activities found
+        if (!activities.length) {
             return res.status(200).send({ status: true, message: 'No activities found for the user' });
         }
 
-        return res.send({ status: true, data: userActivity });
+        // Prepare response object with paginated results
+        const response = {
+            message: "Fetched activities successfully",
+            data: activities.map(activity => ({
+                id: activity.id,
+                Activity_title: activity.Activity_title,
+                activity_description: activity.activity_description,
+                activity_created_at: activity.activity_created_at,
+                activity_created_by_id: activity.activity_created_by_id,
+                activity_created_by_type: activity.activity_created_by_type,
+                activity_document_id: activity.activity_document_id
+            })),
+            pagination: {
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: pageNumber,
+                pageSize: limit,
+            }
+        };
+
+        return res.send(response);
     } catch (error) {
         console.error(error.toString());
         return res.status(500).send({ error: 'Internal Server Error' });
