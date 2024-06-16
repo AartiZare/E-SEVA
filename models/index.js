@@ -14,7 +14,7 @@ import talukModel from "./talukModel.js";
 import documentTypeModel from "./documentTypeModel.js";
 import designationModel from "./designationModel.js";
 import feedbackModel from "./feedbackModel.js";
-import userStateToBranchModel from "./UserStateToBranchModel.js";
+import userStateToBranchModel from "./userStateToBranchModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
