@@ -601,16 +601,67 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
     });
     
 
+    // export const getMyTeamUserList = catchAsync(async (req, res, next) => {
+    //     try {
+    //         const { qFilter, search } = req.query;
+            
+    //         let filter = {
+    //             status: true
+    //         };
+
+    //         const _userFilter = fillUserStateToBranchFilter(req, {});
+    //         _userFilter.status = 1;
+    //         const filteredUsers = await userModel.findAll({
+    //             where: _userFilter,
+    //             attributes: ['id']
+    //         });
+    //         const filteredUserIds = filteredUsers.map(user => user.id);
+    //         filter.id = {
+    //             [Op.in]: filteredUserIds
+    //         };
+    
+    //         if (qFilter) {
+    //             filter = {
+    //                 ...filter,
+    //                 ...JSON.parse(qFilter),
+    //             };
+    //         }
+    
+    //         if (search) {
+    //             const searchTerm = search.trim();
+    //             if (searchTerm !== '') {
+    //                 filter = {
+    //                     ...filter,
+    //                     full_name: {
+    //                         [Op.like]: `%${searchTerm}%`
+    //                     }
+    //                 };
+    //             }
+    //         }
+    
+    //         const users = await userModel.findAll({
+    //             where: filter,
+    //             order: [['createdAt', 'DESC']]
+    //         });
+    
+    //         return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
+    //     } catch (error) {
+    //         console.log(error.toString())
+    //         return res.status(500).send({ error: 'Internal Server Error',errorMessage: error.toString() });
+    //     }
+    // });
+
     export const getMyTeamUserList = catchAsync(async (req, res, next) => {
         try {
             const { qFilter, search } = req.query;
             
             let filter = {
-                status: true
+                // status: true  // Assuming status is a boolean
             };
-
-            const _userFilter = fillUserStateToBranchFilter(req, {});
-            _userFilter.status = 1;
+    
+            const _userFilter = await fillUserStateToBranchFilter(req, {});
+            // _userFilter.status = true; // Assuming status is a boolean
+            
             const filteredUsers = await userModel.findAll({
                 where: _userFilter,
                 attributes: ['id']
@@ -646,9 +697,11 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
     
             return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
         } catch (error) {
-            return res.status(500).send({ error: 'Internal Server Error' });
+            console.log(error.toString());
+            return res.status(500).send({ error: 'Internal Server Error', errorMessage: error.toString() });
         }
     });
+    
 
 export const activateUser = catchAsync(async (req, res, next) => {
     try {
