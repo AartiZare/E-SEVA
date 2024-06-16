@@ -16,6 +16,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const userModel = db.Users;
+const userStateToBranchModel = db.UserStateToBranchModel;
 const roleModel = db.Roles;
 const vendorModel = db.Vendor;
 const branchModel = db.Branch;
@@ -82,35 +83,121 @@ export const create = catchAsync(async (req, res, next) => {
 
         const createdUser = await userService.createUser(userData);
 
-        const branches = await branchModel.findAll({
-            where: {
-                id: branchIds
-            }
-        });
+        // Creating entry for the user in user_state_to_branch table
+        const userStateToBranchData = {
+            user_id: createdUser.id,
+            state_id: body.state_id,
+            division_id: -1,
+            district_id: -1,
+            taluk_id: -1,
+            branch_id: -1,
+            createdBy: req.user.id,
+            updatedBy: req.user.id,
+            status: 1
+        };
 
-        const foundBranchIds = branches.map(branch => branch.id);
-        const notFoundBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
-
-        if (notFoundBranchIds.length > 0) {
-            return next(new ApiError(httpStatus.BAD_REQUEST, `Branches not found for IDs: ${notFoundBranchIds.join(', ')}`));
-        }
-
-        await Promise.all(branchIds.map(async (branchId) => {
-            const existingUserBranch = await userBranchModel.findOne({
-                where: {
-                    userId: createdUser.id,
-                    branchId: branchId,
-                }
-            });
-
-            if (!existingUserBranch) {
-                await userBranchModel.create({
-                    userId: createdUser.id,
-                    branchId: branchId,
-                    status: true
+        if (body.roleId === 8) {
+            // RCS
+            const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
+        } else if (body.roleId === 9) {
+            // ARCS
+            userStateToBranchData.division_id = body.division_id;
+            // Support for multiple districts
+            if (Array.isArray(body.district_id)) {
+                body.district_id.forEach(async (districtId) => {
+                    let _userStateToBranchData = { ...userStateToBranchData };
+                    _userStateToBranchData.district_id = districtId;
+                    const createdUserEntry = await userStateToBranchModel.create(_userStateToBranchData);
                 });
+            } else {
+                userStateToBranchData.district_id = body.district_id;
+                const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
             }
-        }));
+        } else if (body.roleId === 7) {
+            // Deputy Registrar
+            userStateToBranchData.division_id = body.division_id;
+            // Support for multiple districts
+            if (Array.isArray(body.district_id)) {
+                body.district_id.forEach(async (districtId) => {
+                    let _userStateToBranchData = { ...userStateToBranchData };
+                    _userStateToBranchData.district_id = districtId;
+                    const createdUserEntry = await userStateToBranchModel.create(_userStateToBranchData);
+                });
+            } else {
+                userStateToBranchData.district_id = body.district_id;
+                const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
+            }
+        } else if (body.roleId === 6) {
+            // Assistant Registrar
+            userStateToBranchData.division_id = body.division_id;
+            userStateToBranchData.district_id = body.district_id;
+            // Support for multiple taluks
+            if (Array.isArray(body.taluk_id)) {
+                body.taluk_id.forEach(async (talukId) => {
+                    let _userStateToBranchData = { ...userStateToBranchData };
+                    _userStateToBranchData.taluk_id = talukId;
+                    const createdUserEntry = await userStateToBranchModel.create(_userStateToBranchData);
+                });
+            } else {
+                userStateToBranchData.taluk_id = body.taluk_id;
+                const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
+            }
+        } else if (body.roleId === 10) {
+            // Branch Registrar
+            userStateToBranchData.division_id = body.division_id;
+            userStateToBranchData.district_id = body.district_id;
+            userStateToBranchData.taluk_id = body.taluk_id;
+            // Support for multiple branches
+            if (Array.isArray(body.branch_id)) {
+                body.branch_id.forEach(async (branchId) => {
+                    let _userStateToBranchData = { ...userStateToBranchData };
+                    _userStateToBranchData.branch_id = branchId;
+                    const createdUserEntry = await userStateToBranchModel.create(_userStateToBranchData);
+                });
+            } else {
+                userStateToBranchData.branch_id = body.branch_id;
+                const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
+            }
+        } else if (body.roleId === 2) {
+            // Supervisor
+            userStateToBranchData.division_id = body.division_id;
+            userStateToBranchData.district_id = body.district_id;
+            userStateToBranchData.taluk_id = body.taluk_id;
+            // Support for multiple branches
+            if (Array.isArray(body.branch_id)) {
+                body.branch_id.forEach(async (branchId) => {
+                    let _userStateToBranchData = { ...userStateToBranchData };
+                    _userStateToBranchData.branch_id = branchId;
+                    const createdUserEntry = await userStateToBranchModel.create(_userStateToBranchData);
+                });
+            } else {
+                userStateToBranchData.branch_id = body.branch_id;
+                const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
+            }
+        } else if (body.roleId === 3) {
+            // Squad
+            userStateToBranchData.division_id = body.division_id;
+            userStateToBranchData.district_id = body.district_id;
+            userStateToBranchData.taluk_id = body.taluk_id;
+            // Support for multiple branches
+            if (Array.isArray(body.branch_id)) {
+                body.branch_id.forEach(async (branchId) => {
+                    let _userStateToBranchData = { ...userStateToBranchData };
+                    _userStateToBranchData.branch_id = branchId;
+                    const createdUserEntry = await userStateToBranchModel.create(_userStateToBranchData);
+                });
+            } else {
+                userStateToBranchData.branch_id = body.branch_id;
+                const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
+            }
+        } else if (body.roleId === 4) {
+            // User
+            userStateToBranchData.division_id = body.division_id;
+            userStateToBranchData.district_id = body.district_id;
+            userStateToBranchData.taluk_id = body.taluk_id;
+            userStateToBranchData.branch_id = body.branch_id;
+            const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
+        }
 
         const activityData = {
             Activity_title: 'User Created',
@@ -172,13 +259,71 @@ export const set_password = catchAsync(async (req, res, next) => {
     }
 });
 
+const fillUserStateToBranchFilter = async (req, filter) => {
+    if (req.user.roleId  === 8) {
+        // RCS
+        const userState = await userStateToBranchModel.findAll({
+            where: {
+                user_id: userId,
+                status: 1
+            },
+            attributes: ['state_id']
+        });
+        filter.state_id = userState.state_id.map(state => state.state_id);
+    } else if (req.user.roleId === 9) {
+        // ARCS
+        const userDistricts = await userStateToBranchModel.findAll({
+            where: {
+                user_id: userId,
+                status: 1
+            },
+            attributes: ['district_id']
+        });
+        filter.district_id = userDistricts.district_id.map(district => district.district_id);
+    } else if (req.user.roleId === 7) {
+        // Deputy Registrar
+        const userDistricts = await userStateToBranchModel.findAll({
+            where: {
+                user_id: userId,
+                status: 1
+            },
+            attributes: ['district_id']
+        });
+        filter.district_id = userDistricts.district_id.map(district => district.district_id);
+    } else if (req.user.roleId === 6) {
+        // Assistant Registrar
+        const userTaluks = await userStateToBranchModel.findAll({
+            where: {
+                user_id: userId,
+                status: 1
+            },
+            attributes: ['taluk_id']
+        });
+        filter.taluk_id = userTaluks.taluk_id.map(taluk => taluk.taluk_id);
+    } else if (req.user.roleId === 10) {
+        // Branch Registrar
+        const userBranches = await userStateToBranchModel.findAll({
+            where: {
+                user_id: userId,
+                status: 1
+            },
+            attributes: ['branch_id']
+        });
+        filter.branch_id = userBranches.branch_id.map(branch => branch.branch_id);
+    }
+
+    return filter;
+}
+
 export const getAll = catchAsync(async (req, res) => {
     try {
         const { qFilter, page, pageSize, search } = req.query;
         const userId = req.user.id;
         const userRole = await roleModel.findByPk(req.user.roleId);
 
-        let filter = {};
+        let filter = {
+            status: true
+        };
 
         if (qFilter) {
             filter = {
@@ -199,31 +344,18 @@ export const getAll = catchAsync(async (req, res) => {
         }
 
         // Exclude 'Admin' role for non-admin users
-        if (userRole.name !== 'Admin') {
-            filter = {
-                ...filter,
-                '$role.name$': {
-                    [Op.ne]: 'Admin',
-                },
+        let userIds = [];
+        if (req.user.roleId !== 1) {
+            const _userFilter = fillUserStateToBranchFilter(req, {});
+            _userFilter.status = 1;
+            const users = await userModel.findAll({
+                where: _userFilter,
+                attributes: ['id']
+            });
+            userIds = users.map(user => user.id);
+            filter.id = {
+                [Op.in]: userIds
             };
-
-            if (['RCS', 'ARCS', 'Assistant Registrar', 'Deputy Registrar', 'Branch Registrar'].includes(userRole.name)) {
-                filter = {
-                    ...filter,
-                    created_by: userId,
-                    '$role.name$': {
-                        [Op.and]: [
-                            { [Op.ne]: 'Admin' },
-                            { [Op.notIn]: ['Squad', 'Supervisor', 'User', 'Vendor'] }
-                        ],
-                    },
-                };
-            } else if (['Squad', 'Supervisor', 'User'].includes(userRole.name)) {
-                filter = {
-                    ...filter,
-                    created_by: userId,
-                };
-            }
         }
 
         const pageNumber = parseInt(page) || 1;
@@ -472,9 +604,20 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
     export const getMyTeamUserList = catchAsync(async (req, res, next) => {
         try {
             const { qFilter, search } = req.query;
+            
             let filter = {
-                created_by: req.user.id,
-                // status: true
+                status: true
+            };
+
+            const _userFilter = fillUserStateToBranchFilter(req, {});
+            _userFilter.status = 1;
+            const filteredUsers = await userModel.findAll({
+                where: _userFilter,
+                attributes: ['id']
+            });
+            const filteredUserIds = filteredUsers.map(user => user.id);
+            filter.id = {
+                [Op.in]: filteredUserIds
             };
     
             if (qFilter) {

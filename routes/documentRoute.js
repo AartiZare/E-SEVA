@@ -24,6 +24,10 @@ router
   .get(auth(), documentController.rejectedDocumentListUser);
 
 router
+  .route('/documentListUser')
+  .get(auth(), documentController.getDocumentListUser);
+
+router
   .route('/:documentId')
   .get(auth(), documentController.getDocumentById)
   .put(auth(), documentController.approveDocument);

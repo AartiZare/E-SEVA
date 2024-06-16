@@ -12,6 +12,7 @@ const roleModel = db.Roles;
 const activityModel = db.Activity;
 const userModel = db.Users;
 const branchModel = db.Branch;
+const userStateToBranchModel = db.userStateToBranchModel;
  
 export const createDocument = catchAsync(async (req, res, next) => {
     try {
@@ -202,63 +203,150 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         const userRole = await roleModel.findByPk(user.roleId);
 
         let pendingDoc;
+        let filter = {
+            
+        };
 
-        if (userRole.name === 'User') {
-            pendingDoc = await documentModel.findAll({
+        if (user.roleId === 1) {
+            // Admin
+            filter.final_verification_status = 0;
+        } else if (user.roleId === 2) {
+            // Supervisor
+            const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    created_by: user.id,
-                    final_verification_status: 0,
-                }
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
             });
-        } else if (userRole.name === 'Supervisor') {
-            // Find users created by the supervisor
-            const supervisorCreatedUsers = await userModel.findAll({
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.supervisor_verification_status = 0;
+        } else if (user.roleId === 3) {
+            // Squad
+            const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    created_by: user.id
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.squad_verification_status = 0;
+        } else if (user.roleId === 4) {
+            // User
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.final_verification_status = 0;
+        } else if(user.roleId === 8) {
+            // RCS
+            const _userStates = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['state_id']
+            });
+            const _userDivisions = await db.Division.findAll({
+                where: {
+                    stateId: _userStates.map(state => state.state_id)
                 },
                 attributes: ['id']
             });
-
-            const supervisorCreatedUserIds = supervisorCreatedUsers.map(u => u.id);
-
-            pendingDoc = await documentModel.findAll({
+            const _userDistricts = await db.District.findAll({
                 where: {
-                    created_by: supervisorCreatedUserIds,
-                    supervisor_verification_status: 0
-                }
-            });
-        } else if (userRole.name === 'Squad') {
-            // Find supervisors created by the squad
-            const squadCreatedSupervisors = await userModel.findAll({
-                where: {
-                    created_by: user.id,
-                    roleId: await roleModel.findOne({ where: { name: 'Supervisor' } }).then(role => role.id)
+                    divisionId: _userDivisions.map(division => division.id)
                 },
                 attributes: ['id']
             });
-
-            const supervisorIds = squadCreatedSupervisors.map(supervisor => supervisor.id);
-
-            // Find users created by these supervisors
-            const supervisorCreatedUsers = await userModel.findAll({
+            const _userTaluks = await db.Taluk.findAll({
                 where: {
-                    created_by: supervisorIds
+                    districtId: _userDistricts.map(district => district.id)
                 },
                 attributes: ['id']
             });
-
-            const supervisorCreatedUserIds = supervisorCreatedUsers.map(u => u.id);
-
-            pendingDoc = await documentModel.findAll({
+            const _userBranches = await db.Branch.findAll({
                 where: {
-                    created_by: supervisorCreatedUserIds,
-                    squad_verification_status: 0
-                }
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
             });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 0;
+        } else if(user.roleId === 9) {
+            // ARCS
+            const _userDistricts = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['district_id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 0;
+        } else if(user.roleId === 7) {
+            // Deputy Registrar
+            const _userDistricts = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['district_id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 0;
+        } else if(user.roleId === 6) {
+            // Assistant Registrar
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 0;
+        } else if(user.roleId === 10) {
+            // Branch Registrar
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.final_verification_status = 0;
+        } 
 
-        } else {
-            return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized role'));
-        }
+        pendingDoc = await documentModel.findAll({ where: filter });
 
         return res.send({ status: true, data: pendingDoc });
     } catch (error) {
@@ -273,30 +361,153 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         const userRole = await roleModel.findByPk(user.roleId);
 
         let rejectedDoc;
-        if (userRole.name === 'User') {
-            rejectedDoc = await documentModel.findAll({
+        let filter = {
+            
+        };
+
+        if (user.roleId === 1) {
+            // Admin
+            filter.final_verification_status = 0;
+        } else if (user.roleId === 2) {
+            // Supervisor
+            const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    created_by: user.id,
-                    final_verification_status: 2
-                }
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
             });
-        } else if (userRole.name === 'Supervisor') {
-            rejectedDoc = await documentModel.findAll({
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.supervisor_verification_status = 2;
+        } else if (user.roleId === 3) {
+            // Squad
+            const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    updated_by: user.id,
-                    supervisor_verification_status: 2
-                }
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
             });
-        } else if (userRole.name === 'Squad') {
-            rejectedDoc = await documentModel.findAll({
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.squad_verification_status = 2;
+        } else if (user.roleId === 4) {
+            // User
+            const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    updated_by: user.id,
-                    squad_verification_status: 2
-                }
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
             });
-        } else {
-            return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized role'));
-        }
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter[Op.or] = {
+                supervisor_verification_status: 2,
+                squad_verification_status: 2
+            };
+        } else if(user.roleId === 8) {
+            // RCS
+            const _userStates = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['state_id']
+            });
+            const _userDivisions = await db.Division.findAll({
+                where: {
+                    stateId: _userStates.map(state => state.state_id)
+                },
+                attributes: ['id']
+            });
+            const _userDistricts = await db.District.findAll({
+                where: {
+                    divisionId: _userDivisions.map(division => division.id)
+                },
+                attributes: ['id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 2;
+        } else if(user.roleId === 9) {
+            // ARCS
+            const _userDistricts = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['district_id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 2;
+        } else if(user.roleId === 7) {
+            // Deputy Registrar
+            const _userDistricts = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['district_id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 2;
+        } else if(user.roleId === 6) {
+            // Assistant Registrar
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+            filter.final_verification_status = 2;
+        } else if(user.roleId === 10) {
+            // Branch Registrar
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.final_verification_status = 2;
+        } 
+
+        rejectedDoc = await documentModel.findAll({ where: filter });
 
         return res.send({ status: true, data: rejectedDoc });
     } catch (error) {
@@ -387,13 +598,13 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
         const documentId = req.query.documentId;
 
         const filePath = path.join(`${process.env.FILE_PATH}`+documentId);
+        // `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}${path.extname(file.originalname)}`;
 
         console.log(filePath, "uploaded file");
 
         res.sendFile(filePath, (err) => {
             if (err) {
                 next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, JSON.stringify(err)));
-                // next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error sending file'));
             }
         });
     } catch (error) {
@@ -641,6 +852,156 @@ export const getDocumentList = catchAsync(async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+
+export const getDocumentListUser = catchAsync(async (req, res, next) => {
+    try {
+        const user = req.user;
+        const userRole = await roleModel.findByPk(user.roleId);
+
+        let docList;
+        let filter = {
+            
+        };
+
+        if (user.roleId === 1) {
+            // Admin
+        } else if (user.roleId === 2) {
+            // Supervisor
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+        } else if (user.roleId === 3) {
+            // Squad
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+        } else if (user.roleId === 4) {
+            // User
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+        } else if(user.roleId === 8) {
+            // RCS
+            const _userStates = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['state_id']
+            });
+            const _userDivisions = await db.Division.findAll({
+                where: {
+                    stateId: _userStates.map(state => state.state_id)
+                },
+                attributes: ['id']
+            });
+            const _userDistricts = await db.District.findAll({
+                where: {
+                    divisionId: _userDivisions.map(division => division.id)
+                },
+                attributes: ['id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+        } else if(user.roleId === 9) {
+            // ARCS
+            const _userDistricts = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['district_id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+        } else if(user.roleId === 7) {
+            // Deputy Registrar
+            const _userDistricts = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['district_id']
+            });
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+        } else if(user.roleId === 6) {
+            // Assistant Registrar
+            const _userTaluks = await db.Taluk.findAll({
+                where: {
+                    districtId: _userDistricts.map(district => district.district_id)
+                },
+                attributes: ['id']
+            });
+            const _userBranches = await db.Branch.findAll({
+                where: {
+                    talukId: _userTaluks.map(taluk => taluk.id)
+                },
+                attributes: ['id']
+            });
+            filter.branch = _userBranches.map(branch => branch.id);
+        } else if(user.roleId === 10) {
+            // Branch Registrar
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+        } 
+
+        docList = await documentModel.findAll({ where: filter });
+
+        return res.send({ status: true, data: docList });
+    } catch (error) {
+        console.error(error.toString());
         return res.status(500).send({ error: 'Internal Server Error' });
     }
 });
