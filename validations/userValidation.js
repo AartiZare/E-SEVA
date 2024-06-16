@@ -24,6 +24,10 @@ export const createUser = {
     bank_name: Joi.string().allow(''),
     status: Joi.boolean(),
     state_id: Joi.string().allow(''),
+    division_id: Joi.string().allow(''),
+    district_id: Joi.string().allow(''),
+    taluk_id: Joi.string().allow(''),
+    branch_id: Joi.string().allow(''),
     vendor_id: Joi.string().allow(''),
   }),
   file: Joi.object()
