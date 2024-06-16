@@ -12,7 +12,7 @@ const roleModel = db.Roles;
 const activityModel = db.Activity;
 const userModel = db.Users;
 const branchModel = db.Branch;
-const userStateToBranchModel = db.userStateToBranchModel;
+const userStateToBranchModel = db.UserStateToBranch;
  
 export const createDocument = catchAsync(async (req, res, next) => {
     try {
