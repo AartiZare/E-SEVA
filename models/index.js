@@ -14,6 +14,7 @@ import talukModel from "./talukModel.js";
 import documentTypeModel from "./documentTypeModel.js";
 import designationModel from "./designationModel.js";
 import feedbackModel from "./feedbackModel.js";
+import userStateToBranchModel from "./UserStateToBranchModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -44,7 +45,8 @@ const models = {
   District: districtModel(sequelize, DataTypes),
   DocumentType: documentTypeModel(sequelize, DataTypes),
   Designation: designationModel(sequelize, DataTypes),
-  Feedback: feedbackModel(sequelize, DataTypes)
+  Feedback: feedbackModel(sequelize, DataTypes),
+  UserStateToBranch: userStateToBranchModel(sequelize, DataTypes)
 };
   
 const db = {

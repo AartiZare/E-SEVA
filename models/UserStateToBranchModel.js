@@ -46,7 +46,7 @@ const userStateToBranchModel = (sequelize, DataTypes) => {
         },
         status: {
             type: DataTypes.BOOLEAN,
-            defaultValue: 1,
+            defaultValue: false,
         }
     }, {
         timestamps: true
