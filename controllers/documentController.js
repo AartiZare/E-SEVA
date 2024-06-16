@@ -512,7 +512,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         return res.send({ status: true, data: rejectedDoc });
     } catch (error) {
         console.error(error.toString());
-        return res.status(500).send({ error: 'Internal Server Error' });
+        return res.status(500).send({ error: 'Internal Server Error', errorMessage: error.toString() });
     }
 });
 
