@@ -678,6 +678,18 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
     
             const _userFilter = await fillUserStateToBranchFilter(req, {});
             _userFilter.status = true; // Assuming status is a boolean
+
+            if (req.user.roleId === 3) {
+                // Squad
+                _userFilter.roleId = [2, 4];
+            } else if (req.user.roleId === 2) {
+                // Supervisor
+                _userFilter.roleId = [4];
+            } else if (req.user.roleId === 4) {
+                // User
+                _userFilter.roleId = [4];
+                _userFilter.id = req.user.id;
+            }
             
             const filteredUsers = await userModel.findAll({
                 where: _userFilter,

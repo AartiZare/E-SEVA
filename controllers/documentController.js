@@ -210,17 +210,6 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         if (user.roleId === 1) {
             // Admin
             filter.final_verification_status = 0;
-        } else if (user.roleId === 2) {
-            // Supervisor
-            const _userBranches = await userStateToBranchModel.findAll({
-                where: {
-                    user_id: user.id,
-                    status: true
-                },
-                attributes: ['branch_id']
-            });
-            filter.branch = _userBranches.map(branch => branch.branch_id);
-            filter.supervisor_verification_status = 0;
         } else if (user.roleId === 3) {
             // Squad
             const _userBranches = await userStateToBranchModel.findAll({
@@ -232,7 +221,18 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             });
             filter.branch = _userBranches.map(branch => branch.branch_id);
             filter.squad_verification_status = 0;
-        } else if (user.roleId === 4) {
+        }else if (user.roleId === 2) {
+            // Supervisor
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id,
+                    status: true
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.supervisor_verification_status = 0;
+        }  else if (user.roleId === 4) {
             // User
             const _userBranches = await userStateToBranchModel.findAll({
                 where: {
@@ -385,16 +385,6 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         if (user.roleId === 1) {
             // Admin
             filter.final_verification_status = 0;
-        } else if (user.roleId === 2) {
-            // Supervisor
-            const _userBranches = await userStateToBranchModel.findAll({
-                where: {
-                    user_id: user.id
-                },
-                attributes: ['branch_id']
-            });
-            filter.branch = _userBranches.map(branch => branch.branch_id);
-            filter.supervisor_verification_status = 2;
         } else if (user.roleId === 3) {
             // Squad
             const _userBranches = await userStateToBranchModel.findAll({
@@ -405,6 +395,16 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
             });
             filter.branch = _userBranches.map(branch => branch.branch_id);
             filter.squad_verification_status = 2;
+        } else if (user.roleId === 2) {
+            // Supervisor
+            const _userBranches = await userStateToBranchModel.findAll({
+                where: {
+                    user_id: user.id
+                },
+                attributes: ['branch_id']
+            });
+            filter.branch = _userBranches.map(branch => branch.branch_id);
+            filter.supervisor_verification_status = 2;
         } else if (user.roleId === 4) {
             // User
             const _userBranches = await userStateToBranchModel.findAll({
@@ -886,8 +886,8 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
 
         if (user.roleId === 1) {
             // Admin
-        } else if (user.roleId === 2) {
-            // Supervisor
+        } else if (user.roleId === 3) {
+            // Squad
             const _userBranches = await userStateToBranchModel.findAll({
                 where: {
                     user_id: user.id
@@ -895,8 +895,8 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
                 attributes: ['branch_id']
             });
             filter.branch = _userBranches.map(branch => branch.branch_id);
-        } else if (user.roleId === 3) {
-            // Squad
+        } else if (user.roleId === 2) {
+            // Supervisor
             const _userBranches = await userStateToBranchModel.findAll({
                 where: {
                     user_id: user.id
