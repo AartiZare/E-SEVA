@@ -281,52 +281,52 @@ const fillUserStateToBranchFilter = async (req, filter) => {
         // RCS
         const userState = await userStateToBranchModel.findAll({
             where: {
-                user_id: userId,
+                user_id: req.user.id,
                 status: true
             },
             attributes: ['state_id']
         });
-        filter.state_id = userState.state_id.map(state => state.state_id);
+        filter.state_id = userState.map(user => user.state_id);
     } else if (req.user.roleId === 9) {
         // ARCS
         const userDistricts = await userStateToBranchModel.findAll({
             where: {
-                user_id: userId,
+                user_id: req.user.id,
                 status: true
             },
             attributes: ['district_id']
         });
-        filter.district_id = userDistricts.district_id.map(district => district.district_id);
+        filter.district_id = userDistricts.map(user => user.district_id);
     } else if (req.user.roleId === 7) {
         // Deputy Registrar
         const userDistricts = await userStateToBranchModel.findAll({
             where: {
-                user_id: userId,
+                user_id: req.user.id,
                 status: true
             },
             attributes: ['district_id']
         });
-        filter.district_id = userDistricts.district_id.map(district => district.district_id);
+        filter.district_id = userDistricts.map(user => user.district_id);
     } else if (req.user.roleId === 6) {
         // Assistant Registrar
         const userTaluks = await userStateToBranchModel.findAll({
             where: {
-                user_id: userId,
+                user_id: req.user.id,
                 status: true
             },
             attributes: ['taluk_id']
         });
-        filter.taluk_id = userTaluks.taluk_id.map(taluk => taluk.taluk_id);
+        filter.taluk_id = userTaluks.map(user => user.taluk_id);
     } else if (req.user.roleId === 10) {
         // Branch Registrar
         const userBranches = await userStateToBranchModel.findAll({
             where: {
-                user_id: userId,
+                user_id: req.user.id,
                 status: true
             },
             attributes: ['branch_id']
         });
-        filter.branch_id = userBranches.branch_id.map(branch => branch.branch_id);
+        filter.branch_id = userBranches.map(user => user.branch_id);
     }
 
     return filter;
@@ -365,8 +365,19 @@ export const getAll = catchAsync(async (req, res) => {
         if (req.user.roleId !== 1) {
             const _userFilter = await fillUserStateToBranchFilter(req, {});
             _userFilter.status = true;
+            const _users = await userStateToBranchModel.findAll({
+                where: { ..._userFilter },
+                attributes: ['user_id']
+            })
+
+            const _userModelFilter = {
+                status: true
+            };
+
+            _userModelFilter.id = _users.map(user => user.user_id);
+
             const users = await userModel.findAll({
-                where: _userFilter,
+                where: _userModelFilter,
                 attributes: ['id']
             });
             userIds = users.map(user => user.id);
@@ -679,20 +690,32 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
             const _userFilter = await fillUserStateToBranchFilter(req, {});
             _userFilter.status = true; // Assuming status is a boolean
 
+            const _users = await userStateToBranchModel.findAll({
+                where: { ..._userFilter },
+                attributes: ['user_id']
+            })
+
+            const _userModelFilter = {
+                status: true
+            };
+
+            _userModelFilter.id = _users.map(user => user.user_id);
+
+
             if (req.user.roleId === 3) {
                 // Squad
-                _userFilter.roleId = [2, 4];
+                _userModelFilter.roleId = [2, 4];
             } else if (req.user.roleId === 2) {
                 // Supervisor
-                _userFilter.roleId = [4];
+                _userModelFilter.roleId = [4];
             } else if (req.user.roleId === 4) {
                 // User
-                _userFilter.roleId = [4];
-                _userFilter.id = req.user.id;
+                _userModelFilter.roleId = [4];
+                _userModelFilter.id = req.user.id;
             }
             
             const filteredUsers = await userModel.findAll({
-                where: _userFilter,
+                where: _userModelFilter,
                 attributes: ['id']
             });
             const filteredUserIds = filteredUsers.map(user => user.id);
