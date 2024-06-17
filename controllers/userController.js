@@ -293,7 +293,7 @@ export const create = catchAsync(async (req, res, next) => {
     }
 
     const activityData = {
-      Activity_title: "User Created",
+      activity_title: "User Created",
       activity_description: `User ${createdUser.full_name} was created.`,
       activity_created_by_id: req.user.id,
       activity_created_by_type: userRole.name,
@@ -615,7 +615,7 @@ export const login = catchAsync(async (req, res, next) => {
 
     // Log user activity
     const userActivity = await activityModel.create({
-      Activity_title: "Login",
+      activity_title: "Login",
       activity_description: "User logged in",
       activity_created_by_id: user.id,
       activity_created_by_type: userRole.name,

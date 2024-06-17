@@ -80,7 +80,7 @@ export const create = catchAsync(async (req, res, next) => {
     });
 
     const activityData = {
-      Activity_title: "Feedback Created",
+      activity_title: "Feedback Created",
       activity_description: `Feedback with subject ${feedback.feedback_for} created by user ${req.user.id}`,
       activity_created_by_id: req.user.id,
       activity_created_by_type: userRole.name,

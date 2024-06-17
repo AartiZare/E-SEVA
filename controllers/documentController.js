@@ -82,7 +82,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       : "not available";
 
     const activityData = {
-      Activity_title: "Document Created",
+      activity_title: "Document Created",
       activity_description: `Document ${newDocument.document_name} with registration number ${newDocument.document_reg_no} has been uploaded. Document Unique ID: ${documentUniqueId}`,
       activity_created_at: newDocument.created_at,
       activity_created_by_id: userId,
@@ -134,7 +134,7 @@ export const approveDocument = catchAsync(async (req, res, next) => {
 
     // Create activity entry after approving the document
     const activityData = {
-      Activity_title: "Document Approved",
+      activity_title: "Document Approved",
       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
       activity_created_at: document.updated_at,
       activity_created_by_id: userId,
@@ -193,7 +193,7 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
 
     // Create activity entry after rejecting the document
     const activityData = {
-      Activity_title: "Document Rejected",
+      activity_title: "Document Rejected",
       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
       activity_created_at: document.updated_at,
       activity_created_by_id: userId,
