@@ -7,7 +7,7 @@ import vendorRoute from "./vendorRoute.js";
 import activityRoute from "./activityRoute.js";
 import dashboardRoute from "./dashboardRoute.js";
 import supervisorRoute from "./supervisorRoute.js";
-import districtRoute from "./disrictRoute.js";
+import districtRoute from "./districtRoute.js";
 import divisionRoute from "./divisionRoute.js";
 import stateRoute from "./stateRoute.js";
 import talukRoute from "./talukRoute.js";
