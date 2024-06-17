@@ -9,30 +9,30 @@ const storage = multer.diskStorage({
       const branchName = req.body.branch_name;
       // const uploadPath = path.join(__dirname, 'uploads', branchName);
       const uploadPath = `public/uploads/${branchName}`;
-  
+
       // Check if the directory exists
       if (!fs.existsSync(uploadPath)) {
-          // Create the directory if it does not exist
-          fs.mkdirSync(uploadPath, { recursive: true }, (err) => {
-            if (err) {
-                console.error('Error creating directory:', err);
-                cb(err, uploadPath);
-            }
+        // Create the directory if it does not exist
+        fs.mkdirSync(uploadPath, { recursive: true }, (err) => {
+          if (err) {
+            console.error("Error creating directory:", err);
+            cb(err, uploadPath);
+          }
         });
       }
-  
+
       cb(null, uploadPath);
     } else {
       const uploadPath = `public/uploads/profileImages`;
 
       // Check if the directory exists
       if (!fs.existsSync(uploadPath)) {
-          // Create the directory if it does not exist
-          fs.mkdirSync(uploadPath, { recursive: true }, (err) => {
-            if (err) {
-                console.error('Error creating directory:', err);
-                cb(err, uploadPath);
-            }
+        // Create the directory if it does not exist
+        fs.mkdirSync(uploadPath, { recursive: true }, (err) => {
+          if (err) {
+            console.error("Error creating directory:", err);
+            cb(err, uploadPath);
+          }
         });
       }
 
@@ -41,10 +41,14 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     if (req.body.document_reg_no) {
-      const newFilename = `${req.body.document_reg_no}${path.extname(file.originalname)}`;
+      const newFilename = `${req.body.document_reg_no}${path.extname(
+        file.originalname
+      )}`;
       cb(null, newFilename);
     } else {
-      const newFilename = `${req.body.contact_no}${path.extname(file.originalname)}`;
+      const newFilename = `${req.body.contact_number}${path.extname(
+        file.originalname
+      )}`;
       cb(null, newFilename);
     }
   },

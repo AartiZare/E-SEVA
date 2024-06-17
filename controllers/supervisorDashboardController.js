@@ -81,7 +81,7 @@ const fetchTotalEvaluation = async (req) => {
       const endDate = new Date(monthDay);
       endDate.setUTCHours(23, 59, 59, 999);
 
-      filters.createdAt = { [Op.between]: [startDate, endDate] };
+      filters.created_at = { [Op.between]: [startDate, endDate] };
     }
 
     const approvedDocuments = await documentModel.findAll({
@@ -380,7 +380,7 @@ export const fetchUsersForBranch = async (req, res, next) => {
         id: { [Op.in]: userIdsInBranch },
         created_by: supervisorId,
       },
-      attributes: ["id", "full_name", "email_id"],
+      attributes: ["id", "full_name", "email"],
     });
 
     if (users.length === 0) {

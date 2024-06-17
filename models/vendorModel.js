@@ -16,35 +16,35 @@ const vendorModel = (sequelize, DataTypes) => {
       profile_image: {
         type: DataTypes.STRING,
       },
-      email_id: {
+      email: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      contact_no: {
+      contact_number: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      alt_contact_no: {
+      alternate_contact_number: {
         type: DataTypes.STRING,
       },
-      pan_no: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      adhar_no: {
+      pan_number: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      qualifications: {
+      aadhaar_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      qualification: {
         type: DataTypes.STRING,
       },
-      resetOTP: {
+      reset_otp: {
         type: DataTypes.STRING,
       },
       password: {
         type: DataTypes.STRING,
       },
-      resetOTPExpiration: {
+      reset_otp_expiration: {
         type: DataTypes.DATE,
       },
       pincode: {
@@ -65,15 +65,15 @@ const vendorModel = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      account_no: {
+      bank_account_number: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      branch: {
+      bank_branch: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      ifsc: {
+      bank_ifsc: {
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -90,7 +90,7 @@ const vendorModel = (sequelize, DataTypes) => {
         defaultValue: true,
       },
     },
-    { timestamps: true, tableName: "tbl_vendors" }
+    { timestamps: false, tableName: "tbl_vendors" }
   );
 
   Vendor.belongsTo(Role(sequelize, DataTypes), { foreignKey: "role_id" });

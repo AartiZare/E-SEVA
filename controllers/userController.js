@@ -113,8 +113,8 @@ export const create = catchAsync(async (req, res, next) => {
       district_id: -1,
       taluk_id: -1,
       branch_id: -1,
-      createdBy: req.user.id,
-      updatedBy: req.user.id,
+      created_by: req.user.id,
+      updated_by: req.user.id,
       status: true,
     };
 
@@ -775,7 +775,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 
 //         const users = await userModel.findAll({
 //             where: filter,
-//             order: [['createdAt', 'DESC']]
+//             order: [['created_at', 'DESC']]
 //         });
 
 //         return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });

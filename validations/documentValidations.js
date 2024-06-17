@@ -14,7 +14,7 @@ export const createDocument = {
           authorised_person_name: Joi.string().required(),
           contact_number: Joi.string().required(),
           alternate_number: Joi.string().allow(null, ""),
-          email_id: Joi.string().email().required(),
+          email: Joi.string().email().required(),
           designation: Joi.string().required(),
         })
       )

@@ -29,7 +29,7 @@ export const createBranch = catchAsync(async (req, res, next) => {
 
     const branchToBeCreated = {
       ...body,
-      createdBy: req.user.id,
+      created_by: req.user.id,
       status: true,
     };
 

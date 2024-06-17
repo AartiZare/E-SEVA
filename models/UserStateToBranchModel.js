@@ -10,10 +10,6 @@ const userStateToBranchModel = (sequelize, DataTypes) => {
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "users", // name of the Users table
-          key: "id",
-        },
       },
       state_id: {
         type: DataTypes.INTEGER,
@@ -35,21 +31,13 @@ const userStateToBranchModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      createdBy: {
+      created_by: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "users", // name of the Users table
-          key: "id",
-        },
       },
-      updatedBy: {
+      updated_by: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "users", // name of the Users table
-          key: "id",
-        },
       },
       status: {
         type: DataTypes.BOOLEAN,

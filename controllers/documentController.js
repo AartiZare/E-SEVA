@@ -56,7 +56,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
         authorised_person_name: person.authorised_person_name,
         contact_number: person.contact_number,
         alternate_number: person.alternate_number || null, // default to null if not provided
-        email_id: person.email_id,
+        email: person.email,
         designation: person.designation,
       })),
       total_no_of_date: body.total_no_of_date,
@@ -84,7 +84,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
     const activityData = {
       Activity_title: "Document Created",
       activity_description: `Document ${newDocument.document_name} with registration number ${newDocument.document_reg_no} has been uploaded. Document Unique ID: ${documentUniqueId}`,
-      activity_created_at: newDocument.createdAt,
+      activity_created_at: newDocument.created_at,
       activity_created_by_id: userId,
       activity_created_by_type: userRole.name,
       activity_document_id: newDocument.id,
@@ -136,7 +136,7 @@ export const approveDocument = catchAsync(async (req, res, next) => {
     const activityData = {
       Activity_title: "Document Approved",
       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
-      activity_created_at: document.updatedAt,
+      activity_created_at: document.updated_at,
       activity_created_by_id: userId,
       activity_created_by_type: userRole.name,
       activity_document_id: document.id,
@@ -195,7 +195,7 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
     const activityData = {
       Activity_title: "Document Rejected",
       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
-      activity_created_at: document.updatedAt,
+      activity_created_at: document.updated_at,
       activity_created_by_id: userId,
       activity_created_by_type: userRole.name,
       activity_document_id: document.id,
@@ -673,7 +673,7 @@ export const webDashboard = catchAsync(async (req, res, next) => {
     if (req.body?.fromDate) {
       where = {
         ...where,
-        createdAt: {
+        created_at: {
           [Op.gte]: req.body?.fromDate,
         },
       };
@@ -681,7 +681,7 @@ export const webDashboard = catchAsync(async (req, res, next) => {
     if (req.body?.toDate) {
       where = {
         ...where,
-        createdAt: {
+        created_at: {
           [Op.lte]: req.body?.toDate,
         },
       };
@@ -810,21 +810,21 @@ export const webDashboard = catchAsync(async (req, res, next) => {
       where,
       attributes: [
         "document_type",
-        [db.sequelize.fn("DATE", db.sequelize.col("createdAt")), "createdAt"],
+        [db.sequelize.fn("DATE", db.sequelize.col("created_at")), "created_at"],
         [db.sequelize.fn("COUNT", "document_type"), "count"],
       ],
       group: [
         "document_type",
-        [db.sequelize.fn("DATE", db.sequelize.col("createdAt"))],
+        [db.sequelize.fn("DATE", db.sequelize.col("created_at"))],
       ],
     });
     const uploadsByDate = await documentModel.findAll({
       where,
       attributes: [
-        [db.sequelize.fn("DATE", db.sequelize.col("createdAt")), "createdAt"],
-        [db.sequelize.fn("COUNT", "createdAt"), "count"],
+        [db.sequelize.fn("DATE", db.sequelize.col("created_at")), "created_at"],
+        [db.sequelize.fn("COUNT", "created_at"), "count"],
       ],
-      group: [[db.sequelize.fn("DATE", db.sequelize.col("createdAt"))]],
+      group: [[db.sequelize.fn("DATE", db.sequelize.col("created_at"))]],
     });
 
     const documentTypeNames = await db.DocumentType.findAll({

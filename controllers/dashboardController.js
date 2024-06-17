@@ -32,7 +32,7 @@ const activityModel = db.Activity;
 //             const endDate = new Date(parsedToDate);
 //             endDate.setUTCHours(23, 59, 59, 999);
 
-//             filters.createdAt = {
+//             filters.created_at = {
 //                 [Op.between]: [startDate, endDate]
 //             };
 //         }
@@ -95,7 +95,7 @@ const activityModel = db.Activity;
 
 //         const filters = {
 //             created_by: userId,
-//             createdAt: {
+//             created_at: {
 //                 [Op.between]: [startDate, endDate]
 //             }
 //         };
@@ -184,7 +184,7 @@ const fetchUserRecords = async (req) => {
     const endDate = new Date(toDate);
     endDate.setUTCHours(23, 59, 59, 999);
 
-    filters.createdAt = {
+    filters.created_at = {
       [Op.between]: [startDate, endDate],
     };
   }
@@ -250,7 +250,7 @@ const fetchUserDailyActivity = async (req) => {
 
   const filters = {
     created_by: userId,
-    createdAt: {
+    created_at: {
       [Op.between]: [startDate, endDate],
     },
   };

@@ -46,7 +46,7 @@ export const getFeedbackList = catchAsync(async (req, res, next) => {
         where: filter,
         offset,
         limit,
-        order: [["createdAt", "DESC"]],
+        order: [["created_at", "DESC"]],
       });
 
     const totalPages = Math.ceil(totalCount / limit);
@@ -75,8 +75,8 @@ export const create = catchAsync(async (req, res, next) => {
       ...body,
       created_by: req.user.id,
       user_name: req.user.full_name,
-      mobile_no: req.user.contact_no,
-      user_email: req.user.email_id,
+      mobile_no: req.user.contact_number,
+      user_email: req.user.email,
     });
 
     const activityData = {

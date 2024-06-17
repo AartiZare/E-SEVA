@@ -85,7 +85,7 @@ export const getAllUsers = {
 
 export const login = {
   body: Joi.object().keys({
-    email_id: Joi.string().required(),
+    email: Joi.string().required(),
     password: Joi.string().required(),
   }),
 };
