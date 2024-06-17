@@ -19,8 +19,6 @@ const userModel = db.Users;
 const userStateToBranchModel = db.UserStateToBranch;
 const roleModel = db.Roles;
 const vendorModel = db.Vendor;
-const branchModel = db.Branch;
-const userBranchModel = db.UserBranch;
 const activityModel = db.Activity;
 const saltRounds = 10;
 
@@ -72,7 +70,7 @@ export const create = catchAsync(async (req, res, next) => {
             hashedPassword = await bcrypt.hash(body.password, saltRounds);
         }
 
-        const userData = { ...body, resetPasswordToken };
+        const userData = { ...body, resetPasswordToken, status: true };
         if (hashedPassword) {
             userData.password = hashedPassword;
             userData.status = true;
