@@ -3,7 +3,7 @@ import { catchAsync } from "../utils/catchAsync.js";
 import httpStatus from "http-status";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
-const roleModel = db.Roles;
+const roleModel = db.Role;
 
 export const create = catchAsync(async (req, res, next) => {
   try {

@@ -1,6 +1,6 @@
 const branchModel = (sequelize, DataTypes) => {
   const Branch = sequelize.define(
-    "branche",
+    "branch",
     {
       id: {
         type: DataTypes.INTEGER,

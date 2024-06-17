@@ -4,12 +4,12 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import httpStatus from "http-status";
 
-const { Feedback, Activity, Roles } = db;
+const { Feedback, Activity, Role } = db;
 
 export const getFeedbackList = catchAsync(async (req, res, next) => {
   try {
     // Check if the user has an admin role
-    const userRole = await Roles.findByPk(req.user.role_id);
+    const userRole = await Role.findByPk(req.user.role_id);
     if (!userRole || userRole.name !== "Admin") {
       return next(new ApiError(httpStatus.FORBIDDEN, "Access denied"));
     }
@@ -68,7 +68,7 @@ export const getFeedbackList = catchAsync(async (req, res, next) => {
 
 export const create = catchAsync(async (req, res, next) => {
   const { body } = req;
-  const userRole = await Roles.findByPk(req.user.role_id);
+  const userRole = await Role.findByPk(req.user.role_id);
 
   try {
     const feedback = await Feedback.create({
