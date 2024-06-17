@@ -156,11 +156,12 @@ export const create = catchAsync(async (req, res, next) => {
                 userStateToBranchData.branch_id = body.branch_id;
                 const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
             }
-        } else if (body.roleId === 2) {
-            // Supervisor
-            userStateToBranchData.division_id = body.division_id;
-            userStateToBranchData.district_id = body.district_id;
-            userStateToBranchData.taluk_id = body.taluk_id;
+        } else if (body.roleId === 3) {
+            // Squad
+            userStateToBranchData.state_id = req.user.state_id;
+            userStateToBranchData.division_id = req.user.division_id;
+            userStateToBranchData.district_id = req.user.district_id;
+            userStateToBranchData.taluk_id = req.user.taluk_id;
             // Support for multiple branches
             if (Array.isArray(body.branch_id)) {
                 body.branch_id.forEach(async (branchId) => {
@@ -172,11 +173,12 @@ export const create = catchAsync(async (req, res, next) => {
                 userStateToBranchData.branch_id = body.branch_id;
                 const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
             }
-        } else if (body.roleId === 3) {
-            // Squad
-            userStateToBranchData.division_id = body.division_id;
-            userStateToBranchData.district_id = body.district_id;
-            userStateToBranchData.taluk_id = body.taluk_id;
+        } else if (body.roleId === 2) {
+            // Supervisor
+            userStateToBranchData.state_id = req.user.state_id;
+            userStateToBranchData.division_id = req.user.division_id;
+            userStateToBranchData.district_id = req.user.district_id;
+            userStateToBranchData.taluk_id = req.user.taluk_id;
             // Support for multiple branches
             if (Array.isArray(body.branch_id)) {
                 body.branch_id.forEach(async (branchId) => {
