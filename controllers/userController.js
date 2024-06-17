@@ -16,7 +16,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const userModel = db.Users;
-const userStateToBranchModel = db.UserStateToBranchModel;
+const userStateToBranchModel = db.UserStateToBranch;
 const roleModel = db.Roles;
 const vendorModel = db.Vendor;
 const branchModel = db.Branch;
@@ -93,7 +93,7 @@ export const create = catchAsync(async (req, res, next) => {
             branch_id: -1,
             createdBy: req.user.id,
             updatedBy: req.user.id,
-            status: 1
+            status: true
         };
 
         if (body.roleId === 8) {
@@ -265,7 +265,7 @@ const fillUserStateToBranchFilter = async (req, filter) => {
         const userState = await userStateToBranchModel.findAll({
             where: {
                 user_id: userId,
-                status: 1
+                status: true
             },
             attributes: ['state_id']
         });
@@ -275,7 +275,7 @@ const fillUserStateToBranchFilter = async (req, filter) => {
         const userDistricts = await userStateToBranchModel.findAll({
             where: {
                 user_id: userId,
-                status: 1
+                status: true
             },
             attributes: ['district_id']
         });
@@ -285,7 +285,7 @@ const fillUserStateToBranchFilter = async (req, filter) => {
         const userDistricts = await userStateToBranchModel.findAll({
             where: {
                 user_id: userId,
-                status: 1
+                status: true
             },
             attributes: ['district_id']
         });
@@ -295,7 +295,7 @@ const fillUserStateToBranchFilter = async (req, filter) => {
         const userTaluks = await userStateToBranchModel.findAll({
             where: {
                 user_id: userId,
-                status: 1
+                status: true
             },
             attributes: ['taluk_id']
         });
@@ -305,7 +305,7 @@ const fillUserStateToBranchFilter = async (req, filter) => {
         const userBranches = await userStateToBranchModel.findAll({
             where: {
                 user_id: userId,
-                status: 1
+                status: true
             },
             attributes: ['branch_id']
         });
@@ -660,7 +660,7 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
             };
     
             const _userFilter = await fillUserStateToBranchFilter(req, {});
-            // _userFilter.status = true; // Assuming status is a boolean
+            _userFilter.status = true; // Assuming status is a boolean
             
             const filteredUsers = await userModel.findAll({
                 where: _userFilter,

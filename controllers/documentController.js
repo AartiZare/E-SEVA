@@ -214,7 +214,8 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // Supervisor
             const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    user_id: user.id
+                    user_id: user.id,
+                    status: true
                 },
                 attributes: ['branch_id']
             });
@@ -224,7 +225,8 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // Squad
             const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    user_id: user.id
+                    user_id: user.id,
+                    status: true
                 },
                 attributes: ['branch_id']
             });
@@ -234,7 +236,8 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // User
             const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    user_id: user.id
+                    user_id: user.id,
+                    status: true
                 },
                 attributes: ['branch_id']
             });
@@ -244,31 +247,36 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // RCS
             const _userStates = await userStateToBranchModel.findAll({
                 where: {
-                    user_id: user.id
+                    user_id: user.id,
+                    status: true
                 },
                 attributes: ['state_id']
             });
             const _userDivisions = await db.Division.findAll({
                 where: {
-                    stateId: _userStates.map(state => state.state_id)
+                    stateId: _userStates.map(state => state.state_id),
+                    status: true
                 },
                 attributes: ['id']
             });
             const _userDistricts = await db.District.findAll({
                 where: {
-                    divisionId: _userDivisions.map(division => division.id)
+                    divisionId: _userDivisions.map(division => division.id),
+                    status: true
                 },
                 attributes: ['id']
             });
             const _userTaluks = await db.Taluk.findAll({
                 where: {
-                    districtId: _userDistricts.map(district => district.id)
+                    districtId: _userDistricts.map(district => district.id),
+                    status: true
                 },
                 attributes: ['id']
             });
             const _userBranches = await db.Branch.findAll({
                 where: {
-                    talukId: _userTaluks.map(taluk => taluk.id)
+                    talukId: _userTaluks.map(taluk => taluk.id),
+                    status: true
                 },
                 attributes: ['id']
             });
@@ -278,19 +286,22 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // ARCS
             const _userDistricts = await userStateToBranchModel.findAll({
                 where: {
-                    user_id: user.id
+                    user_id: user.id,
+                    status: true
                 },
                 attributes: ['district_id']
             });
             const _userTaluks = await db.Taluk.findAll({
                 where: {
-                    districtId: _userDistricts.map(district => district.district_id)
+                    districtId: _userDistricts.map(district => district.district_id),
+                    status: true
                 },
                 attributes: ['id']
             });
             const _userBranches = await db.Branch.findAll({
                 where: {
-                    talukId: _userTaluks.map(taluk => taluk.id)
+                    talukId: _userTaluks.map(taluk => taluk.id),
+                    status: true
                 },
                 attributes: ['id']
             });
@@ -300,19 +311,22 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // Deputy Registrar
             const _userDistricts = await userStateToBranchModel.findAll({
                 where: {
-                    user_id: user.id
+                    user_id: user.id,
+                    status: true
                 },
                 attributes: ['district_id']
             });
             const _userTaluks = await db.Taluk.findAll({
                 where: {
-                    districtId: _userDistricts.map(district => district.district_id)
+                    districtId: _userDistricts.map(district => district.district_id),
+                    status: true
                 },
                 attributes: ['id']
             });
             const _userBranches = await db.Branch.findAll({
                 where: {
-                    talukId: _userTaluks.map(taluk => taluk.id)
+                    talukId: _userTaluks.map(taluk => taluk.id),
+                    status: true
                 },
                 attributes: ['id']
             });
@@ -322,13 +336,15 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // Assistant Registrar
             const _userTaluks = await db.Taluk.findAll({
                 where: {
-                    districtId: _userDistricts.map(district => district.district_id)
+                    districtId: _userDistricts.map(district => district.district_id),
+                    status: true
                 },
                 attributes: ['id']
             });
             const _userBranches = await db.Branch.findAll({
                 where: {
-                    talukId: _userTaluks.map(taluk => taluk.id)
+                    talukId: _userTaluks.map(taluk => taluk.id),
+                    status: true
                 },
                 attributes: ['id']
             });
@@ -338,7 +354,8 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
             // Branch Registrar
             const _userBranches = await userStateToBranchModel.findAll({
                 where: {
-                    user_id: user.id
+                    user_id: user.id,
+                    status: true
                 },
                 attributes: ['branch_id']
             });
