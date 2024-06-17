@@ -175,16 +175,16 @@ export const listBranchesByUser = catchAsync(async (req, res, next) => {
           where: {
               user_id: req.user.id
           },
-          include: [
-              {
-                  model: branchModel,
-                  as: 'branch',
-                  attributes: ['id', 'name'],
-              },
-          ],
+          attributes: ['branch_id']
       });
 
-      return res.send({ results: userBranches });
+      const withBranches = await branchModel.findAll({
+          where: {
+              id: userBranches.map(branch => branch.branch_id)
+          }
+      });
+
+      return res.send({ results: withBranches });
   } catch (error) {
       console.error(error);
       return res.status(500).send({ error: error.message });
