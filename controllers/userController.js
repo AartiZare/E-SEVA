@@ -339,7 +339,7 @@ export const getAll = catchAsync(async (req, res) => {
         const userRole = await roleModel.findByPk(req.user.roleId);
 
         let filter = {
-            status: true
+            status: true,
         };
 
         if (qFilter) {
@@ -363,8 +363,8 @@ export const getAll = catchAsync(async (req, res) => {
         // Exclude 'Admin' role for non-admin users
         let userIds = [];
         if (req.user.roleId !== 1) {
-            const _userFilter = fillUserStateToBranchFilter(req, {});
-            _userFilter.status = 1;
+            const _userFilter = await fillUserStateToBranchFilter(req, {});
+            _userFilter.status = true;
             const users = await userModel.findAll({
                 where: _userFilter,
                 attributes: ['id']
