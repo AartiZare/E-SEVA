@@ -16,6 +16,14 @@ const feedbackModel = (sequelize, DataTypes) => {
                 key: 'id',
             },
         },
+        document_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'documents',
+                key: 'id',
+            },
+        },
         mobile_no: {
             type: DataTypes.STRING,
             allowNull: true,
