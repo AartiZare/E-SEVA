@@ -3,11 +3,11 @@ import { catchAsync } from '../utils/catchAsync.js';
 import httpStatus from 'http-status';
 import ApiError from '../utils/ApiError.js';
 import db from '../models/index.js';
-import userStateToBranchModel from '../models/UserStateToBranchModel.js';
 const branchModel = db.Branch;
 const userModel = db.Users;
 const userBranchModel = db.UserBranch;
 const roleModel = db.Roles;
+const userStateToBranchModel = db.UserStateToBranch;
 
 export const createBranch = catchAsync(async (req, res, next) => {
   try {
