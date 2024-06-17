@@ -1,29 +1,28 @@
-import Joi from 'joi';
+import Joi from "joi";
 
 export const createVendor = {
   body: Joi.object({
     full_name: Joi.string().required(),
-    email_id: Joi.string().email().required(),
-    contact_no: Joi.string().required(),
-    alt_contact_no: Joi.string().allow(''),
-    pan_no: Joi.string().required(),
-    adhar_no: Joi.string().required(),
-    qualifications: Joi.string().allow(''),
-    company_name: Joi.string().allow(''),
+    email: Joi.string().email().required(),
+    contact_number: Joi.string().required(),
+    alternate_contact_number: Joi.string().allow(""),
+    pan_number: Joi.string().required(),
+    aadhaar_number: Joi.string().required(),
+    qualification: Joi.string().allow(""),
+    company_name: Joi.string().allow(""),
     pincode: Joi.string().required(),
     district: Joi.string().required(),
-    taluk: Joi.string().allow(''),
-    village: Joi.string().allow(''),
+    taluk: Joi.string().allow(""),
+    village: Joi.string().allow(""),
     address: Joi.string().required(),
-    account_no: Joi.string().required(),
-    branch: Joi.string().required(),
+    bank_account_number: Joi.string().required(),
+    bank_branch: Joi.string().required(),
     password: Joi.string(),
-    ifsc: Joi.string().required(),
+    bank_ifsc: Joi.string().required(),
     bank_name: Joi.string().required(),
-    roleId: Joi.number().integer().required()
+    role_id: Joi.number().integer().required(),
   }),
-  file: Joi.object()
-    .keys({
-      profile_image: Joi.string().allow(''),
+  file: Joi.object().keys({
+    profile_image: Joi.string().allow(""),
   }),
 };
