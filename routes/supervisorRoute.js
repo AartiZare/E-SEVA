@@ -1,6 +1,6 @@
-import express from 'express';
-import { supervisorController } from '../controllers/index.js';
-import auth from '../middlewares/auth.js';
+import express from "express";
+import { supervisorController } from "../controllers/index.js";
+import auth from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -25,11 +25,19 @@ const router = express.Router();
 //     .get(auth(), supervisorController.isSupervisor, supervisorController.fetchBranchesForSupervisor);
 
 router
-    .route('/users')
-    .get(auth(), supervisorController.isSupervisor, supervisorController.fetchUsersForBranch);
+  .route("/users")
+  .get(
+    auth(),
+    supervisorController.isSupervisor,
+    supervisorController.fetchUsersForBranch
+  );
 
 router
-    .route('/dashboard')
-    .get(auth(), supervisorController.isSupervisor, supervisorController.fetchAllSupervisorData);
+  .route("/dashboard")
+  .get(
+    auth(),
+    supervisorController.isSupervisor,
+    supervisorController.fetchAllSupervisorData
+  );
 
 export default router;

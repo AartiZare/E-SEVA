@@ -1,6 +1,6 @@
-import express from 'express';
-import { squadController } from '../controllers/index.js';
-import auth from '../middlewares/auth.js';
+import express from "express";
+import { squadController } from "../controllers/index.js";
+import auth from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ const router = express.Router();
 //     .get(auth(), squadController.isSquad, squadController.fetchSupervisorsForSquad);
 
 router
-    .route('/dashboard')
-    .get(auth(), squadController.isSquad, squadController.fetchAllData);
-    
+  .route("/dashboard")
+  .get(auth(), squadController.isSquad, squadController.fetchAllData);
+
 export default router;
