@@ -3,6 +3,7 @@ import { catchAsync } from '../utils/catchAsync.js';
 import httpStatus from 'http-status';
 import ApiError from '../utils/ApiError.js';
 import db from '../models/index.js';
+import userStateToBranchModel from '../models/UserStateToBranchModel.js';
 const branchModel = db.Branch;
 const userModel = db.Users;
 const userBranchModel = db.UserBranch;
@@ -170,19 +171,20 @@ export const assignBranchToUser = catchAsync(async (req, res, next) => {
 
 export const listBranchesByUser = catchAsync(async (req, res, next) => {
   try {
-      // Find branch assignments for the given user
-      const userBranches = await userBranchModel.findAll({
-          where: { userId: req.user.id },
-      });
-
-      const branchIds = userBranches.map(userBranch => userBranch.branchId);
-      const branches = await branchModel.findAll({
+      const userBranches = await userStateToBranchModel.findAll({
           where: {
-              id: branchIds
-          }
+              user_id: req.user.id
+          },
+          include: [
+              {
+                  model: branchModel,
+                  as: 'branch',
+                  attributes: ['id', 'name'],
+              },
+          ],
       });
 
-      return res.send({ results: branches });
+      return res.send({ results: userBranches });
   } catch (error) {
       console.error(error);
       return res.status(500).send({ error: error.message });
