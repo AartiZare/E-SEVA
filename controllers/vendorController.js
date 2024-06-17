@@ -56,7 +56,7 @@ export const createVendor = catchAsync(async (req, res, next) => {
     }
 
     const resetPasswordToken = jwt.sign({ email: body.email }, secretKey, {
-      expiresIn: "6h",
+      expiresIn: "10h",
     });
 
     let profileImageUrl;

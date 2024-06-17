@@ -1,5 +1,5 @@
 // import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import { signJWT } from '../utils/sign_jwt.js';
+import { signJWT } from "../utils/sign_jwt.js";
 // import db from '../models/index.js';
 // const userModel = db.Users;
 
@@ -26,7 +26,7 @@ import { signJWT } from '../utils/sign_jwt.js';
 // const jwtVerify = async (payload, done) => {
 //   let user;
 //   try {
- 
+
 //     user = await userModel.findByPk(payload.sub);
 //     console.log(user, "user")
 
@@ -40,14 +40,14 @@ import { signJWT } from '../utils/sign_jwt.js';
 // };
 
 // export const jwtStrategy = new JwtStrategy(jwtOptions, jwtVerify);
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import jwt from 'jsonwebtoken';
-import db from '../models/index.js';
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import jwt from "jsonwebtoken";
+import db from "../models/index.js";
 
 const userModel = db.Users; // Adjust according to your setup
 
-export const secretKey = 'time-tracker';
-const issuer = 'TIME_TRACKER';
+export const secretKey = "time-tracker";
+const issuer = "TIME_TRACKER";
 
 export const genToken = (user, type) => {
   return jwt.sign(
@@ -57,7 +57,7 @@ export const genToken = (user, type) => {
       type,
     },
     secretKey,
-    { expiresIn: '6h' }
+    { expiresIn: "10h" }
   );
 };
 
