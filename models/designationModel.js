@@ -1,23 +1,30 @@
-
 const designationModel = (sequelize, DataTypes) => {
-    const Designation = sequelize.define('Designation', {
-    id: {
+  const Designation = sequelize.define(
+    "designation",
+    {
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-    },
-    name: {
+      },
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
-    },
-    description: {
+      },
+      description: {
         type: DataTypes.STRING,
         allowNull: true,
-    }
+      },
+      status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
     },
     {
-        timestamps: false
-    });
-    return Designation
-}
+      timestamps: false,
+      tableName: "tbl_designations",
+    }
+  );
+  return Designation;
+};
 export default designationModel;

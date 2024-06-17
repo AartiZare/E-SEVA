@@ -1,14 +1,28 @@
 const stateModel = (sequelize, DataTypes) => {
-    const State = sequelize.define('state', {
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false
-        }
-    }, {
-        timestamps: true
-    });
+  const State = sequelize.define(
+    "state",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+    },
+    {
+      timestamps: true,
+      tableName: "tbl_states",
+    }
+  );
 
-    return State;
-}
+  return State;
+};
 
 export default stateModel;

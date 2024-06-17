@@ -1,152 +1,119 @@
-import Role from './roleModel.js';
-import userBranchModel from './userBranchModel.js';
-import branchModel from './branchModel.js';
-import { JSONB } from 'sequelize';
+import Role from "./roleModel.js";
 
 const userModel = (sequelize, DataTypes) => {
-    const User = sequelize.define("users", {
-        full_name: {
-            type: DataTypes.STRING,
-            allowNull: false,
+  const User = sequelize.define(
+    "user",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      full_name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      profile_image: {
+        type: DataTypes.STRING,
+      },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      contact_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      alternate_contact_number: {
+        type: DataTypes.STRING,
+      },
+      pan_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      aadhaar_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      qualification: {
+        type: DataTypes.STRING,
+      },
+      date_of_birth: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      pincode: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      district: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      taluk: {
+        type: DataTypes.STRING,
+      },
+      village: {
+        type: DataTypes.STRING,
+      },
+      address: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      bank_account_number: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      password: {
+        type: DataTypes.STRING,
+      },
+      bank_ifsc: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      bank_name: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      role_id: {
+        type: DataTypes.INTEGER,
+      },
+      reset_otp: {
+        type: DataTypes.STRING,
+      },
+      reset_otp_expiration: {
+        type: DataTypes.DATE,
+      },
+      bank_branch: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      created_by: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+      vendor_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "vendor",
+          key: "id",
         },
-        status: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
-        vendor_id: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'vendors', // name of the States table
-                key: 'id',
-            },
-        },
-        profile_image: {
-            type: DataTypes.STRING,
-        },
-        email_id: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        contact_no: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        alt_contact_no: {
-            type: DataTypes.STRING,
-        },
-        pan_no: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        adhar_no: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        qualifications: {
-            type: DataTypes.STRING,
-        },
-        resetOTP: {
-            type: DataTypes.STRING
-        },
-        password: {
-            type: DataTypes.STRING
-        },
-        resetOTPExpiration: {
-            type: DataTypes.DATE
-        },
-        dob: {
-            type: DataTypes.DATE,
-            allowNull: false,
-        },
-        pincode: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        district: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        assignedStateId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'states', // name of the States table
-                key: 'id',
-            },
-        },
-        assignedDivisionId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'divisions', // name of the Divisions table
-                key: 'id',
-            },
-        },
-        assignedDistrictId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'districts', // name of the Districts table
-                key: 'id',
-            },
-        },
-        assignedTalukId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'taluks', // name of the Taluks table
-                key: 'id',
-            },
-        },
-        taluk: {
-            type: DataTypes.STRING,
-        },
-        village: {
-            type: DataTypes.STRING,
-        },
-        address: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        account_no: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        branch: {
-            type: DataTypes.ARRAY(DataTypes.INTEGER),
-            defaultValue: [],            
-            allowNull: true,
-        },
-        is_deleted: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
-        ifsc: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        bank_name: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        created_by: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-        },
-        bank_branch:{
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        assignedStateId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-        },
-    }, { timestamps: true });
+      },
+    },
+    {
+      timestamps: true,
+      tableName: "tbl_users",
+    }
+  );
 
-    User.belongsTo(Role(sequelize, DataTypes), { foreignKey: 'roleId' });
+  User.belongsTo(Role(sequelize, DataTypes), { foreignKey: "role_id" });
 
-    return User;
+  return User;
 };
 
 export default userModel;

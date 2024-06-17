@@ -1,30 +1,43 @@
-// models/districtModel.js
 const districtModel = (sequelize, DataTypes) => {
-    const District = sequelize.define('districts', {
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false
+  const District = sequelize.define(
+    "district",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      division_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "division", // Name of the Division model
+          key: "id",
         },
-        divisionId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'divisions', // Name of the Division model
-                key: 'id'
-            }
-        }
-    }, {
-        timestamps: true
+      },
+      status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+    },
+    {
+      timestamps: true,
+      tableName: "tbl_districts",
+    }
+  );
+
+  District.associate = (models) => {
+    District.belongsTo(models.Division, {
+      foreignKey: "divisionId",
+      as: "division",
     });
+  };
 
-    District.associate = (models) => {
-        District.belongsTo(models.Division, {
-            foreignKey: 'divisionId',
-            as: 'division'
-        });
-    };
-
-    return District;
+  return District;
 };
 
 export default districtModel;

@@ -1,30 +1,38 @@
-// models/divisionModel.js
 const divisionModel = (sequelize, DataTypes) => {
-    const Division = sequelize.define('divisions', {
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false
+  const Division = sequelize.define(
+    "division",
+    {
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      state_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "state", // Name of the State model
+          key: "id",
         },
-        stateId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'states', // Name of the State model
-                key: 'id'
-            }
-        }
-    }, {
-        timestamps: true
+      },
+      status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+    },
+    {
+      timestamps: true,
+      tableName: "tbl_divisions",
+    }
+  );
+
+  Division.associate = (models) => {
+    Division.belongsTo(models.State, {
+      foreignKey: "stateId",
+      as: "state",
     });
+  };
 
-    Division.associate = (models) => {
-        Division.belongsTo(models.State, {
-            foreignKey: 'stateId',
-            as: 'state'
-        });
-    };
-
-    return Division;
+  return Division;
 };
 
 export default divisionModel;

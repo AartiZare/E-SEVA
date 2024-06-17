@@ -5,7 +5,6 @@ import roleModel from "./roleModel.js";
 import branchModel from "./branchModel.js";
 import documentsModel from "./documentModel.js";
 import vendorModel from "./vendorModel.js";
-import userBranchModel from "./userBranchModel.js";
 import activityModel from "./activityModel.js";
 import stateModel from "./stateModel.js";
 import divisionModel from "./divisionModel.js";
@@ -14,7 +13,7 @@ import talukModel from "./talukModel.js";
 import documentTypeModel from "./documentTypeModel.js";
 import designationModel from "./designationModel.js";
 import feedbackModel from "./feedbackModel.js";
-import userStateToBranchModel from "./UserStateToBranchModel.js";
+import userStateToBranchModel from "./userStateToBranchModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -32,35 +31,35 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
 })();
 
 const models = {
-  Users: userModel(sequelize, DataTypes),
-  Roles: roleModel(sequelize, DataTypes),
-  Branch: branchModel(sequelize, DataTypes),
-  Document: documentsModel(sequelize, DataTypes),
-  Vendor: vendorModel(sequelize, DataTypes),
-  UserBranch: userBranchModel(sequelize, DataTypes),
   Activity: activityModel(sequelize, DataTypes),
-  State: stateModel(sequelize, DataTypes),
-  Division: divisionModel(sequelize, DataTypes),
-  Taluk: talukModel(sequelize, DataTypes),
-  District: districtModel(sequelize, DataTypes),
-  DocumentType: documentTypeModel(sequelize, DataTypes),
+  Branch: branchModel(sequelize, DataTypes),
   Designation: designationModel(sequelize, DataTypes),
+  District: districtModel(sequelize, DataTypes),
+  Division: divisionModel(sequelize, DataTypes),
+  Document: documentsModel(sequelize, DataTypes),
+  DocumentType: documentTypeModel(sequelize, DataTypes),
   Feedback: feedbackModel(sequelize, DataTypes),
-  UserStateToBranch: userStateToBranchModel(sequelize, DataTypes)
+  Role: roleModel(sequelize, DataTypes),
+  State: stateModel(sequelize, DataTypes),
+  Taluk: talukModel(sequelize, DataTypes),
+  User: userModel(sequelize, DataTypes),
+  UserStateToBranch: userStateToBranchModel(sequelize, DataTypes),
+  Vendor: vendorModel(sequelize, DataTypes),
 };
-  
+
 const db = {
   Sequelize,
   sequelize,
-  ...models,  // Spread all models into db object
+  ...models, // Spread all models into db object
 };
 
-sequelize.sync({ force: false })
+sequelize
+  .sync({ force: false })
   .then(() => {
     console.log("Database synced successfully.");
   })
   .catch((error) => {
     console.error("Error syncing database:", error);
-});
+  });
 
 export default db;

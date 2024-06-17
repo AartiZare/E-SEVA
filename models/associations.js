@@ -2,6 +2,9 @@ import userModel from './userModel.js';
 import branchModel from './branchModel.js';
 import userBranchModel from './userBranchModel.js';
 
+
+// TODO: Ask bapu/arti why this file? what does it do?
+
 const setupAssociations = (sequelize) => {
     const User = userModel(sequelize, sequelize.Sequelize.DataTypes);
     const Branch = branchModel(sequelize, sequelize.Sequelize.DataTypes);
