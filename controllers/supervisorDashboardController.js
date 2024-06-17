@@ -81,7 +81,7 @@ const fetchTotalEvaluation = async (req) => {
       const endDate = new Date(monthDay);
       endDate.setUTCHours(23, 59, 59, 999);
 
-      filters.created_at = { [Op.between]: [startDate, endDate] };
+      filters.createdAt = { [Op.between]: [startDate, endDate] };
     }
 
     const approvedDocuments = await documentModel.findAll({
@@ -158,7 +158,7 @@ const fetchDailyWisePageDoc = async (req) => {
     endDate.setUTCHours(23, 59, 59, 999);
 
     const filters = {
-      created_at: { [Op.between]: [startDate, endDate] },
+      createdAt: { [Op.between]: [startDate, endDate] },
       created_by: { [Op.in]: userIds },
     };
 

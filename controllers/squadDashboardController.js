@@ -83,7 +83,7 @@ const addVerificationFilter = (filters, vs) => {
 //             const endDate = new Date(monthDay);
 //             endDate.setUTCHours(23, 59, 59, 999);
 
-//             filters.created_at = {
+//             filters.createdAt = {
 //                 [Op.between]: [startDate, endDate]
 //             };
 //         }
@@ -169,7 +169,7 @@ const addVerificationFilter = (filters, vs) => {
 //         endDate.setUTCHours(23, 59, 59, 999);
 
 //         const filters = {
-//             created_at: {
+//             createdAt: {
 //                 [Op.between]: [startDate, endDate]
 //             },
 //             created_by: {
@@ -361,7 +361,7 @@ export const fetchTotalEvaluation = async (req) => {
       const endDate = new Date(monthDay);
       endDate.setUTCHours(23, 59, 59, 999);
 
-      filters.created_at = {
+      filters.createdAt = {
         [Op.between]: [startDate, endDate],
       };
     }
@@ -441,7 +441,7 @@ export const fetchDailyWisePageDoc = async (req) => {
     endDate.setUTCHours(23, 59, 59, 999);
 
     const filters = {
-      created_at: {
+      createdAt: {
         [Op.between]: [startDate, endDate],
       },
       created_by: {

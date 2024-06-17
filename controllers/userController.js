@@ -470,7 +470,7 @@ export const getAll = catchAsync(async (req, res) => {
       where: filter,
       offset: offset,
       limit: limit,
-      order: [["created_at", "DESC"]],
+      order: [["createdAt", "DESC"]],
       include: [
         {
           model: roleModel,
@@ -775,7 +775,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 
 //         const users = await userModel.findAll({
 //             where: filter,
-//             order: [['created_at', 'DESC']]
+//             order: [['createdAt', 'DESC']]
 //         });
 
 //         return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
@@ -849,7 +849,7 @@ export const getMyTeamUserList = catchAsync(async (req, res, next) => {
 
     const users = await userModel.findAll({
       where: filter,
-      order: [["created_at", "DESC"]],
+      order: [["createdAt", "DESC"]],
     });
 
     return res.send({

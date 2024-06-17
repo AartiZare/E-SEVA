@@ -46,7 +46,7 @@ export const getFeedbackList = catchAsync(async (req, res, next) => {
         where: filter,
         offset,
         limit,
-        order: [["created_at", "DESC"]],
+        order: [["createdAt", "DESC"]],
       });
 
     const totalPages = Math.ceil(totalCount / limit);
