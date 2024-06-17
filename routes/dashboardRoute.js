@@ -4,7 +4,10 @@ import auth from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.route("/").get(auth(), dashboardController.fetchAllUserData);
+router
+  .route("/")
+  // Dashboard
+  .get(auth(), dashboardController.fetchAllUserData);
 
 // router
 //     .route('/fetchRecords')

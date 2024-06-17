@@ -6,13 +6,18 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(documentTypeController.createDocumentType) // Create a new document type
-  .get(documentTypeController.getDocumentTypes); // Get all document types
+  // Create a new document type
+  .post(documentTypeController.createDocumentType)
+  // Get all document types
+  .get(documentTypeController.getDocumentTypes);
 
 router
   .route("/:id")
-  .get(documentTypeController.getDocumentTypeById) // Get a document type by ID
-  .put(documentTypeController.updateDocumentType) // Update a document type by ID
-  .delete(documentTypeController.deleteDocumentType); // Delete a document type by ID
+  // Get a document type by ID
+  .get(documentTypeController.getDocumentTypeById)
+  // Update a document type by ID
+  .put(documentTypeController.updateDocumentType)
+  // Delete a document type by ID
+  .delete(documentTypeController.deleteDocumentType);
 
 export default router;

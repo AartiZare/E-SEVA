@@ -8,15 +8,23 @@ const router = express.Router();
 
 router
   .route("/")
+  // Create a new branch
   .post(
     auth(),
     validate(branchValidation.createBranch),
     branchController.createBranch
   )
+  // Get all branches
   .get(branchController.getAllBranches);
 
-router.route("/assign-branch").post(branchController.assignBranchToUser); // assign branch to user with userId and branchId which is PK in their own table
+router
+  .route("/assign-branch")
+  // assign branch to user
+  .post(branchController.assignBranchToUser); // assign branch to user with userId and branchId which is PK in their own table
 
-router.route("/user/branches").get(auth(), branchController.listBranchesByUser);
+router
+  .route("/user/branches")
+  // Get all branches by user
+  .get(auth(), branchController.listBranchesByUser);
 
 export default router;

@@ -7,6 +7,8 @@ const router = express.Router();
 
 router
   .route("/")
+  // Create a new role
   .post(validate(roleValidation.create), roleController.create)
+  // Get all roles
   .get(validate(roleValidation.getAllRoles), roleController.getAllRole);
 export default router;

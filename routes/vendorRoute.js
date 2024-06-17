@@ -9,10 +9,13 @@ const router = express.Router();
 
 router
   .route("/")
+  // Create a new vendor
   .post(
     upload.single("profile_image"),
     validate(vendorValidation.createVendor),
     vendorController.createVendor
   )
+  // Get all vendors
   .get(vendorController.getAllVendors);
+
 export default router;

@@ -5,13 +5,18 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(designationController.createDesignation) // Create a new designation
-  .get(designationController.getDesignations); // Get all designations
+  // Create a new designation
+  .post(designationController.createDesignation)
+  // Get all designations
+  .get(designationController.getDesignations);
 
 router
   .route("/:id")
-  .get(designationController.getDesignationById) // Get a designation by ID
-  .put(designationController.updateDesignation) // Update a designation by ID
-  .delete(designationController.deleteDesignation); // Delete a designation by ID
+  // Get a designation by ID
+  .get(designationController.getDesignationById)
+  // Update a designation by ID
+  .put(designationController.updateDesignation)
+  // Delete a designation by ID
+  .delete(designationController.deleteDesignation);
 
 export default router;

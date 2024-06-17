@@ -6,7 +6,9 @@ const router = express.Router();
 
 router
   .route("/")
+  // Create a new feedback
   .post(auth(), feedbackController.create)
+  // Get all feedbacks
   .get(auth(), feedbackController.getFeedbackList);
 
 export default router;

@@ -26,6 +26,7 @@ const router = express.Router();
 
 router
   .route("/dashboard")
+  // Get all data for squad dashboard
   .get(auth(), squadController.isSquad, squadController.fetchAllData);
 
 export default router;

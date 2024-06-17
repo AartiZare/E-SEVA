@@ -26,6 +26,7 @@ const router = express.Router();
 
 router
   .route("/users")
+  // Get all users for branch
   .get(
     auth(),
     supervisorController.isSupervisor,
@@ -34,6 +35,7 @@ router
 
 router
   .route("/dashboard")
+  // Get all data for supervisor dashboard
   .get(
     auth(),
     supervisorController.isSupervisor,

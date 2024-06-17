@@ -5,13 +5,18 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(stateController.createState) // Create a new state
-  .get(stateController.getState); // Get all states
+  // Create a new state
+  .post(stateController.createState)
+  // Get all states
+  .get(stateController.getState);
 
 router
   .route("/:id")
-  .get(stateController.getStateById) // Get a state by ID
-  .put(stateController.updateState) // Update a state by ID
-  .delete(stateController.deleteState); // Delete a state by ID
+  // Get a state by ID
+  .get(stateController.getStateById)
+  // Update a state by ID
+  .put(stateController.updateState)
+  // Delete a state by ID
+  .delete(stateController.deleteState);
 
 export default router;

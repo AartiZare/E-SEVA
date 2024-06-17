@@ -5,15 +5,23 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(divisionController.createDivision) // Create a new division
-  .get(divisionController.getDivision); // Get all divisions
+  // Create a new division
+  .post(divisionController.createDivision)
+  // Get all divisions
+  .get(divisionController.getDivision);
 
 router
   .route("/:id")
-  .get(divisionController.getDivisionById) // Get a division by ID
-  .put(divisionController.updateDivision) // Update a division by ID
-  .delete(divisionController.deleteDivision); // Delete a division by ID
+  // Get a division by ID
+  .get(divisionController.getDivisionById)
+  // Update a division by ID
+  .put(divisionController.updateDivision)
+  // Delete a division by ID
+  .delete(divisionController.deleteDivision);
 
-router.route("/state/:stateId").get(divisionController.getDivisionByStateId);
+router
+  .route("/state/:stateId")
+  // Get a division by state ID
+  .get(divisionController.getDivisionByStateId);
 
 export default router;

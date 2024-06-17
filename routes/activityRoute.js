@@ -4,6 +4,9 @@ import auth from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.route("/").get(auth(), activityController.userActivityList);
+router
+  .route("/")
+  // User Activity List
+  .get(auth(), activityController.userActivityList);
 
 export default router;

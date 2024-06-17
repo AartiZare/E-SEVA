@@ -7,40 +7,67 @@ import upload from "../middlewares/multer.js";
 
 const router = express.Router();
 
-router.route("/forgot_password").post(userController.forgotPassword);
+router
+  .route("/forgot_password")
+  // forgot password
+  .post(userController.forgotPassword);
 
-router.route("/reset_password").post(userController.resetPassword);
+router
+  .route("/reset_password")
+  // reset password
+  .post(userController.resetPassword);
 
-router.route("/set-password").post(userController.set_password);
+router
+  .route("/set-password")
+  // set password
+  .post(userController.set_password);
 
-router.route("/verify_OTP").post(userController.verifyOTP);
+router
+  .route("/verify_OTP")
+  // verify OTP
+  .post(userController.verifyOTP);
 
-router.route("/myTeamUserList").get(auth(), userController.getMyTeamUserList);
+router
+  .route("/myTeamUserList")
+  // get my team user list
+  .get(auth(), userController.getMyTeamUserList);
 
 router
   .route("/")
+  // Create a new user
   .post(
     auth(),
     upload.single("profile_image"),
     validate(userValidation.createUser),
     userController.create
   )
+  // Get all users
   .get(auth(), validate(userValidation.getAllUsers), userController.getAll);
 
 router
   .route("/:id")
+  // Get a user by ID
   .put(
     upload.single("profile_image"),
     validate(userValidation.updateUser),
     userController.update
   )
+  // Update a user by ID
   .get(validate(userValidation.getOneUser), userController.getUserById);
 
 router
   .route("/login")
+  // Login
   .post(validate(userValidation.login), userController.login);
 
-router.route("/activate/:userId").put(userController.activateUser);
+router
+  .route("/activate/:userId")
+  // Activate user
+  .put(userController.activateUser);
 
-router.route("/deactivate/:userId").put(userController.deactivateUser);
+router
+  .route("/deactivate/:userId")
+  // Deactivate user
+  .put(userController.deactivateUser);
+
 export default router;
