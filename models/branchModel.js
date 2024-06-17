@@ -35,7 +35,7 @@ const branchModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "users", // name of the Users table
+          model: "users", // name of the User table
           key: "id",
         },
       },

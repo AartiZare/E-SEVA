@@ -41,7 +41,7 @@ const documentsModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "users", // Name of the Users table
+          model: "users", // Name of the User table
           key: "id",
         },
       },
@@ -49,7 +49,7 @@ const documentsModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "users", // Name of the Users table
+          model: "users", // Name of the User table
           key: "id",
         },
       },

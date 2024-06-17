@@ -1,7 +1,7 @@
 // import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { signJWT } from "../utils/sign_jwt.js";
 // import db from '../models/index.js';
-// const userModel = db.Users;
+// const userModel = db.User;
 
 // // Replace these values with your actual secret and issuer
 // export const secretKey = 'time-tracker';
@@ -44,7 +44,7 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import jwt from "jsonwebtoken";
 import db from "../models/index.js";
 
-const userModel = db.Users; // Adjust according to your setup
+const userModel = db.User; // Adjust according to your setup
 
 export const secretKey = "time-tracker";
 const issuer = "TIME_TRACKER";

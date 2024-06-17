@@ -6,7 +6,7 @@ import db from "../models/index.js";
 import { parseISO, startOfDay, endOfDay } from "date-fns";
 
 const documentModel = db.Document;
-const userModel = db.Users;
+const userModel = db.User;
 const activityModel = db.Activity;
 const verificationStatus = { p: 0, a: 1, r: 2 };
 

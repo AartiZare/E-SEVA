@@ -729,19 +729,19 @@ export const webDashboard = catchAsync(async (req, res, next) => {
       };
     } else if (req.user.roleId === 9) {
       // ARCS
-      const userCreatedDRs = await db.Users.findAll({
+      const userCreatedDRs = await db.User.findAll({
         where: {
           created_by: req.user.id,
         },
         attributes: ["id"],
       });
-      const userCreatedARs = await db.Users.findAll({
+      const userCreatedARs = await db.User.findAll({
         where: {
           created_by: userCreatedDRs.map((dr) => dr.id),
         },
         attributes: ["id"],
       });
-      const userBranches = await db.Users.findAll({
+      const userBranches = await db.User.findAll({
         where: {
           created_by: userCreatedARs.map((ar) => ar.id),
         },
@@ -753,13 +753,13 @@ export const webDashboard = catchAsync(async (req, res, next) => {
       };
     } else if (req.user.roleId === 7) {
       // Deputy Registrar
-      const userCreatedARs = await db.Users.findAll({
+      const userCreatedARs = await db.User.findAll({
         where: {
           created_by: req.user.id,
         },
         attributes: ["id"],
       });
-      const userBranches = await db.Users.findAll({
+      const userBranches = await db.User.findAll({
         where: {
           created_by: userCreatedARs.map((ar) => ar.id),
         },
@@ -771,7 +771,7 @@ export const webDashboard = catchAsync(async (req, res, next) => {
       };
     } else if (req.user.roleId === 6) {
       // Assistant Registrar
-      const userBranches = await db.Users.findAll({
+      const userBranches = await db.User.findAll({
         where: {
           created_by: req.user.id,
         },
