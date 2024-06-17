@@ -175,27 +175,44 @@ export const create = catchAsync(async (req, res, next) => {
             }
         } else if (body.roleId === 2) {
             // Supervisor
-            userStateToBranchData.state_id = req.user.state_id;
-            userStateToBranchData.division_id = req.user.division_id;
-            userStateToBranchData.district_id = req.user.district_id;
-            userStateToBranchData.taluk_id = req.user.taluk_id;
             // Support for multiple branches
             if (Array.isArray(body.branch_id)) {
                 body.branch_id.forEach(async (branchId) => {
                     let _userStateToBranchData = { ...userStateToBranchData };
+                    const branchTaluk = await db.Branch.findOne({ where: { id: branchId }});
+                    const talukDistrict = await db.Taluk.findOne({ where: { id: branchTaluk.talukId }});
+                    const districtDivision = await db.District.findOne({ where: { id: talukDistrict.districtId }});
+                    const divisionState = await db.Division.findOne({ where: { id: districtDivision.divisionId }});
+                    _userStateToBranchData.taluk_id = branchTaluk.talukId;
+                    _userStateToBranchData.district_id = talukDistrict.districtId;
+                    _userStateToBranchData.division_id = districtDivision.divisionId;
+                    _userStateToBranchData.state_id = divisionState.stateId;
                     _userStateToBranchData.branch_id = branchId;
                     const createdUserEntry = await userStateToBranchModel.create(_userStateToBranchData);
                 });
             } else {
                 userStateToBranchData.branch_id = body.branch_id;
+                const branchTaluk = await db.Branch.findOne({ where: { id: body.branch_id }});
+                const talukDistrict = await db.Taluk.findOne({ where: { id: branchTaluk.talukId }});
+                const districtDivision = await db.District.findOne({ where: { id: talukDistrict.districtId }});
+                const divisionState = await db.Division.findOne({ where: { id: districtDivision.divisionId }});
+                userStateToBranchData.taluk_id = branchTaluk.talukId;
+                userStateToBranchData.district_id = talukDistrict.districtId;
+                userStateToBranchData.division_id = districtDivision.divisionId;
+                userStateToBranchData.state_id = divisionState.stateId;
                 const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
             }
         } else if (body.roleId === 4) {
             // User
-            userStateToBranchData.division_id = body.division_id;
-            userStateToBranchData.district_id = body.district_id;
-            userStateToBranchData.taluk_id = body.taluk_id;
             userStateToBranchData.branch_id = body.branch_id;
+            const branchTaluk = await db.Branch.findOne({ where: { id: body.branch_id }});
+            const talukDistrict = await db.Taluk.findOne({ where: { id: branchTaluk.talukId }});
+            const districtDivision = await db.District.findOne({ where: { id: talukDistrict.districtId }});
+            const divisionState = await db.Division.findOne({ where: { id: districtDivision.divisionId }});
+            userStateToBranchData.taluk_id = branchTaluk.talukId;
+            userStateToBranchData.district_id = talukDistrict.districtId;
+            userStateToBranchData.division_id = districtDivision.divisionId;
+            userStateToBranchData.state_id = divisionState.stateId;
             const createdUserEntry = await userStateToBranchModel.create(userStateToBranchData);
         }
 
