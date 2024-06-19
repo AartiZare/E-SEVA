@@ -603,12 +603,6 @@ export const updateDocument = catchAsync(async (req, res, next) => {
     //   }${path.extname(file.originalname)}`;
     // }
 
-    if (file) {
-      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
-        body.branch_name
-      }/${body.document_reg_no}${path.extname(file.originalname)}`;
-    }
-
     // Update document data
     const documentData = {
       ...updatedData,
@@ -616,6 +610,12 @@ export const updateDocument = catchAsync(async (req, res, next) => {
       squad_verification_status: 0, // Reseting to make it as a fresh verification
       final_verification_status: 0, // Reseting to make it as a fresh verification
     };
+
+    if (file) {
+      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
+        body.branch_name
+      }/${body.document_reg_no}${path.extname(file.originalname)}`;
+    }
     // if (documentFileUrl) {
     //   documentData.image_pdf = documentFileUrl;
     // }
