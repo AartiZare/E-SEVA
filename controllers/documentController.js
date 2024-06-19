@@ -613,12 +613,9 @@ export const updateDocument = catchAsync(async (req, res, next) => {
 
     if (file) {
       documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
-        body.branch_name
-      }/${body.document_reg_no}${path.extname(file.originalname)}`;
+        req.body.branch_name
+      }/${req.body.document_reg_no}${path.extname(file.originalname)}`;
     }
-    // if (documentFileUrl) {
-    //   documentData.image_pdf = documentFileUrl;
-    // }
 
     // Update the document in the database
     const rowsUpdated = await documentModel.update(documentData, {
