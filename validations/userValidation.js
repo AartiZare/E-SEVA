@@ -3,7 +3,7 @@ import Joi from "joi";
 export const createUser = {
   body: Joi.object({
     full_name: Joi.string().required(),
-    email: Joi.string().email().required(),
+    email: Joi.string().required(),
     contact_number: Joi.string().required(),
     alternate_contact_number: Joi.string().allow(""),
     pan_number: Joi.string().required(),
@@ -43,7 +43,7 @@ export const updateUser = {
   }),
   body: Joi.object({
     full_name: Joi.string().allow(""),
-    email: Joi.string().email().allow(""),
+    email: Joi.string().allow(""),
     contact_number: Joi.string().required(),
     alternate_contact_number: Joi.string().allow(""),
     pan_number: Joi.string().allow(""),
