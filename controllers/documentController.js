@@ -65,7 +65,6 @@ export const createDocument = catchAsync(async (req, res, next) => {
       document_type: body.document_type,
       created_by: userId,
       updated_by: userId,
-      branch: body.branch,
     };
 
     // const id = crypto.randomBytes(16).toString('hex')
@@ -75,18 +74,24 @@ export const createDocument = catchAsync(async (req, res, next) => {
       }/${body.document_reg_no}${path.extname(file.originalname)}`;
     }
 
-    // india standard time
-    const todayDMY = new Date().toLocaleDateString("en-IN");
+    // india standard time. date format: dd-mm-yyyy
+    const todayDMY = new Date().toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
     // find how many are inserted for today date
     const count = await documentModel.count({
       where: {
         createdAt: {
-          [Op.gte]: new Date(todayDMY),
+          [Op.gte]: new Date(new Date().setHours(0, 0, 0)),
+          [Op.lt]: new Date(new Date().setHours(23, 59, 59)),
         },
       },
     });
 
     // create unique id
+    // console.log("count", count);
     documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${
       count + 1
     }`;
