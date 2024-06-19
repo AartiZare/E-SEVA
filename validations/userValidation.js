@@ -23,11 +23,12 @@ export const createUser = {
     bank_branch: Joi.array().items(Joi.number()).allow(null, ""), // Changed to optional
     created_by: Joi.number().integer(),
     status: Joi.boolean(),
-    vendor_id: Joi.number().allow(""),
+    vendor_id: Joi.allow(""),
     state_id: Joi.number().integer().allow(""),
     taluk_id: Joi.number().integer().allow(""),
     district_id: Joi.number().integer().allow(""),
     division_id: Joi.number().integer().allow(""),
+    branch_id: Joi.number().integer().allow(""),
   }),
   file: Joi.object().keys({
     profile_image: Joi.string().allow(""),
