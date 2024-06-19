@@ -11,14 +11,14 @@ const talukModel = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      districtId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "districts",
-          key: "id",
-        },
-      },
+      // districtId: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: false,
+      //   references: {
+      //     model: "districts",
+      //     key: "id",
+      //   },
+      // },
       status: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
