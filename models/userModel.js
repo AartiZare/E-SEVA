@@ -106,7 +106,7 @@ const userModel = (sequelize, DataTypes) => {
       },
     },
     {
-      timestamps: false,
+      timestamps: true,
       tableName: "tbl_users",
     }
   );

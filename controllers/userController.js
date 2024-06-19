@@ -200,10 +200,10 @@ export const create = catchAsync(async (req, res, next) => {
       }
     } else if (body.role_id === 3) {
       // Squad
-      userStateToBranchData.state_id = req.user.state_id;
-      userStateToBranchData.division_id = req.user.division_id;
-      userStateToBranchData.district_id = req.user.district_id;
-      userStateToBranchData.taluk_id = req.user.taluk_id;
+      userStateToBranchData.state_id = body.state_id;
+      userStateToBranchData.division_id = body.division_id;
+      userStateToBranchData.district_id = body.district_id;
+      userStateToBranchData.taluk_id = body.taluk_id;
       // Support for multiple branches
       if (Array.isArray(body.branch_id)) {
         body.branch_id.forEach(async (branchId) => {

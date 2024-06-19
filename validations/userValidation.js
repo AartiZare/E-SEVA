@@ -24,6 +24,13 @@ export const createUser = {
     created_by: Joi.number().integer(),
     status: Joi.boolean(),
     vendor_id: Joi.allow(""),
+
+    // Other model fields
+    state_id: Joi.allow(""),
+    division_id: Joi.allow(""),
+    district_id: Joi.allow(""),
+    taluk_id: Joi.allow(""),
+    branch_id: Joi.allow(""),
   }),
   file: Joi.object().keys({
     profile_image: Joi.string().allow(""),
@@ -54,6 +61,13 @@ export const updateUser = {
     bank_name: Joi.string().allow(""),
     role_id: Joi.number().integer().allow(null),
     bank_branch: Joi.string().allow(""),
+
+    // Other model fields
+    state_id: Joi.allow(""),
+    division_id: Joi.allow(""),
+    district_id: Joi.allow(""),
+    taluk_id: Joi.allow(""),
+    branch_id: Joi.allow(""),
   }),
   file: Joi.object().keys({
     profile_image: Joi.string().allow(""),

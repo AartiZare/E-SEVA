@@ -21,7 +21,7 @@ const designationModel = (sequelize, DataTypes) => {
       },
     },
     {
-      timestamps: false,
+      timestamps: true,
       tableName: "tbl_designations",
     }
   );

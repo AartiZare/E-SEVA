@@ -11,7 +11,7 @@ const talukModel = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      districtId: {
+      district_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
