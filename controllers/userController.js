@@ -872,7 +872,6 @@ export const activateUser = catchAsync(async (req, res, next) => {
     const user = await userModel.findOne({
       where: {
         id: userId,
-        status: false,
       },
     });
 
@@ -903,7 +902,6 @@ export const deactivateUser = catchAsync(async (req, res, next) => {
     const user = await userModel.findOne({
       where: {
         id: userId,
-        status: true,
       },
     });
 
