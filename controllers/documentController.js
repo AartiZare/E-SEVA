@@ -23,7 +23,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     console.log("Document body", body);
 
-    const userRole = await roleModel.findByPk(req.user.roleId);
+    const userRole = await roleModel.findByPk(req.user.role_id);
     const isDocumentExist = await documentModel.findOne({
       where: {
         [Op.and]: [
@@ -46,9 +46,9 @@ export const createDocument = catchAsync(async (req, res, next) => {
       document_name: body.document_name,
       document_reg_no: body.document_reg_no,
       // TODO: Ask Aarti, why these are coming from the client, if they can be set it to default values at document creation time.
-      supervisor_verification_status: body.supervisor_verification_status,
-      squad_verification_status: body.squad_verification_status,
-      final_verification_status: body.final_verification_status, // assuming this field should also be included
+      supervisor_verification_status: 0,
+      squad_verification_status: 0,
+      final_verification_status: 0,
       document_reg_date: body.document_reg_date,
       document_renewal_date: body.document_renewal_date,
       total_no_of_page: body.total_no_of_page,
@@ -85,7 +85,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       activity_title: "Document Created",
       activity_description: `Document ${newDocument.document_name} with registration number ${newDocument.document_reg_no} has been uploaded. Document Unique ID: ${documentUniqueId}`,
       activity_created_at: newDocument.createdAt,
-      activity_created_by_id: userId,
+      activity_created_by_id: req.user.id,
       activity_created_by_type: userRole.name,
       activity_document_id: newDocument.id,
     };
