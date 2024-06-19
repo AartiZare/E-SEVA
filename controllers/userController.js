@@ -91,13 +91,17 @@ export const create = catchAsync(async (req, res, next) => {
 
     const resetPasswordTokenExpiry = new Date(Date.now() + 10 * 60 * 60 * 1000); // 10 hours from now
 
-
     let hashedPassword;
     if (body.password) {
       hashedPassword = await bcrypt.hash(body.password, saltRounds);
     }
 
-    const userData = { ...body, resetPasswordToken, resetPasswordTokenExpiry, status: true };
+    const userData = {
+      ...body,
+      resetPasswordToken,
+      resetPasswordTokenExpiry,
+      status: true,
+    };
     if (hashedPassword) {
       userData.password = hashedPassword;
       userData.status = true;
@@ -340,8 +344,8 @@ export const set_password = catchAsync(async (req, res, next) => {
       where: {
         email,
         resetPasswordToken: token,
-        resetPasswordTokenExpiry: { [Op.gt]: new Date() }
-      }
+        resetPasswordTokenExpiry: { [Op.gt]: new Date() },
+      },
     });
 
     if (!user) {
@@ -349,12 +353,16 @@ export const set_password = catchAsync(async (req, res, next) => {
         where: {
           email,
           resetPasswordToken: token,
-          resetPasswordTokenExpiry: { [Op.gt]: new Date() }
-        }
+          resetPasswordTokenExpiry: { [Op.gt]: new Date() },
+        },
       });
       if (!user) {
-        return res.status(404).send("The password set link has expired. Please try resetting your password again.");
-      }           
+        return res
+          .status(404)
+          .send(
+            "The password set link has expired. Please try resetting your password again."
+          );
+      }
     }
 
     // Hash the new password and update user
@@ -535,7 +543,10 @@ export const update = catchAsync(async (req, res, next) => {
     let profileImageUrl;
     if (req.file) {
       // profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
-      profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
+      profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${
+        req.body.contact_number
+      }${path.extname(req.file.originalname)}`;
+      // profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${file.originalname}`;
     }
 
     const userData = { ...updatedData };
@@ -684,7 +695,9 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 
     // Check if an OTP has already been generated and not expired
     if (user.reset_otp && user.reset_otp_expiration > new Date()) {
-      return res.status(400).send({ message: "OTP already sent. Please wait before requesting again." });
+      return res.status(400).send({
+        message: "OTP already sent. Please wait before requesting again.",
+      });
     }
 
     const otp = generateOTP();
@@ -722,7 +735,11 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
     }
 
     // Check if the OTP is expired
-    if (!user.reset_otp || user.reset_otp !== otp || user.reset_otp_expiration < new Date()) {
+    if (
+      !user.reset_otp ||
+      user.reset_otp !== otp ||
+      user.reset_otp_expiration < new Date()
+    ) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
