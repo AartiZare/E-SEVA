@@ -603,6 +603,12 @@ export const updateDocument = catchAsync(async (req, res, next) => {
     //   }${path.extname(file.originalname)}`;
     // }
 
+    if (file) {
+      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
+        body.branch_name
+      }/${body.document_reg_no}${path.extname(file.originalname)}`;
+    }
+
     // Update document data
     const documentData = {
       ...updatedData,
