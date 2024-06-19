@@ -74,6 +74,21 @@ export const createDocument = catchAsync(async (req, res, next) => {
       }/${body.document_reg_no}${path.extname(file.originalname)}`;
     }
 
+    // india standard time
+    const todayDMY = new Date().toLocaleDateString("en-IN");
+    // find how many are inserted for today date
+    const count = await documentModel.count({
+      where: {
+        createdAt: {
+          [Op.gte]: new Date(todayDMY),
+        },
+      },
+    });
+
+    // create unique id
+    documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${
+      count + 1
+    }`;
     const newDocument = await documentModel.create(documentData);
 
     // Create activity entry after creating the document
