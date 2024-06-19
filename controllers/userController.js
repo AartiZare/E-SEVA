@@ -880,7 +880,7 @@ export const activateUser = catchAsync(async (req, res, next) => {
       return next(new ApiError(httpStatus.NOT_FOUND, "User not found"));
     }
 
-    user.status = true;
+    user.is_active = true;
     await user.save();
 
     return res.send({
@@ -911,7 +911,7 @@ export const deactivateUser = catchAsync(async (req, res, next) => {
       return next(new ApiError(httpStatus.NOT_FOUND, "User not found"));
     }
 
-    user.status = false;
+    user.is_active = false;
     await user.save();
 
     return res.send({
