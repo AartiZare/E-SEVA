@@ -89,6 +89,14 @@ const vendorModel = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      resetPasswordToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      resetPasswordTokenExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     { timestamps: true, tableName: "tbl_vendors" }
   );
