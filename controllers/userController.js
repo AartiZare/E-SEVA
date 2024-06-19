@@ -89,12 +89,15 @@ export const create = catchAsync(async (req, res, next) => {
       expiresIn: "10h",
     });
 
+    const resetPasswordTokenExpiry = new Date(Date.now() + 10 * 60 * 60 * 1000); // 10 hours from now
+
+
     let hashedPassword;
     if (body.password) {
       hashedPassword = await bcrypt.hash(body.password, saltRounds);
     }
 
-    const userData = { ...body, resetPasswordToken, status: true };
+    const userData = { ...body, resetPasswordToken, resetPasswordTokenExpiry, status: true };
     if (hashedPassword) {
       userData.password = hashedPassword;
       userData.status = true;
@@ -328,20 +331,37 @@ export const set_password = catchAsync(async (req, res, next) => {
       return res.status(400).send("Password is required");
     }
 
+    // Decode the token
     const decodedToken = jwt.verify(token, secretKey);
     const email = decodedToken.email;
 
-    let user = await userModel.findOne({ where: { email } });
+    // Find user by email and verify token and expiry
+    let user = await userModel.findOne({
+      where: {
+        email,
+        resetPasswordToken: token,
+        resetPasswordTokenExpiry: { [Op.gt]: new Date() }
+      }
+    });
 
     if (!user) {
-      user = await vendorModel.findOne({ where: { email } });
+      user = await vendorModel.findOne({
+        where: {
+          email,
+          resetPasswordToken: token,
+          resetPasswordTokenExpiry: { [Op.gt]: new Date() }
+        }
+      });
       if (!user) {
-        return res.status(404).send("User does not exist.");
-      }
+        return res.status(404).send("The password set link has expired. Please try resetting your password again.");
+      }           
     }
 
+    // Hash the new password and update user
     const encryptedUserPassword = await bcrypt.hash(password, 10);
     user.password = encryptedUserPassword;
+    user.resetPasswordToken = null; // Clear the reset token
+    user.resetPasswordTokenExpiry = null; // Clear the reset token expiry
     user.status = true;
     await user.save();
 
@@ -662,10 +682,15 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
       }
     }
 
+    // Check if an OTP has already been generated and not expired
+    if (user.reset_otp && user.reset_otp_expiration > new Date()) {
+      return res.status(400).send({ message: "OTP already sent. Please wait before requesting again." });
+    }
+
     const otp = generateOTP();
 
     user.reset_otp = otp;
-    user.reset_otp_expiration = new Date(Date.now() + 5 * 60000);
+    user.reset_otp_expiration = new Date(Date.now() + 5 * 60000); // Set OTP expiration time
     await user.save();
 
     const emailSubject = "Password Reset OTP";
@@ -696,9 +721,15 @@ export const verifyOTP = catchAsync(async (req, res, next) => {
       }
     }
 
-    if (user.reset_otp !== otp || user.reset_otp_expiration < new Date()) {
+    // Check if the OTP is expired
+    if (!user.reset_otp || user.reset_otp !== otp || user.reset_otp_expiration < new Date()) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
+
+    // Clear the OTP and expiration time after successful verification
+    user.reset_otp = null;
+    user.reset_otp_expiration = null;
+    await user.save();
 
     return res.status(200).json({ message: "OTP verified successfully" });
   } catch (error) {
@@ -734,56 +765,6 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
-
-// export const getMyTeamUserList = catchAsync(async (req, res, next) => {
-//     try {
-//         const { qFilter, search } = req.query;
-
-//         let filter = {
-//             status: true
-//         };
-
-//         const _userFilter = fillUserStateToBranchFilter(req, {});
-//         _userFilter.status = 1;
-//         const filteredUsers = await userModel.findAll({
-//             where: _userFilter,
-//             attributes: ['id']
-//         });
-//         const filteredUserIds = filteredUsers.map(user => user.id);
-//         filter.id = {
-//             [Op.in]: filteredUserIds
-//         };
-
-//         if (qFilter) {
-//             filter = {
-//                 ...filter,
-//                 ...JSON.parse(qFilter),
-//             };
-//         }
-
-//         if (search) {
-//             const searchTerm = search.trim();
-//             if (searchTerm !== '') {
-//                 filter = {
-//                     ...filter,
-//                     full_name: {
-//                         [Op.like]: `%${searchTerm}%`
-//                     }
-//                 };
-//             }
-//         }
-
-//         const users = await userModel.findAll({
-//             where: filter,
-//             order: [['createdAt', 'DESC']]
-//         });
-
-//         return res.send({ msg: "Fetched User List Successfully.", data: users, total: users.length });
-//     } catch (error) {
-//         console.log(error.toString())
-//         return res.status(500).send({ error: 'Internal Server Error',errorMessage: error.toString() });
-//     }
-// });
 
 export const getMyTeamUserList = catchAsync(async (req, res, next) => {
   try {

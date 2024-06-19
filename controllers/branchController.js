@@ -104,6 +104,33 @@ export const getAllBranches = catchAsync(async (req, res, next) => {
       branches = branches.filter(branch => talukIds.includes(branch.taluk_id));
     }
 
+    // Fetch district information for each branch
+    const talukIds = branches.map(branch => branch.taluk_id);
+    const taluks = await talukModel.findAll({
+      where: { id: { [Op.in]: talukIds } },
+    });
+    const districtIds = taluks.map(taluk => taluk.district_id);
+    const districts = await districtModel.findAll({
+      where: { id: { [Op.in]: districtIds } },
+    });
+
+    // Map district information to branches
+    const districtMap = districts.reduce((map, district) => {
+      map[district.id] = district.name;
+      return map;
+    }, {});
+
+    branches = branches.map(branch => {
+      const taluk = taluks.find(taluk => taluk.id === branch.taluk_id);
+      return {
+        ...branch.get(),
+        district: {
+          id: taluk.district_id,
+          name: districtMap[taluk.district_id],
+        },
+      };
+    });
+
     return res.send(branches);
   } catch (error) {
     console.error(error);

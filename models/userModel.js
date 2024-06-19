@@ -96,6 +96,14 @@ const userModel = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      resetPasswordToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      resetPasswordTokenExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       vendor_id: {
         type: DataTypes.INTEGER,
         allowNull: true,

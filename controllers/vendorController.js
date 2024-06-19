@@ -59,12 +59,14 @@ export const createVendor = catchAsync(async (req, res, next) => {
       expiresIn: "10h",
     });
 
+    const resetPasswordTokenExpiry = new Date(Date.now() + 10 * 60 * 60 * 1000); // 10 hours from now
+
     let profileImageUrl;
     if (req.file) {
       profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
     }
 
-    const vendorData = { ...body, resetPasswordToken };
+    const vendorData = { ...body, resetPasswordToken, resetPasswordTokenExpiry };
     if (profileImageUrl) {
       vendorData.profile_image = profileImageUrl;
     }
