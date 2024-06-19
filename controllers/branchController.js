@@ -6,6 +6,9 @@ import db from "../models/index.js";
 const branchModel = db.Branch;
 const userModel = db.User;
 const userStateToBranchModel = db.UserStateToBranch;
+const talukModel = db.Taluk;
+const divisionModel = db.Division;
+const districtModel = db.District;
 
 export const createBranch = catchAsync(async (req, res, next) => {
   try {
@@ -45,38 +48,62 @@ export const createBranch = catchAsync(async (req, res, next) => {
 
 export const getAllBranches = catchAsync(async (req, res, next) => {
   try {
-    const { qFilter, talukId } = req.query;
+    const { qFilter } = req.query;
+
     let filter = {};
 
     if (qFilter) {
-      filter = {
-        ...JSON.parse(qFilter),
-      };
+      filter = JSON.parse(qFilter);
     }
 
-    if (talukId) {
-      filter.taluk_id = talukId;
+    const { state_id, division_id, district_id, taluk_id } = filter;
+
+    let branches = await branchModel.findAll();
+
+    // Step 2: Filter by taluk_id if provided
+    if (taluk_id) {
+      branches = branches.filter(branch => branch.taluk_id === parseInt(taluk_id));
     }
 
-    let page = parseInt(req.query.page) || 1;
-    let pageSize = parseInt(req.query.pageSize) || 10;
-
-    if (req.query.search) {
-      const searchTerm = req.query.search.trim();
-      if (searchTerm !== "") {
-        filter.name = {
-          [Op.like]: `%${searchTerm}%`,
-        };
-      }
+    // Step 3: Filter by district_id if provided
+    if (district_id) {
+      const taluks = await talukModel.findAll({
+        where: { district_id },
+      });
+      const talukIds = taluks.map(taluk => taluk.id);
+      branches = branches.filter(branch => talukIds.includes(branch.taluk_id));
     }
 
-    const query = {
-      where: filter,
-      limit: pageSize,
-      offset: (page - 1) * pageSize,
-    };
+    // Step 4: Filter by division_id if provided
+    if (division_id) {
+      const districts = await districtModel.findAll({
+        where: { division_id },
+      });
+      const districtIds = districts.map(district => district.id);
+      const taluks = await talukModel.findAll({
+        where: { district_id: { [Op.in]: districtIds } },
+      });
+      const talukIds = taluks.map(taluk => taluk.id);
+      branches = branches.filter(branch => talukIds.includes(branch.taluk_id));
+    }
 
-    const branches = await branchModel.findAll(query);
+    // Step 5: Filter by state_id if provided
+    if (state_id) {
+      const divisions = await divisionModel.findAll({
+        where: { state_id },
+      });
+      const divisionIds = divisions.map(division => division.id);
+      const districts = await districtModel.findAll({
+        where: { division_id: { [Op.in]: divisionIds } },
+      });
+      const districtIds = districts.map(district => district.id);
+      const taluks = await talukModel.findAll({
+        where: { district_id: { [Op.in]: districtIds } },
+      });
+      const talukIds = taluks.map(taluk => taluk.id);
+      branches = branches.filter(branch => talukIds.includes(branch.taluk_id));
+    }
+
     return res.send(branches);
   } catch (error) {
     console.error(error);
