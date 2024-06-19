@@ -574,7 +574,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
     const userId = req.user.id;
     const documentId = req.params.documentId;
     const updatedData = req.body;
-    // const { file } = req;
+    const { file } = req;
 
     const document = await documentModel.findOne({
       where: {
