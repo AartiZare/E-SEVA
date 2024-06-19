@@ -59,6 +59,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
         email: person.email,
         designation: person.designation,
       })),
+      branch_id: body.branch_id,
       total_no_of_date: body.total_no_of_date,
       document_unique_id: body.document_unique_id,
       document_type: body.document_type,
