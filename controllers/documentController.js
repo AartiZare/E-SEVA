@@ -574,17 +574,15 @@ export const updateDocument = catchAsync(async (req, res, next) => {
     const userId = req.user.id;
     const documentId = req.params.documentId;
     const updatedData = req.body;
-    const { file } = req;
+    // const { file } = req;
 
-    // Find the document created by the user
     const document = await documentModel.findOne({
       where: {
-        created_by: userId,
         id: documentId,
       },
     });
 
-    const branch = await branchModel.findByPk(document.branch);
+    // const branch = await branchModel.findByPk(document.branch);
     // If document not found, return error
     if (!document) {
       return next(
@@ -596,7 +594,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
     }
 
     // Handle file upload if present
-    let documentFileUrl;
+    // let documentFileUrl;
     // Not required to update the file. its always the same name and same extension
     // if (req.file) {
     //   // documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
@@ -619,25 +617,13 @@ export const updateDocument = catchAsync(async (req, res, next) => {
     // Update the document in the database
     const rowsUpdated = await documentModel.update(documentData, {
       where: {
-        created_by: userId,
         id: documentId,
       },
     });
 
-    // If no rows were updated, return error
-    if (rowsUpdated[0] === 0) {
-      return next(
-        new ApiError(
-          httpStatus.BAD_REQUEST,
-          `Document with id ${documentId} doesn't exist or no changes were made`
-        )
-      );
-    }
-
     // Fetch the updated document
     const updatedDocument = await documentModel.findOne({
       where: {
-        created_by: userId,
         id: documentId,
       },
     });
