@@ -250,7 +250,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.squad_verification_status = 0;
     } else if (user.role_id === 2) {
       // Supervisor
@@ -261,7 +261,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.supervisor_verification_status = 0;
     } else if (user.role_id === 4) {
       // User
@@ -272,7 +272,8 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.final_verification_status = 0;
     } else if (user.role_id === 8) {
       // RCS
@@ -311,7 +312,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 0;
     } else if (user.role_id === 9) {
       // ARCS
@@ -336,7 +337,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 0;
     } else if (user.role_id === 7) {
       // Deputy Registrar
@@ -361,7 +362,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 0;
     } else if (user.role_id === 6) {
       // Assistant Registrar
@@ -379,7 +380,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 0;
     } else if (user.role_id === 10) {
       // Branch Registrar
@@ -390,10 +391,9 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.final_verification_status = 0;
     }
-
     pendingDoc = await documentModel.findAll({ where: filter });
 
     return res.send({ status: true, data: pendingDoc });
@@ -422,7 +422,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.squad_verification_status = 2;
     } else if (user.role_id === 2) {
       // Supervisor
@@ -432,7 +432,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.supervisor_verification_status = 2;
     } else if (user.role_id === 4) {
       // User
@@ -442,7 +442,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter[Op.or] = {
         supervisor_verification_status: 2,
         squad_verification_status: 2,
@@ -479,7 +479,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 2;
     } else if (user.role_id === 9) {
       // ARCS
@@ -501,7 +501,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 2;
     } else if (user.role_id === 7) {
       // Deputy Registrar
@@ -523,7 +523,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 2;
     } else if (user.role_id === 6) {
       // Assistant Registrar
@@ -539,7 +539,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
       filter.final_verification_status = 2;
     } else if (user.role_id === 10) {
       // Branch Registrar
@@ -549,7 +549,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.final_verification_status = 2;
     }
 
@@ -943,7 +943,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
     } else if (user.role_id === 2) {
       // Supervisor
       const _userBranches = await userStateToBranchModel.findAll({
@@ -952,7 +952,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
     } else if (user.role_id === 4) {
       // User
       const _userBranches = await userStateToBranchModel.findAll({
@@ -961,7 +961,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
     } else if (user.role_id === 8) {
       // RCS
       const _userStates = await userStateToBranchModel.findAll({
@@ -994,7 +994,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
     } else if (user.role_id === 9) {
       // ARCS
       const _userDistricts = await userStateToBranchModel.findAll({
@@ -1015,7 +1015,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
     } else if (user.role_id === 7) {
       // Deputy Registrar
       const _userDistricts = await userStateToBranchModel.findAll({
@@ -1036,7 +1036,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
     } else if (user.role_id === 6) {
       // Assistant Registrar
       const _userTaluks = await db.Taluk.findAll({
@@ -1051,7 +1051,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.id);
+      filter.branch_id = _userBranches.map((branch) => branch.id);
     } else if (user.role_id === 10) {
       // Branch Registrar
       const _userBranches = await userStateToBranchModel.findAll({
@@ -1060,7 +1060,7 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
         },
         attributes: ["branch_id"],
       });
-      filter.branch = _userBranches.map((branch) => branch.branch_id);
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
     }
 
     docList = await documentModel.findAll({ where: filter });
