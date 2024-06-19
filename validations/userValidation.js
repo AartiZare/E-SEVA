@@ -28,7 +28,7 @@ export const createUser = {
     taluk_id: Joi.number().integer().allow(""),
     district_id: Joi.number().integer().allow(""),
     division_id: Joi.number().integer().allow(""),
-    branch_id: Joi.number().integer().allow(""),
+    branch_id: Joi.array().items(Joi.number().integer().allow(null)),
   }),
   file: Joi.object().keys({
     profile_image: Joi.string().allow(""),
