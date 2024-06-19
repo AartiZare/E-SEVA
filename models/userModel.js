@@ -112,6 +112,10 @@ const userModel = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
     },
     {
       timestamps: true,
