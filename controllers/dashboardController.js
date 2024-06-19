@@ -13,6 +13,7 @@ import db from "../models/index.js";
 
 const documentModel = db.Document;
 const activityModel = db.Activity;
+const userStateToBranchModel = db.UserStateToBranch;
 
 // Function to fetch all records without filters
 // export const fetchAllUserRecords = catchAsync(async (req, res) => {
@@ -173,7 +174,7 @@ const activityModel = db.Activity;
 
 const fetchUserRecords = async (req) => {
   const userId = req.user.dataValues.id;
-  const { fromDate, toDate, branch } = req.query;
+  const { fromDate, toDate, branch_id } = req.query;
 
   let filters = { created_by: userId };
 
@@ -189,9 +190,19 @@ const fetchUserRecords = async (req) => {
     };
   }
 
-  //     if (branch) {
-  //         filters.branch = branch;
+  //     if (branch_id) {
+  //         filters.branch_id = branch_id;
   //   }
+
+  const _userBranches = await userStateToBranchModel.findAll({
+    where: {
+      user_id: userId,
+      status: true,
+    },
+    attributes: ["branch_id"],
+  });
+
+  filters.branch_id = _userBranches.map((branch) => branch.branch_id);
 
   const approvedDocuments = await documentModel.findAll({
     where: {
@@ -254,6 +265,16 @@ const fetchUserDailyActivity = async (req) => {
       [Op.between]: [startDate, endDate],
     },
   };
+
+  const _userBranches = await userStateToBranchModel.findAll({
+    where: {
+      user_id: userId,
+      status: true,
+    },
+    attributes: ["branch_id"],
+  });
+
+  filters.branch_id = _userBranches.map((branch) => branch.branch_id);
 
   const approvedCount = await documentModel.count({
     where: {
