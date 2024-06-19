@@ -90,7 +90,7 @@ const vendorModel = (sequelize, DataTypes) => {
         defaultValue: true,
       },
     },
-    { timestamps: false, tableName: "tbl_vendors" }
+    { timestamps: true, tableName: "tbl_vendors" }
   );
 
   Vendor.belongsTo(Role(sequelize, DataTypes), { foreignKey: "role_id" });
