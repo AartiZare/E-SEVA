@@ -597,12 +597,13 @@ export const updateDocument = catchAsync(async (req, res, next) => {
 
     // Handle file upload if present
     let documentFileUrl;
-    if (req.file) {
-      // documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
-      documentFileUrl = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${
-        body.document_reg_no
-      }${path.extname(file.originalname)}`;
-    }
+    // Not required to update the file. its always the same name and same extension
+    // if (req.file) {
+    //   // documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
+    //   documentFileUrl = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${
+    //     body.document_reg_no
+    //   }${path.extname(file.originalname)}`;
+    // }
 
     // Update document data
     const documentData = {
@@ -611,9 +612,9 @@ export const updateDocument = catchAsync(async (req, res, next) => {
       squad_verification_status: 0, // Reseting to make it as a fresh verification
       final_verification_status: 0, // Reseting to make it as a fresh verification
     };
-    if (documentFileUrl) {
-      documentData.image_pdf = documentFileUrl;
-    }
+    // if (documentFileUrl) {
+    //   documentData.image_pdf = documentFileUrl;
+    // }
 
     // Update the document in the database
     const rowsUpdated = await documentModel.update(documentData, {
