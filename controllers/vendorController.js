@@ -1,15 +1,11 @@
 import { Op } from "sequelize";
 import jwt from "jsonwebtoken";
-import path from "path";
 import { catchAsync } from "../utils/catchAsync.js";
 import httpStatus from "http-status";
 import ApiError from "../utils/ApiError.js";
 import mailService from "../utils/mailService.js";
 import { secretKey } from "../middlewares/passport.js";
 import db from "../models/index.js";
-import dotenv from "dotenv";
-dotenv.config();
-
 const vendorModel = db.Vendor;
 
 export const createVendor = catchAsync(async (req, res, next) => {
@@ -67,10 +63,7 @@ export const createVendor = catchAsync(async (req, res, next) => {
 
     let profileImageUrl;
     if (req.file) {
-      // profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
-      profileImageUrl = `${process.env.FILE_ACCESS_PATH}profileImages/${
-        req.body.contact_number
-      }${path.extname(req.file.originalname)}`;
+      profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
     }
 
     const vendorData = { ...body, resetPasswordToken, resetPasswordTokenExpiry };
