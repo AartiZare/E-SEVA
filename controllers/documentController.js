@@ -14,6 +14,138 @@ const userModel = db.User;
 const branchModel = db.Branch;
 const userStateToBranchModel = db.UserStateToBranch;
 
+export const userBranches = async (roleId, userId) => {
+  if (roleId === 1) {
+    // Admin
+  } else if (roleId === 3) {
+    // Squad
+    const _userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["branch_id"],
+    });
+    return _userBranches.map((branch) => branch.branch_id);
+  } else if (roleId === 2) {
+    // Supervisor
+    const _userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["branch_id"],
+    });
+    return _userBranches.map((branch) => branch.branch_id);
+  } else if (roleId === 4) {
+    // User
+    const _userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["branch_id"],
+    });
+    return _userBranches.map((branch) => branch.branch_id);
+  } else if (roleId === 8) {
+    // RCS
+    const _userStates = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["state_id"],
+    });
+    const _userDivisions = await db.Division.findAll({
+      where: {
+        state_id: _userStates.map((state) => state.state_id),
+      },
+      attributes: ["id"],
+    });
+    const _userDistricts = await db.District.findAll({
+      where: {
+        division_id: _userDivisions.map((division) => division.id),
+      },
+      attributes: ["id"],
+    });
+    const _userTaluks = await db.Taluk.findAll({
+      where: {
+        district_id: _userDistricts.map((district) => district.id),
+      },
+      attributes: ["id"],
+    });
+    const _userBranches = await db.Branch.findAll({
+      where: {
+        taluk_id: _userTaluks.map((taluk) => taluk.id),
+      },
+      attributes: ["id"],
+    });
+    return _userBranches.map((branch) => branch.id);
+  } else if (roleId === 9) {
+    // ARCS
+    const _userDistricts = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["district_id"],
+    });
+    const _userTaluks = await db.Taluk.findAll({
+      where: {
+        district_id: _userDistricts.map((district) => district.district_id),
+      },
+      attributes: ["id"],
+    });
+    const _userBranches = await db.Branch.findAll({
+      where: {
+        taluk_id: _userTaluks.map((taluk) => taluk.id),
+      },
+      attributes: ["id"],
+    });
+    return _userBranches.map((branch) => branch.id);
+  } else if (roleId === 7) {
+    // Deputy Registrar
+    const _userDistricts = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["district_id"],
+    });
+    const _userTaluks = await db.Taluk.findAll({
+      where: {
+        district_id: _userDistricts.map((district) => district.district_id),
+      },
+      attributes: ["id"],
+    });
+    const _userBranches = await db.Branch.findAll({
+      where: {
+        taluk_id: _userTaluks.map((taluk) => taluk.id),
+      },
+      attributes: ["id"],
+    });
+    return _userBranches.map((branch) => branch.id);
+  } else if (roleId === 6) {
+    // Assistant Registrar
+    const _userTaluks = await db.Taluk.findAll({
+      where: {
+        district_id: _userDistricts.map((district) => district.district_id),
+      },
+      attributes: ["id"],
+    });
+    const _userBranches = await db.Branch.findAll({
+      where: {
+        talukId: _userTaluks.map((taluk) => taluk.id),
+      },
+      attributes: ["id"],
+    });
+    return _userBranches.map((branch) => branch.id);
+  } else if (roleId === 10) {
+    // Branch Registrar
+    const _userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["branch_id"],
+    });
+    return _userBranches.map((branch) => branch.branch_id);
+  }
+};
+
 export const createDocument = catchAsync(async (req, res, next) => {
   try {
     const { body, file } = req;
@@ -707,74 +839,9 @@ export const webDashboard = catchAsync(async (req, res, next) => {
     // Add where condition based on the user role
     // We need to find the user role by the auth token
     // RCS => ARCS => Deputy Registrar => Assistant Registrar => Branch Registrar
-    if (req.user.role_id === 8) {
-      // RCS
-      const userBranches = await db.UserStateToBranch.findAll({
-        where: {
-          user_id: req.user.id,
-          status: true,
-        },
-        attributes: ["branch_id"],
-      });
-      where = {
-        ...where,
-        branch_id: userBranches.map((branch) => branch.branch_id),
-      };
-    } else if (req.user.role_id === 9) {
-      // ARCS
-      const userBranches = await db.UserStateToBranch.findAll({
-        where: {
-          user_id: req.user.id,
-          status: true,
-        },
-        attributes: ["branch_id"],
-      });
-      where = {
-        ...where,
-        branch_id: userBranches.map((branch) => branch.branch_id),
-      };
-    } else if (req.user.role_id === 7) {
-      // Deputy Registrar
-      const userBranches = await db.UserStateToBranch.findAll({
-        where: {
-          user_id: req.user.id,
-          status: true,
-        },
-        attributes: ["branch_id"],
-      });
-      where = {
-        ...where,
-        branch_id: userBranches.map((branch) => branch.branch_id),
-      };
-    } else if (req.user.role_id === 6) {
-      // Assistant Registrar
-      const userBranches = await db.UserStateToBranch.findAll({
-        where: {
-          user_id: req.user.id,
-          status: true,
-        },
-        attributes: ["branch_id"],
-      });
-      where = {
-        ...where,
-        branch_id: userBranches.map((branch) => branch.branch_id),
-      };
-    } else if (req.user.role_id === 10) {
-      // Branch Registrar
-      const userBranches = await db.UserStateToBranch.findAll({
-        where: {
-          user_id: req.user.id,
-          status: true,
-        },
-        attributes: ["branch_id"],
-      });
-      where = {
-        ...where,
-        branch_id: userBranches.map((branch) => branch.branch_id),
-      };
-    } else {
-      // return next(new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized role'));
-    }
+
+    const branches = await userBranches(req.user.role_id, req.user.id);
+    where.branch_id = branches;
 
     const responseData = {
       uploads: 0,
