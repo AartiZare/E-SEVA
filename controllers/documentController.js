@@ -791,6 +791,8 @@ export const webDashboard = catchAsync(async (req, res, next) => {
     const renewables = await documentModel.count({
       where: { ...where, document_renewal_date: { [Op.lte]: new Date() } },
     });
+
+    // Charts Data
     const uploadsByDateAndType = await documentModel.findAll({
       where,
       attributes: [
