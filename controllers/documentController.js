@@ -17,6 +17,7 @@ const userStateToBranchModel = db.UserStateToBranch;
 export const userBranches = async (roleId, userId) => {
   if (roleId === 1) {
     // Admin
+    return [];
   } else if (roleId === 3) {
     // Squad
     const _userBranches = await userStateToBranchModel.findAll({
@@ -841,7 +842,9 @@ export const webDashboard = catchAsync(async (req, res, next) => {
     // RCS => ARCS => Deputy Registrar => Assistant Registrar => Branch Registrar
 
     const branches = await userBranches(req.user.role_id, req.user.id);
-    where.branch_id = branches;
+    if (branches.length > 0) {
+      filter.branch_id = branches;
+    }
 
     const responseData = {
       uploads: 0,
@@ -972,7 +975,9 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
     let filter = {};
 
     const branches = await userBranches(req.user.role_id, req.user.id);
-    filter.branch_id = branches;
+    if (branches.length > 0) {
+      filter.branch_id = branches;
+    }
     docList = await documentModel.findAll({ where: filter });
 
     return res.send({ status: true, data: docList });
