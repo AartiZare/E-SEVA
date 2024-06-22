@@ -490,6 +490,29 @@ export const getAll = catchAsync(async (req, res) => {
       };
     }
 
+    if (req.user.role_id === 8) {
+      // RCS
+      filter.role_id = [9, 7, 6, 10];
+    } else if (req.user.role_id === 9) {
+      // ARCS
+      filter.role_id = [7, 6, 10];
+    } else if (req.user.role_id === 7) {
+      // Deputy Registrar
+      filter.role_id = [6, 10];
+    } else if (req.user.role_id === 6) {
+      // Assistant Registrar
+      filter.role_id = [10];
+    } else if (req.user.role_id === 10) {
+      // Branch Registrar
+      filter.role_id = [2, 3, 4];
+    } else if (req.user.role_id === 3) {
+      // Squad
+      filter.role_id = [2, 4];
+    } else if (req.user.role_id === 2) {
+      // Supervisor
+      filter.role_id = [4];
+    }
+
     const pageNumber = parseInt(page) || 1;
     const limit = parseInt(pageSize) || 10;
     const offset = (pageNumber - 1) * limit;
