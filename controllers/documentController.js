@@ -6,6 +6,7 @@ import { Op } from "sequelize";
 import { catchAsync } from "../utils/catchAsync.js";
 import httpStatus from "http-status";
 import ApiError from "../utils/ApiError.js";
+import logger from '../loggers.js';
 import db from "../models/index.js";
 const documentModel = db.Document;
 const roleModel = db.Role;
@@ -148,15 +149,19 @@ export const userBranches = async (roleId, userId) => {
 };
 
 export const createDocument = catchAsync(async (req, res, next) => {
+  logger.info('Entered createDocument method');
   try {
     const { body, file } = req;
     const userId = req.user.id;
 
-    console.log(userId, "user id");
+    logger.info(`User ID: ${userId}`);
+    logger.info(`Document body: ${JSON.stringify(body)}`);
 
-    console.log("Document body", body);
-
+    logger.info('Fetching user role');
     const userRole = await roleModel.findByPk(req.user.role_id);
+    logger.info('Fetched user role');
+
+    logger.info('Checking if document exists');
     const isDocumentExist = await documentModel.findOne({
       where: {
         [Op.and]: [
@@ -165,8 +170,10 @@ export const createDocument = catchAsync(async (req, res, next) => {
         ],
       },
     });
+    logger.info('Checked document existence');
 
     if (isDocumentExist) {
+      logger.warn(`Document already exists: ${body.document_name} - ${body.document_reg_no}`);
       return next(
         new ApiError(
           httpStatus.BAD_REQUEST,
@@ -178,7 +185,6 @@ export const createDocument = catchAsync(async (req, res, next) => {
     const documentData = {
       document_name: body.document_name,
       document_reg_no: body.document_reg_no,
-      // TODO: Ask Aarti, why these are coming from the client, if they can be set it to default values at document creation time.
       supervisor_verification_status: 0,
       squad_verification_status: 0,
       final_verification_status: 0,
@@ -188,7 +194,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       authorised_persons: body.authorised_persons.map((person) => ({
         authorised_person_name: person.authorised_person_name,
         contact_number: person.contact_number,
-        alternate_number: person.alternate_number || null, // default to null if not provided
+        alternate_number: person.alternate_number || null,
         email: person.email,
         designation: person.designation,
       })),
@@ -202,9 +208,9 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     // const id = crypto.randomBytes(16).toString('hex')
     if (file) {
-      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
-        body.branch_name
-      }/${body.document_reg_no}${path.extname(file.originalname)}`;
+      logger.info('Creating file path for uploaded file');
+      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}${path.extname(file.originalname)}`;
+      logger.info(`File path created: ${documentData.image_pdf}`);
     }
 
     // india standard time. date format: dd-mm-yyyy
@@ -213,7 +219,8 @@ export const createDocument = catchAsync(async (req, res, next) => {
       month: "2-digit",
       year: "numeric",
     });
-    // find how many are inserted for today date
+
+    logger.info('Counting documents created today');
     const count = await documentModel.count({
       where: {
         createdAt: {
@@ -225,10 +232,14 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     // create unique id
     // console.log("count", count);
-    documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${
-      count + 1
-    }`;
+    logger.info(`Counted documents created today: ${count}`);
+
+    documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${count + 1}`;
+    logger.info(`Generated document unique ID: ${documentData.document_unique_id}`);
+
+    logger.info('Creating new document in the database');
     const newDocument = await documentModel.create(documentData);
+    logger.info(`Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`);
 
     // Create activity entry after creating the document
     const documentUniqueId = newDocument.document_unique_id
@@ -244,10 +255,13 @@ export const createDocument = catchAsync(async (req, res, next) => {
       activity_document_id: newDocument.id,
     };
 
+    logger.info('Creating activity log for the new document');
     await activityModel.create(activityData);
+    logger.info(`Activity logged for document creation: ${newDocument.document_name} (${newDocument.document_reg_no})`);
+
     return res.send({ results: newDocument });
   } catch (error) {
-    console.error(error.toString());
+    logger.error(`Error in createDocument: ${error.toString()}`);
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
