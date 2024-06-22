@@ -6,7 +6,7 @@ import { Op } from "sequelize";
 import { catchAsync } from "../utils/catchAsync.js";
 import httpStatus from "http-status";
 import ApiError from "../utils/ApiError.js";
-import logger from '../loggers.js';
+import logger from "../loggers.js";
 import db from "../models/index.js";
 const documentModel = db.Document;
 const roleModel = db.Role;
@@ -149,7 +149,7 @@ export const userBranches = async (roleId, userId) => {
 };
 
 export const createDocument = catchAsync(async (req, res, next) => {
-  logger.info('Entered createDocument method');
+  logger.info("Entered createDocument method");
   try {
     const { body, file } = req;
     const userId = req.user.id;
@@ -157,11 +157,11 @@ export const createDocument = catchAsync(async (req, res, next) => {
     logger.info(`User ID: ${userId}`);
     logger.info(`Document body: ${JSON.stringify(body)}`);
 
-    logger.info('Fetching user role');
+    logger.info("Fetching user role");
     const userRole = await roleModel.findByPk(req.user.role_id);
-    logger.info('Fetched user role');
+    logger.info("Fetched user role");
 
-    logger.info('Checking if document exists');
+    logger.info("Checking if document exists");
     const isDocumentExist = await documentModel.findOne({
       where: {
         [Op.and]: [
@@ -170,10 +170,12 @@ export const createDocument = catchAsync(async (req, res, next) => {
         ],
       },
     });
-    logger.info('Checked document existence');
+    logger.info("Checked document existence");
 
     if (isDocumentExist) {
-      logger.warn(`Document already exists: ${body.document_name} - ${body.document_reg_no}`);
+      logger.warn(
+        `Document already exists: ${body.document_name} - ${body.document_reg_no}`
+      );
       return next(
         new ApiError(
           httpStatus.BAD_REQUEST,
@@ -208,8 +210,10 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     // const id = crypto.randomBytes(16).toString('hex')
     if (file) {
-      logger.info('Creating file path for uploaded file');
-      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}${path.extname(file.originalname)}`;
+      logger.info("Creating file path for uploaded file");
+      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
+        body.branch_name
+      }/${body.document_reg_no}${path.extname(file.originalname)}`;
       logger.info(`File path created: ${documentData.image_pdf}`);
     }
 
@@ -220,7 +224,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       year: "numeric",
     });
 
-    logger.info('Counting documents created today');
+    logger.info("Counting documents created today");
     const count = await documentModel.count({
       where: {
         createdAt: {
@@ -234,12 +238,18 @@ export const createDocument = catchAsync(async (req, res, next) => {
     // console.log("count", count);
     logger.info(`Counted documents created today: ${count}`);
 
-    documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${count + 1}`;
-    logger.info(`Generated document unique ID: ${documentData.document_unique_id}`);
+    documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${
+      count + 1
+    }`;
+    logger.info(
+      `Generated document unique ID: ${documentData.document_unique_id}`
+    );
 
-    logger.info('Creating new document in the database');
+    logger.info("Creating new document in the database");
     const newDocument = await documentModel.create(documentData);
-    logger.info(`Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`);
+    logger.info(
+      `Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`
+    );
 
     // Create activity entry after creating the document
     const documentUniqueId = newDocument.document_unique_id
@@ -255,9 +265,11 @@ export const createDocument = catchAsync(async (req, res, next) => {
       activity_document_id: newDocument.id,
     };
 
-    logger.info('Creating activity log for the new document');
+    logger.info("Creating activity log for the new document");
     await activityModel.create(activityData);
-    logger.info(`Activity logged for document creation: ${newDocument.document_name} (${newDocument.document_reg_no})`);
+    logger.info(
+      `Activity logged for document creation: ${newDocument.document_name} (${newDocument.document_reg_no})`
+    );
 
     return res.send({ results: newDocument });
   } catch (error) {
@@ -857,8 +869,9 @@ export const webDashboard = catchAsync(async (req, res, next) => {
 
     const branches = await userBranches(req.user.role_id, req.user.id);
     if (branches.length > 0) {
-      filter.branch_id = branches;
+      where.branch_id = branches;
     }
+    where.final_verification_status = 1;
 
     const responseData = {
       uploads: 0,
@@ -986,13 +999,13 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
     const userRole = await roleModel.findByPk(user.role_id);
 
     let docList;
-    let filter = {};
+    let where = {};
 
     const branches = await userBranches(req.user.role_id, req.user.id);
     if (branches.length > 0) {
-      filter.branch_id = branches;
+      where.branch_id = branches;
     }
-    docList = await documentModel.findAll({ where: filter });
+    docList = await documentModel.findAll({ where });
 
     return res.send({ status: true, data: docList });
   } catch (error) {
