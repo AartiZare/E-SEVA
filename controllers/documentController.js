@@ -889,7 +889,29 @@ export const webDashboard = catchAsync(async (req, res, next) => {
       where: { ...where, document_renewal_date: { [Op.lte]: new Date() } },
     });
 
-    // Charts Data
+    // Recent 7 days uploads (fromDate will be 7 days before the current date)
+    const toDate = new Date();
+    const fromDate = new Date(new Date(toDate).setDate(toDate.getDate() - 6));
+    let allDates = [];
+    for (let i = 1; i < 7; i++) {
+      allDates.push(
+        new Date(
+          new Date(fromDate).setDate(fromDate.getDate() + i)
+        ).toISOString()
+      );
+    }
+    allDates = allDates.map((date) => {
+      return date.split("T")[0];
+    });
+
+    where.createdAt = {
+      [Op.between]: [
+        new Date(fromDate.setHours(0, 0, 0)),
+        new Date(toDate.setHours(23, 59, 59)),
+      ],
+    };
+
+    // Charts Data. fill the dates with 0 if no data available for that date and type
     const uploadsByDateAndType = await documentModel.findAll({
       where,
       attributes: [
@@ -901,6 +923,50 @@ export const webDashboard = catchAsync(async (req, res, next) => {
         "document_type",
         [db.sequelize.fn("DATE", db.sequelize.col("createdAt"))],
       ],
+    });
+
+    const uniqueDocuments = [
+      ...new Set(uploadsByDateAndType.map((upload) => upload.document_type)),
+    ];
+    const chartData = {};
+    const chartDataByDate = {};
+    uniqueDocuments.forEach((documentType) => {
+      allDates.forEach((date) => {
+        if (!chartData[documentType]) {
+          chartData[documentType] = {};
+        }
+        if (!chartDataByDate[documentType]) {
+          chartDataByDate[documentType] = {};
+        }
+        const isExists = uploadsByDateAndType.find((upload) => {
+          return (
+            upload.document_type === documentType &&
+            new Date(upload.createdAt).toISOString().split("T")[0] === date
+          );
+        });
+        if (isExists) {
+          chartData[documentType][date] = parseInt(
+            isExists.dataValues.count,
+            10
+          );
+        } else {
+          chartData[documentType][date] = 0;
+        }
+        const isExistsByDate = uploadsByDateAndType.find((upload) => {
+          return (
+            upload.document_type === documentType &&
+            new Date(upload.createdAt).toISOString().split("T")[0] === date
+          );
+        });
+        if (isExistsByDate) {
+          chartDataByDate[documentType][date] = parseInt(
+            isExistsByDate.dataValues.count,
+            10
+          );
+        } else {
+          chartDataByDate[documentType][date] = 0;
+        }
+      });
     });
     const uploadsByDate = await documentModel.findAll({
       where,
@@ -919,16 +985,26 @@ export const webDashboard = catchAsync(async (req, res, next) => {
     responseData.pages = pages;
     responseData.downloads = downloads;
     responseData.renewables = renewables;
-    responseData.uploadsByDateAndType = uploadsByDateAndType.map((upload) => {
+    responseData.uploadsByDateAndType = Object.keys(chartData).map((key) => {
       const documentTypeName = documentTypeNames.find((type) => {
-        return parseInt(type.id, 10) === parseInt(upload.document_type, 10);
+        return parseInt(type.id, 10) === parseInt(key, 10);
       });
       return {
-        ...upload.toJSON(),
+        document_type: key,
+        data: chartData[key],
         document_type_name: documentTypeName ? documentTypeName.name : null,
       };
     });
-    responseData.uploadsByDate = uploadsByDate;
+    responseData.uploadsByDate = Object.keys(chartDataByDate).map((key) => {
+      const documentTypeName = documentTypeNames.find((type) => {
+        return parseInt(type.id, 10) === parseInt(key, 10);
+      });
+      return {
+        document_type: key,
+        data: chartDataByDate[key],
+        document_type_name: documentTypeName ? documentTypeName.name : null,
+      };
+    });
 
     return res.send({ status: true, data: responseData });
   } catch (error) {
