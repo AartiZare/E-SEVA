@@ -295,7 +295,7 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
         body.branch_name
       }/${body.document_reg_no}${path.extname(file.originalname)}`;
       logger.info(`File path created: ${documentData.image_pdf}`);
-      documentData.document_upload_status = "PENDING";
+      documentData.document_upload_status = "SUCCESS";
     }
 
     // india standard time. date format: dd-mm-yyyy
@@ -348,6 +348,14 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
     return res.send({ results: rowsUpdated });
   } catch (error) {
     logger.error(`Error in createDocument: ${error.toString()}`);
+    documentData = {};
+    documentData.document_upload_status = "FAILED";
+    await documentModel.update(documentData, {
+      where: {
+        document_reg_no: body.document_reg_no,
+      },
+    });
+
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
