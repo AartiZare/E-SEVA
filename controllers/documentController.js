@@ -206,7 +206,8 @@ export const createDocument = catchAsync(async (req, res, next) => {
       document_type: body.document_type,
       created_by: userId,
       updated_by: userId,
-      document_upload_status: "NOT_UPLOADED",
+      document_upload_status: "UPLOADING",
+      document_created_at: new Date(),
     };
 
     // india standard time. date format: dd-mm-yyyy

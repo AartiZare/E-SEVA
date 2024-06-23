@@ -77,6 +77,14 @@ const documentsModel = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      document_upload_status: {
+        type: DataTypes.STRING,
+        defaultValue: false,
+      },
+      document_created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
       timestamps: true,
