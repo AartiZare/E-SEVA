@@ -27,6 +27,13 @@ export const createDocument = {
     squad_verification_status: Joi.number().default(0),
     final_verification_status: Joi.number().default(0),
   }),
+};
+
+export const uploadDocumentFile = {
+  body: Joi.object().keys({
+    document_reg_no: Joi.string().required(),
+    branch_name: Joi.string(),
+  }),
   file: Joi.object().keys({
     image_pdf: Joi.string().allow(""),
   }),

@@ -206,16 +206,8 @@ export const createDocument = catchAsync(async (req, res, next) => {
       document_type: body.document_type,
       created_by: userId,
       updated_by: userId,
+      document_upload_status: "NOT_UPLOADED",
     };
-
-    // const id = crypto.randomBytes(16).toString('hex')
-    if (file) {
-      logger.info("Creating file path for uploaded file");
-      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
-        body.branch_name
-      }/${body.document_reg_no}${path.extname(file.originalname)}`;
-      logger.info(`File path created: ${documentData.image_pdf}`);
-    }
 
     // india standard time. date format: dd-mm-yyyy
     const todayDMY = new Date().toLocaleString("en-IN", {
@@ -274,6 +266,108 @@ export const createDocument = catchAsync(async (req, res, next) => {
     return res.send({ results: newDocument });
   } catch (error) {
     logger.error(`Error in createDocument: ${error.toString()}`);
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
+export const uploadDocumentFile = catchAsync(async (req, res, next) => {
+  logger.info("Entered createDocument method");
+  try {
+    const { body, file } = req;
+    const userId = req.user.id;
+
+    logger.info(`User ID: ${userId}`);
+    logger.info(`Document body: ${JSON.stringify(body)}`);
+
+    logger.info("Fetching user role");
+    const userRole = await roleModel.findByPk(req.user.role_id);
+    logger.info("Fetched user role");
+
+    logger.info("Checking if document exists");
+
+    const documentData = {};
+
+    // const id = crypto.randomBytes(16).toString('hex')
+    if (file) {
+      logger.info("Creating file path for uploaded file");
+      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
+        body.branch_name
+      }/${body.document_reg_no}${path.extname(file.originalname)}`;
+      logger.info(`File path created: ${documentData.image_pdf}`);
+      documentData.document_upload_status = "PENDING";
+    }
+
+    // india standard time. date format: dd-mm-yyyy
+    const todayDMY = new Date().toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    logger.info("Counting documents created today");
+    const count = await documentModel.count({
+      where: {
+        createdAt: {
+          [Op.gte]: new Date(new Date().setHours(0, 0, 0)),
+          [Op.lt]: new Date(new Date().setHours(23, 59, 59)),
+        },
+      },
+    });
+
+    logger.info("Updating the document in the database by registration number");
+    const rowsUpdated = await documentModel.update(documentData, {
+      where: {
+        document_reg_no: body.document_reg_no,
+      },
+    });
+    logger.info(
+      `Document uploaded: ${rowsUpdated.document_name} (${rowsUpdated.document_reg_no}), Unique ID: ${rowsUpdated.document_unique_id}`
+    );
+
+    // Create activity entry after creating the document
+    const documentUniqueId = rowsUpdated.document_unique_id
+      ? rowsUpdated.document_unique_id
+      : "not available";
+
+    const activityData = {
+      activity_title: "Document File uploaded",
+      activity_description: `Document ${rowsUpdated.document_name} with registration number ${rowsUpdated.document_reg_no} has been uploaded. Document Unique ID: ${documentUniqueId}`,
+      activity_created_at: rowsUpdated.createdAt,
+      activity_created_by_id: req.user.id,
+      activity_created_by_type: userRole.name,
+      activity_document_id: rowsUpdated.id,
+    };
+
+    logger.info("Creating activity log for the new document");
+    await activityModel.create(activityData);
+    logger.info(
+      `Activity logged for document creation: ${rowsUpdated.document_name} (${rowsUpdated.document_reg_no})`
+    );
+
+    return res.send({ results: rowsUpdated });
+  } catch (error) {
+    logger.error(`Error in createDocument: ${error.toString()}`);
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
+export const userDocumentList = catchAsync(async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const userRole = await roleModel.findByPk(req.user.role_id);
+
+    let userDocs;
+    let filter = {};
+
+    userDocs = await documentModel.findAll({
+      where: {
+        created_by: userId,
+      },
+    });
+
+    return res.send({ status: true, data: userDocs });
+  } catch (error) {
+    console.error(error.toString());
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });

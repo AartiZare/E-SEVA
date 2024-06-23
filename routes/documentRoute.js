@@ -22,12 +22,23 @@ router
   // Create a new document
   .post(
     auth(),
-    upload.single("image_pdf"),
     validate(documentValidation.createDocument),
     documentController.createDocument
   )
   // Get all pending documents
   .get(auth(), documentController.pendingDocumentListUser);
+
+router
+  .route("/uploadDocumentFile")
+  .post(
+    upload.single("image_pdf"),
+    validate(documentValidation.uploadDocumentFile),
+    documentController.uploadDocumentFile
+  );
+
+router
+  .route("/userDocumentList")
+  .get(auth(), documentController.userDocumentList);
 
 router
   .route("/rejectedList")
