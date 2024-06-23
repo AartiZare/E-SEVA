@@ -37,7 +37,7 @@ router
   );
 
 router
-  .route("/userDocumentList")
+  .route("/documentUploadStatus")
   .get(auth(), documentController.userDocumentList);
 
 router
