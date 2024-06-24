@@ -277,6 +277,8 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
     const { body, file } = req;
     const userId = req.user.id;
 
+    return res.send({ results: "success" });
+
     logger.info(`User ID: ${userId}`);
     logger.info(`Document body: ${JSON.stringify(body)}`);
 
