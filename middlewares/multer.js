@@ -48,9 +48,9 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     if (req.body.document_reg_no) {
-      const newFilename = `${slugMan(req.body.document_reg_no)}${path.extname(
+      const newFilename = `${slugMan(req.body.document_reg_no)}${
         file.originalname
-      )}`;
+      }`;
       cb(null, newFilename);
     } else {
       const newFilename = `${req.body.contact_number}${path.extname(
