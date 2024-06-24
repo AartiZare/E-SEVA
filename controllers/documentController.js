@@ -1098,16 +1098,8 @@ export const webDashboard = catchAsync(async (req, res, next) => {
         document_type_name: documentTypeName ? documentTypeName.name : null,
       };
     });
-    responseData.uploadsByDate = Object.keys(chartDataByDate).map((key) => {
-      const documentTypeName = documentTypeNames.find((type) => {
-        return parseInt(type.id, 10) === parseInt(key, 10);
-      });
-      return {
-        document_type: key,
-        data: chartDataByDate[key],
-        document_type_name: documentTypeName ? documentTypeName.name : null,
-      };
-    });
+    // Date wise uploads
+    responseData.uploadsByDate = uploadsByDate;
 
     return res.send({ status: true, data: responseData });
   } catch (error) {
