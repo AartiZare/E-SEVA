@@ -30,11 +30,7 @@ router
 
 router
   .route("/uploadDocumentFile")
-  .post(
-    upload.single("image_pdf"),
-    validate(documentValidation.uploadDocumentFile),
-    documentController.uploadDocumentFile
-  );
+  .post(upload.single("image_pdf"), documentController.uploadDocumentFile);
 
 router
   .route("/documentUploadStatus")
