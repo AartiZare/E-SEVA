@@ -274,10 +274,9 @@ export const createDocument = catchAsync(async (req, res, next) => {
 export const uploadDocumentFile = catchAsync(async (req, res, next) => {
   logger.info("Entered createDocument method");
   try {
+    return res.send({ results: "success" });
     const { body, file } = req;
     const userId = req.user.id;
-
-    return res.send({ results: "success" });
 
     logger.info(`User ID: ${userId}`);
     logger.info(`Document body: ${JSON.stringify(body)}`);
