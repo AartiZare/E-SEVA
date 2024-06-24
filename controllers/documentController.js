@@ -348,13 +348,13 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
     return res.send({ results: rowsUpdated });
   } catch (error) {
     logger.error(`Error in createDocument: ${error.toString()}`);
-    const documentData = {};
-    documentData.document_upload_status = "FAILED";
-    await documentModel.update(documentData, {
-      where: {
-        document_reg_no: body.document_reg_no,
-      },
-    });
+    // const documentData = {};
+    // documentData.document_upload_status = "FAILED";
+    // await documentModel.update(documentData, {
+    //   where: {
+    //     document_reg_no: body.document_reg_no,
+    //   },
+    // });
 
     return res
       .status(500)
