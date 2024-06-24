@@ -2,6 +2,13 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+const slugMan = (str) => {
+  return str
+    .toLowerCase()
+    .replace(/ /g, "-")
+    .replace(/[^\w-]+/g, "");
+};
+
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -41,7 +48,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     if (req.body.document_reg_no) {
-      const newFilename = `${req.body.document_reg_no}${path.extname(
+      const newFilename = `${slugMan(req.body.document_reg_no)}${path.extname(
         file.originalname
       )}`;
       cb(null, newFilename);
