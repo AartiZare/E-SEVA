@@ -8,9 +8,9 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     logger.info("Received request headers:" + JSON.stringify(req.headers));
 
-    if (req.headers.branch_name) {
-      const branchName = req.headers.branch_name;
-      const documentRegNo = req.headers.document_reg_no;
+    if (req.headers["x-branch-name"]) {
+      const branchName = req.headers["x-branch-name"];
+      const documentRegNo = req.headers["x-document-reg-no"];
       const uploadPath = `public/uploads/${branchName}/${documentRegNo}`;
 
       logger.info(`Branch name: ${branchName}`);
@@ -54,14 +54,14 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     logger.info("Generating filename from headers", req.headers);
 
-    if (req.headers.document_reg_no) {
-      const newFilename = `${req.headers.file_page_number}${path.extname(
+    if (req.headers["x-document-reg-no"]) {
+      const newFilename = `${req.headers["x-file-page-number"]}${path.extname(
         file.originalname
       )}`;
       logger.info(`Generated filename: ${newFilename}`);
       cb(null, newFilename);
     } else {
-      const newFilename = `${req.headers.contact_number}${path.extname(
+      const newFilename = `${req.headers["x-contact-number"]}${path.extname(
         file.originalname
       )}`;
       logger.info(`Generated filename: ${newFilename}`);
