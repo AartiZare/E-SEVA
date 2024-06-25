@@ -5,6 +5,7 @@ import fs from "fs";
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log("headers22", req.headers);
     if (req.headers.branch_name) {
       console.log("headers", req.headers);
       const branchName = req.headers.branch_name;
