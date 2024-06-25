@@ -1222,7 +1222,7 @@ export const getImages = (req, res) => {
 
   if (!fs.existsSync(uploadPath)) {
     logger.warn(`Directory does not exist: ${uploadPath}`);
-    return res.status(404).send({ error: 'Directory not found' });
+    return res.status(404).send({ error: `Directory not found: ${uploadPath}` });
   }
 
   fs.readdir(uploadPath, (err, files) => {
@@ -1230,12 +1230,11 @@ export const getImages = (req, res) => {
       logger.error(`Error reading directory: ${err}`);
       return res.status(500).send({ error: 'Internal Server Error' });
     }
-    // Filter out PDFs and include all other files
-    const images = files.filter(file => !/\.pdf$/i.test(file));
-    const imageUrls = images.map(image => `${process.env.FILE_ACCESS_PATH}${branch_name}/${document_reg_no}/${image}`);
 
-    logger.info(`Found images: ${JSON.stringify(imageUrls)}`);
-
-    return res.send({ images: imageUrls });
+    const sortedFiles = files.filter(file => !/\.pdf$/i.test(file)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    const fileUrls = sortedFiles.map(file => `${process.env.FILE_ACCESS_PATH}${branch_name}/${document_reg_no}/${file}`);
+    logger.info(`Found files: ${JSON.stringify(fileUrls)}`);
+    return res.send({ images: fileUrls });
   });
 };
+
