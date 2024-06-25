@@ -10,6 +10,12 @@ import logger from "../loggers.js";
 import db from "../models/index.js";
 import { slugify } from "light-string-utils";
 import { imagesToPdf } from "../utils/imagesToPdf.js";
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Function to get directory name in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const documentModel = db.Document;
 const roleModel = db.Role;
@@ -1201,3 +1207,35 @@ export const getDocumentListUser = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
+
+export const getImages = (req, res) => {
+  const { branch_name, document_reg_no } = req.query;
+
+  if (!branch_name || !document_reg_no) {
+    logger.warn('Branch name or document registration number not provided');
+    return res.status(400).send({ error: 'Branch name and document registration number are required' });
+  }
+
+  const uploadPath = path.join(__dirname, `../public/uploads/${branch_name}/${document_reg_no}`);
+
+  logger.info(`Fetching images from path: ${uploadPath}`);
+
+  if (!fs.existsSync(uploadPath)) {
+    logger.warn(`Directory does not exist: ${uploadPath}`);
+    return res.status(404).send({ error: 'Directory not found' });
+  }
+
+  fs.readdir(uploadPath, (err, files) => {
+    if (err) {
+      logger.error(`Error reading directory: ${err}`);
+      return res.status(500).send({ error: 'Internal Server Error' });
+    }
+    // Filter out PDFs and include all other files
+    const images = files.filter(file => !/\.pdf$/i.test(file));
+    const imageUrls = images.map(image => `${process.env.FILE_ACCESS_PATH}${branch_name}/${document_reg_no}/${image}`);
+
+    logger.info(`Found images: ${JSON.stringify(imageUrls)}`);
+
+    return res.send({ images: imageUrls });
+  });
+};

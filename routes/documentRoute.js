@@ -73,4 +73,8 @@ router
   // Get data for web dashboard
   .post(auth(), documentController.webDashboard);
 
+router
+  .route("/images/pdf")
+  .get(documentController.getImages);
+
 export default router;
