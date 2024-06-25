@@ -6,7 +6,7 @@ import logger from "../loggers.js";
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    logger.info("Received request headers", req.headers);
+    logger.info("Received request headers:".JSON.stringify(req.headers));
 
     if (req.headers.branch_name) {
       const branchName = req.headers.branch_name;
@@ -55,11 +55,15 @@ const storage = multer.diskStorage({
     logger.info("Generating filename from headers", req.headers);
 
     if (req.headers.document_reg_no) {
-      const newFilename = `${req.headers.file_page_number}${path.extname(file.originalname)}`;
+      const newFilename = `${req.headers.file_page_number}${path.extname(
+        file.originalname
+      )}`;
       logger.info(`Generated filename: ${newFilename}`);
       cb(null, newFilename);
     } else {
-      const newFilename = `${req.headers.contact_number}${path.extname(file.originalname)}`;
+      const newFilename = `${req.headers.contact_number}${path.extname(
+        file.originalname
+      )}`;
       logger.info(`Generated filename: ${newFilename}`);
       cb(null, newFilename);
     }
