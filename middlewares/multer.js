@@ -1,13 +1,14 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import logger from "../loggers";
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("headers22", req.headers);
+    logger.info("headers22", req.headers);
     if (req.headers.branch_name) {
-      console.log("headers", req.headers);
+      logger.info("headers", req.headers);
       const branchName = req.headers.branch_name;
       const documentRegNo = req.headers.document_reg_no;
       // const uploadPath = path.join(__dirname, 'uploads', branchName);
@@ -43,7 +44,7 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    console.log("headers", req.headers);
+    logger.info("headers", req.headers);
     if (req.headers.document_reg_no) {
       const newFilename = `${req.headers.file_page_number}${path.extname(
         file.originalname
