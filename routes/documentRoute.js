@@ -22,7 +22,7 @@ router
   // Create a new document
   .post(
     auth(),
-    validate(documentValidation.createDocument),
+    // validate(documentValidation.createDocument),
     documentController.createDocument
   )
   // Get all pending documents

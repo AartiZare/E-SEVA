@@ -8,6 +8,9 @@ import httpStatus from "http-status";
 import ApiError from "../utils/ApiError.js";
 import logger from "../loggers.js";
 import db from "../models/index.js";
+import { slugify } from "light-string-utils";
+import { imagesToPdf } from "../utils/imagesToPdf.js";
+
 const documentModel = db.Document;
 const roleModel = db.Role;
 const activityModel = db.Activity;
@@ -151,6 +154,7 @@ export const userBranches = async (roleId, userId) => {
 export const createDocument = catchAsync(async (req, res, next) => {
   logger.info("Entered createDocument method");
   try {
+    console.log(req);
     const { body, file } = req;
     const userId = req.user.id;
 
@@ -239,6 +243,16 @@ export const createDocument = catchAsync(async (req, res, next) => {
     );
 
     logger.info("Creating new document in the database");
+
+    // Generating images to pdf before creating the data
+
+    imagesToPdf(
+      `public/uploads/${body.branch_name}/${body.document_reg_no}`,
+      `public/uploads/${body.branch_name}/${slugify(
+        documentData.document_reg_no
+      )}/${slugify(body.document_reg_no)}.pdf`
+    );
+
     const newDocument = await documentModel.create(documentData);
     logger.info(
       `Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`
