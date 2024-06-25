@@ -31,8 +31,8 @@ export const createDocument = {
 
 export const uploadDocumentFile = {
   body: Joi.object().keys({
-    document_reg_no: Joi.string().required(),
-    branch_name: Joi.string(),
+    // document_reg_no: Joi.string().required(),
+    // branch_name: Joi.string(),
   }),
   file: Joi.object().keys({
     image_pdf: Joi.string().allow(""),
