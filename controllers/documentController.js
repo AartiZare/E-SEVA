@@ -272,7 +272,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
 });
 
 export const uploadDocumentFile = catchAsync(async (req, res, next) => {
-  logger.info("Entered createDocument method");
+  logger.info("Entered documentDocument method");
   try {
     return res.send({ results: "success" });
     const { body, file } = req;
