@@ -160,7 +160,6 @@ export const userBranches = async (roleId, userId) => {
 export const createDocument = catchAsync(async (req, res, next) => {
   logger.info("Entered createDocument method");
   try {
-    logger.info(req);
     const { body, file } = req;
     const userId = req.user.id;
 
