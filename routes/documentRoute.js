@@ -17,20 +17,12 @@ router
   // Get document list
   .get(auth(), documentController.getDocumentList);
 
-// router
-//   .route("/")
-//   // Create a new document
-//   .post(
-//     auth(),
-//     // validate(documentValidation.createDocument),
-//     documentController.createDocument
-//   )
 router
   .route("/")
+  // Create a new document
   .post(
     auth(),
-    // validate(documentValidation.createDocument), // Uncomment if validation is implemented
-    upload.single('file'), // Use multer to handle the file upload
+    // validate(documentValidation.createDocument),
     documentController.createDocument
   )
   // Get all pending documents
