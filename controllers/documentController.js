@@ -238,8 +238,8 @@ export const createDocument = catchAsync(async (req, res, next) => {
     logger.info("Creating new document in the database");
 
     // Generating images to pdf before creating the data
-    const imagesDir = `public/uploads/${body.branch_name}/${body.document_reg_no}`;
-    const pdfOutputDir = `public/uploads/${body.branch_name}/${slugify(documentData.document_reg_no)}`;
+    const imagesDir = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${body.document_reg_no}`;
+    const pdfOutputDir = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${slugify(documentData.document_reg_no)}`;
     const pdfOutputPath = `${pdfOutputDir}/${slugify(body.document_reg_no)}.pdf`;
 
     logger.info(`Converting images to PDF: ${imagesDir} -> ${pdfOutputPath}`);
