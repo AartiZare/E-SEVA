@@ -158,8 +158,9 @@ export const userBranches = async (roleId, userId) => {
 };
 
 export const createDocument = catchAsync(async (req, res, next) => {
-  logger.info("Entered createDocument method");
   try {
+    logger.info("Entered createDocument method");
+
     const { body, file } = req;
     const userId = req.user.id;
 
@@ -219,7 +220,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       document_created_at: new Date(),
     };
 
-    // india standard time. date format: dd-mm-yyyy
+    // India Standard Time. Date format: dd-mm-yyyy
     const todayDMY = new Date().toLocaleString("en-IN", {
       day: "2-digit",
       month: "2-digit",
