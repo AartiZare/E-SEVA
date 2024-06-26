@@ -158,8 +158,9 @@ export const userBranches = async (roleId, userId) => {
 };
 
 export const createDocument = catchAsync(async (req, res, next) => {
-  logger.info("Entered createDocument method");
   try {
+    logger.info("Entered createDocument method");
+
     const { body, file } = req;
     const userId = req.user.id;
 
@@ -182,15 +183,9 @@ export const createDocument = catchAsync(async (req, res, next) => {
     logger.info("Checked document existence");
 
     if (isDocumentExist) {
-      logger.warn(
-        `Document already exists: ${body.document_name} - ${body.document_reg_no}`
-      );
-      return next(
-        new ApiError(
-          httpStatus.BAD_REQUEST,
-          `Document with name ${body.document_name} and registration number ${body.document_reg_no} already exists!`
-        )
-      );
+      const errorMessage = `Document with name ${body.document_name} and registration number ${body.document_reg_no} already exists!`;
+      logger.warn(`Document already exists: ${body.document_name} - ${body.document_reg_no}`);
+      return next(new ApiError(httpStatus.BAD_REQUEST, errorMessage));
     }
 
     const documentData = {
@@ -219,7 +214,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       document_created_at: new Date(),
     };
 
-    // india standard time. date format: dd-mm-yyyy
+    // India standard time. date format: dd-mm-yyyy
     const todayDMY = new Date().toLocaleString("en-IN", {
       day: "2-digit",
       month: "2-digit",
@@ -235,38 +230,29 @@ export const createDocument = catchAsync(async (req, res, next) => {
         },
       },
     });
-
-    // create unique id
-    // console.log("count", count);
     logger.info(`Counted documents created today: ${count}`);
 
-    documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${
-      count + 1
-    }`;
-    logger.info(
-      `Generated document unique ID: ${documentData.document_unique_id}`
-    );
+    documentData.document_unique_id = `${todayDMY.split("/").join("-")}-${count + 1}`;
+    logger.info(`Generated document unique ID: ${documentData.document_unique_id}`);
 
     logger.info("Creating new document in the database");
 
     // Generating images to pdf before creating the data
+    const imagesDir = `public/uploads/${body.branch_name}/${body.document_reg_no}`;
+    const pdfOutputDir = `public/uploads/${body.branch_name}/${slugify(documentData.document_reg_no)}`;
+    const pdfOutputPath = `${pdfOutputDir}/${slugify(body.document_reg_no)}.pdf`;
 
-    imagesToPdf(
-      `public/uploads/${body.branch_name}/${body.document_reg_no}`,
-      `public/uploads/${body.branch_name}/${slugify(
-        documentData.document_reg_no
-      )}/${slugify(body.document_reg_no)}.pdf`
-    );
+    logger.info(`Converting images to PDF: ${imagesDir} -> ${pdfOutputPath}`);
+    await imagesToPdf(imagesDir, pdfOutputPath);
 
+    documentData.image_pdf = pdfOutputPath;
+
+    logger.info("Creating new document record in database");
     const newDocument = await documentModel.create(documentData);
-    logger.info(
-      `Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`
-    );
+    logger.info(`Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`);
 
     // Create activity entry after creating the document
-    const documentUniqueId = newDocument.document_unique_id
-      ? newDocument.document_unique_id
-      : "not available";
+    const documentUniqueId = newDocument.document_unique_id ? newDocument.document_unique_id : "not available";
 
     const activityData = {
       activity_title: "Document Created",
@@ -279,9 +265,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     logger.info("Creating activity log for the new document");
     await activityModel.create(activityData);
-    logger.info(
-      `Activity logged for document creation: ${newDocument.document_name} (${newDocument.document_reg_no})`
-    );
+    logger.info(`Activity logged for document creation: ${newDocument.document_name} (${newDocument.document_reg_no})`);
 
     return res.send({ results: newDocument });
   } catch (error) {
