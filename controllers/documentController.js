@@ -160,6 +160,7 @@ export const userBranches = async (roleId, userId) => {
 export const createDocument = catchAsync(async (req, res, next) => {
   logger.info("Entered createDocument method");
   try {
+    logger.info(req);
     const { body, file } = req;
     const userId = req.user.id;
 
@@ -182,8 +183,15 @@ export const createDocument = catchAsync(async (req, res, next) => {
     logger.info("Checked document existence");
 
     if (isDocumentExist) {
-      logger.warn(`Document already exists: ${body.document_name} - ${body.document_reg_no}`);
-      return next(new ApiError(httpStatus.BAD_REQUEST, `Document with name ${body.document_name} and registration number ${body.document_reg_no} already exists!`));
+      logger.warn(
+        `Document already exists: ${body.document_name} - ${body.document_reg_no}`
+      );
+      return next(
+        new ApiError(
+          httpStatus.BAD_REQUEST,
+          `Document with name ${body.document_name} and registration number ${body.document_reg_no} already exists!`
+        )
+      );
     }
 
     const documentData = {
@@ -212,7 +220,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       document_created_at: new Date(),
     };
 
-    // India standard time. date format: dd-mm-yyyy
+    // india standard time. date format: dd-mm-yyyy
     const todayDMY = new Date().toLocaleString("en-IN", {
       day: "2-digit",
       month: "2-digit",
@@ -243,21 +251,13 @@ export const createDocument = catchAsync(async (req, res, next) => {
     logger.info("Creating new document in the database");
 
     // Generating images to pdf before creating the data
-    const documentRegNoSlug = slugify(body.document_reg_no, { lower: true });
-    const outputPdfDir = `public/uploads/${body.branch_name}/${documentRegNoSlug}`;
-    const outputPdfPath = `${outputPdfDir}/${slugify(body.document_reg_no)}.pdf`;
 
-    // Ensure the directories exist
-    if (!fs.existsSync(outputPdfDir)) {
-      fs.mkdirSync(outputPdfDir, { recursive: true });
-    }
-
-    const imagePdf = await imagesToPdf(
+    imagesToPdf(
       `public/uploads/${body.branch_name}/${body.document_reg_no}`,
-      outputPdfPath
+      `public/uploads/${body.branch_name}/${slugify(
+        documentData.document_reg_no
+      )}/${slugify(body.document_reg_no)}.pdf`
     );
-
-    documentData.image_pdf = imagePdf ? outputPdfPath : null;
 
     const newDocument = await documentModel.create(documentData);
     logger.info(
