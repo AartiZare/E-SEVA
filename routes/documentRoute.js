@@ -81,4 +81,6 @@ router
 
 router.route("/images/pdf").get(documentController.getImages);
 
+router.route("/images/delete").get(documentController.deleteImages);
+
 export default router;

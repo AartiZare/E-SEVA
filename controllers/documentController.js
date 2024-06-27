@@ -1256,3 +1256,25 @@ export const getImages = (req, res) => {
     return res.send({ images: fileUrls });
   });
 };
+
+export const deleteImages = catchAsync((req, res) => {
+  try {
+    const { filePath } = req.body;
+    if (!filePath) {
+      return res.status(400).send({ error: "File path is required" });
+    }
+
+    logger.info(`Deleting file: ${filePath}`);
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        logger.error(`Error deleting file: ${err}`);
+        return res.status(500).send({ error: "Internal Server Error" });
+      }
+      logger.info(`File deleted: ${filePath}`);
+      return res.send({ message: "File deleted successfully" });
+    });
+  } catch (error) {
+    logger.error(error.toString());
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
