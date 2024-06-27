@@ -15,8 +15,11 @@ router
   // Get a state by ID
   .get(stateController.getStateById)
   // Update a state by ID
-  .put(stateController.updateState)
+  .put(stateController.updateState);
+
+router
+.route("/delete/:id")
   // Delete a state by ID
-  .delete(stateController.deleteState);
+  .put(stateController.deleteState);
 
 export default router;

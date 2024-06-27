@@ -97,6 +97,11 @@ const vendorModel = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      is_deleted: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
     },
     { timestamps: true, tableName: "tbl_vendors" }
   );

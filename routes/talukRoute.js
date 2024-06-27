@@ -15,9 +15,12 @@ router
   // Get a taluk by ID
   .get(talukController.getTalukById)
   // Update a taluk by ID
-  .put(talukController.updateTaluk)
+  .put(talukController.updateTaluk);
+
+router
+.route("/delete/:id")
   // Delete a taluk by ID
-  .delete(talukController.deleteTaluk);
+  .put(talukController.deleteTaluk);
 
 router
   .route("/taluk/:districtId")

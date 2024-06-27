@@ -27,4 +27,8 @@ router
   // Get all branches by user
   .get(auth(), branchController.listBranchesByUser);
 
+router
+  .route("/delete/:id")
+  .put(branchController.deleteBranch)
+
 export default router;

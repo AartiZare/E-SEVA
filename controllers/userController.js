@@ -12,6 +12,7 @@ import mailService from "../utils/mailService.js";
 import { generateOTP } from "../utils/generateOtp.js";
 import { secretKey } from "../middlewares/passport.js";
 import dotenv from "dotenv";
+import logger from '../loggers.js';
 
 dotenv.config();
 
@@ -945,3 +946,31 @@ export const deactivateUser = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
+
+export const softDeleteUser = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    const user = await userModel.findOne({
+      where: {
+        id: userId,
+        is_deleted: false
+      }
+    });
+
+    if (!user) {
+      return next(new ApiError(httpStatus.NOT_FOUND,  `User with ID ${userId} does not exist or deleted already`));
+    }
+
+    user.is_deleted = true;
+    await user.save();
+    logger.info(`User with ID ${userId} soft deleted successfully`);
+    return res.send({
+      status: true,
+      message: "User deleted successfully",
+      user,
+    });
+  } catch (error) {
+    logger.error('Error soft deleting user:', error);
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+};
