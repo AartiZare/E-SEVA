@@ -36,14 +36,12 @@ router
   // Get all pending documents
   .get(auth(), documentController.pendingDocumentListUser);
 
-router
-  .route("/uploadDocumentFile")
-  .post(
-    auth(),
-    upload.single("image_pdf"),
-    validate(documentValidation.uploadDocumentFile),
-    documentController.uploadDocumentFile
-  );
+router.route("/uploadDocumentFile").post(
+  auth(),
+  upload.single("image_pdf"),
+  // validate(documentValidation.uploadDocumentFile),
+  documentController.uploadDocumentFile
+);
 
 router
   .route("/documentUploadStatus")

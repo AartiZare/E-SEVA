@@ -308,6 +308,34 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
     const { headers } = req;
     const userId = req.user.id;
 
+    // Deleting all images and pdfs from the directory but not the directory itself
+    const uploadPath = `public/uploads/${slugify(
+      headers["x-branch-name"]
+    )}/${slugify(headers["x-document-reg-no"])}`;
+
+    logger.info(`Deleting all files from directory: ${uploadPath}`);
+    fs.readdir(uploadPath, (err, files) => {
+      if (err) {
+        logger.error(`Error reading directory: ${err.toString()}`);
+        return next(
+          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
+        );
+      }
+
+      for (const file of files) {
+        fs.unlink(path.join(uploadPath, file), (err) => {
+          if (err) {
+            logger.error(`Error deleting file: ${err.toString()}`);
+            return next(
+              new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
+            );
+          }
+        });
+      }
+    });
+
+    logger.info("All files deleted successfully");
+
     logger.info(`User ID: ${userId}`);
     logger.info(`Document headers: ${JSON.stringify(headers)}`);
 
@@ -806,10 +834,44 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
 
 export const updateDocument = catchAsync(async (req, res, next) => {
   try {
+    logger.info("Entered updateeDocument method");
+
+    const { body } = req;
     const userId = req.user.id;
     const documentId = req.params.documentId;
-    const updatedData = req.body;
-    const { file } = req;
+
+    logger.info(`User ID: ${userId}`);
+    logger.info(`Document body: ${JSON.stringify(body)}`);
+
+    logger.info("Fetching user role");
+    const userRole = await roleModel.findByPk(req.user.role_id);
+    logger.info("Fetched user role");
+
+    const documentData = {
+      document_name: body.document_name,
+      document_reg_no: body.document_reg_no,
+      supervisor_verification_status: 0,
+      squad_verification_status: 0,
+      final_verification_status: 0,
+      document_reg_date: body.document_reg_date,
+      document_renewal_date: body.document_renewal_date,
+      total_no_of_page: body.total_no_of_page,
+      authorised_persons: body.authorised_persons.map((person) => ({
+        authorised_person_name: person.authorised_person_name,
+        contact_number: person.contact_number,
+        alternate_number: person.alternate_number || null,
+        email: person.email,
+        designation: person.designation,
+      })),
+      branch_id: body.branch_id,
+      total_no_of_date: body.total_no_of_date,
+      document_unique_id: body.document_unique_id,
+      document_type: body.document_type,
+      created_by: userId,
+      updated_by: userId,
+      document_upload_status: "UPLOADING",
+      document_created_at: new Date(),
+    };
 
     const document = await documentModel.findOne({
       where: {
@@ -828,29 +890,21 @@ export const updateDocument = catchAsync(async (req, res, next) => {
       );
     }
 
-    // Handle file upload if present
-    // let documentFileUrl;
-    // Not required to update the file. its always the same name and same extension
-    // if (req.file) {
-    //   // documentFileUrl = `${process.env.FILE_PATH}${req.file.originalname}`;
-    //   documentFileUrl = `${process.env.FILE_ACCESS_PATH}${body.branch_name}/${
-    //     body.document_reg_no
-    //   }${path.extname(file.originalname)}`;
-    // }
+    imagesToPdf(
+      `public/uploads/${slugify(body.branch_name)}/${slugify(
+        body.document_reg_no
+      )}`,
+      `public/uploads/${slugify(body.branch_name)}/${slugify(
+        documentData.document_reg_no
+      )}/${slugify(body.document_reg_no)}.pdf`
+    );
+    logger.info("Images to pdf successfully converted");
 
-    // Update document data
-    const documentData = {
-      ...updatedData,
-      supervisor_verification_status: 0, // Reseting to make it as a fresh verification
-      squad_verification_status: 0, // Reseting to make it as a fresh verification
-      final_verification_status: 0, // Reseting to make it as a fresh verification
-    };
-
-    if (file) {
-      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
-        req.body.branch_name
-      }/${req.body.document_reg_no}${path.extname(file.originalname)}`;
-    }
+    documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${slugify(
+      body.branch_name
+    )}/${slugify(documentData.document_reg_no)}/${slugify(
+      body.document_reg_no
+    )}.pdf`;
 
     // Update the document in the database
     const rowsUpdated = await documentModel.update(documentData, {
