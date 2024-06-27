@@ -56,9 +56,9 @@ const storage = multer.diskStorage({
     logger.info("Generating filename from headers", req.headers);
 
     if (req.headers["x-document-reg-no"]) {
-      const newFilename = `${req.headers["x-timestamp"]}_${
-        req.headers["x-file-page-number"]
-      }${path.extname(file.originalname)}`;
+      const newFilename = `${req.headers["x-file-page-number"]}${path.extname(
+        file.originalname
+      )}`;
       logger.info(`Generated filename: ${newFilename}`);
       cb(null, newFilename);
     } else {

@@ -258,13 +258,13 @@ export const createDocument = catchAsync(async (req, res, next) => {
       )}`,
       `public/uploads/${slugify(body.branch_name)}/${slugify(
         documentData.document_reg_no
-      )}/${body.timestamp}_${slugify(body.document_reg_no)}.pdf`
+      )}/${slugify(body.document_reg_no)}.pdf`
     );
     logger.info("Images to pdf successfully converted");
 
     documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${slugify(
       body.branch_name
-    )}/${slugify(documentData.document_reg_no)}/${body.timestamp}_${slugify(
+    )}/${slugify(documentData.document_reg_no)}/${slugify(
       body.document_reg_no
     )}.pdf`;
 
@@ -899,7 +899,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
       )}`,
       `public/uploads/${slugify(body.branch_name)}/${slugify(
         documentData.document_reg_no
-      )}/${body.timestamp}_${slugify(body.document_reg_no)}.pdf`
+      )}/${slugify(body.document_reg_no)}.pdf`
     );
     logger.info("Images to pdf successfully converted");
 
