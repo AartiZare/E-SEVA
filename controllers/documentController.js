@@ -250,6 +250,15 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     logger.info("Creating new document in the database");
 
+    // Generating images to pdf before creating the data
+
+    imagesToPdf(
+      `public/uploads/${body.branch_name}/${body.document_reg_no}`,
+      `public/uploads/${body.branch_name}/${slugify(
+        documentData.document_reg_no
+      )}/${slugify(body.document_reg_no)}.pdf`
+    );
+
     const newDocument = await documentModel.create(documentData);
     logger.info(
       `Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`
@@ -282,26 +291,6 @@ export const createDocument = catchAsync(async (req, res, next) => {
   }
 });
 
-export const convertImagesToPdf = catchAsync(async (req, res, next) => {
-  try {
-    const { body } = req;
-
-    // Generating images to pdf before creating the data
-
-    imagesToPdf(
-      `public/uploads/${body.branch_name}/${body.document_reg_no}`,
-      `public/uploads/${body.branch_name}/${slugify(
-        documentData.document_reg_no
-      )}/${slugify(body.document_reg_no)}.pdf`
-    );
-
-    return res.send({ results: "Images converted to PDF" });
-  } catch (error) {
-    logger.error(`Error in convertImagesToPdf: ${error.toString()}`);
-    return res.status(500).send({ error: "Internal Server Error" });
-  }
-});
-
 export const uploadDocumentFile = catchAsync(async (req, res, next) => {
   logger.info("Entered uploadDocumentFile method");
   try {
@@ -313,24 +302,6 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
 
     logger.info(
       `Document(images) uploaded: ${headers["x-branch-name"]} (${headers["x-document-reg-no"]})`
-    );
-
-    // Create activity entry after creating the document
-    const documentRegNo = headers["x-document-reg-no"];
-
-    const activityData = {
-      activity_title: "Document (images) File uploaded",
-      activity_description: `Document ${headers["x-branch-name"]} (reg no: ${headers["x-document-reg-no"]}) has been uploaded.`,
-      activity_created_at: new Date(), // TODO: This also must be the created date of the document
-      activity_created_by_id: req.user.id,
-      activity_created_by_type: "User",
-      activity_document_id: 0, // TODO: There must be a created document id. Which is not available in the headers for now. So, user must be able to upload the images only after creating the document
-    };
-
-    logger.info("Creating activity log for the new document");
-    await activityModel.create(activityData);
-    logger.info(
-      `Activity logged for document creation: ${headers["x-branch-name"]} (reg no: ${headers["x-document-reg-no"]})`
     );
 
     return res.send({ results: rowsUpdated });

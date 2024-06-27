@@ -17,14 +17,14 @@ router
   // Get document list
   .get(auth(), documentController.getDocumentList);
 
-router
-  .route("/convertImagesToPdf")
-  // Convert images to pdf
-  .post(
-    auth(),
-    // validate(documentValidation.createDocument),
-    documentController.convertImagesToPdf
-  );
+// router
+//   .route("/")
+//   // Create a new document
+//   .post(
+//     auth(),
+//     // validate(documentValidation.createDocument),
+//     documentController.createDocument
+//   )
 router
   .route("/")
   .post(
