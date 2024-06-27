@@ -14,6 +14,7 @@ import db from "../models/index.js";
 const documentModel = db.Document;
 const activityModel = db.Activity;
 const userStateToBranchModel = db.UserStateToBranch;
+const roleModel = db.Role;
 
 const fetchUserRecords = async (req) => {
   const userId = req.user.id;
