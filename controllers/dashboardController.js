@@ -3,6 +3,7 @@ import { catchAsync } from "../utils/catchAsync.js";
 // import httpStatus from "http-status";
 // import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
+import { userBranches } from "./documentController.js";
 // import {
 //   format,
 //   parseISO,
@@ -292,6 +293,75 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
     const userRecordsPromise = fetchUserRecords(req);
     const userDailyActivityPromise = fetchUserDailyActivity(req);
     const userMonthlyActivityPromise = fetchUserMonthlyActivity(req);
+    let userTeam = {};
+
+    const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
+    if (userRole.name === "Supervisor") {
+      const supervisorBranches = await userBranches(
+        req.user.role_id,
+        req.user.id
+      );
+      const branch_users = await userStateToBranchModel.findAll({
+        where: {
+          branch_id: supervisorBranches,
+          status: true,
+        },
+        attributes: ["user_id"],
+      });
+      const userCounts = await db.User.count({
+        where: {
+          id: branch_users.map((user) => user.user_id),
+        },
+      });
+      const activeUserCounts = await db.User.count({
+        where: {
+          id: branch_users.map((user) => user.user_id),
+          status: true,
+        },
+      });
+      const inactiveUserCounts = await db.User.count({
+        where: {
+          id: branch_users.map((user) => user.user_id),
+          status: false,
+        },
+      });
+      userTeam = {
+        userCounts,
+        activeUserCounts,
+        inactiveUserCounts,
+      };
+    } else if (userRole.name === "Squad") {
+      const squadBranches = userBranches(req.user.role_id, req.user.id);
+      const branch_users = await userStateToBranchModel.findAll({
+        where: {
+          branch_id: squadBranches,
+          status: true,
+        },
+        attributes: ["user_id"],
+      });
+      const userCounts = await db.User.count({
+        where: {
+          id: branch_users.map((user) => user.user_id),
+        },
+      });
+      const activeUserCounts = await db.User.count({
+        where: {
+          id: branch_users.map((user) => user.user_id),
+          status: true,
+        },
+      });
+      const inactiveUserCounts = await db.User.count({
+        where: {
+          id: branch_users.map((user) => user.user_id),
+          status: false,
+        },
+      });
+      userTeam = {
+        userCounts,
+        activeUserCounts,
+        inactiveUserCounts,
+      };
+    }
 
     const [userRecords, userDailyActivity, userMonthlyActivity] =
       await Promise.all([
@@ -304,6 +374,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
       userRecords,
       userDailyActivity,
       userMonthlyActivity,
+      userTeam,
     });
   } catch (error) {
     console.error(error.toString());
