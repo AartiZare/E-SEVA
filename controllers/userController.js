@@ -445,6 +445,7 @@ export const getAll = catchAsync(async (req, res) => {
 
     let filter = {
       status: true,
+      is_deleted: false
     };
 
     if (qFilter) {
@@ -813,6 +814,7 @@ export const getMyTeamUserList = catchAsync(async (req, res, next) => {
 
     let filter = {
       // status: true  // Assuming status is a boolean
+      is_deleted: false
     };
 
     const _userFilter = await fillUserStateToBranchFilter(req, {});

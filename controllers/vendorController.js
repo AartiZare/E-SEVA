@@ -97,7 +97,9 @@ export const createVendor = catchAsync(async (req, res, next) => {
 export const getAllVendors = catchAsync(async (req, res) => {
   try {
     const { qFilter, page, pageSize, search } = req.query;
-    let filter = {};
+    let filter = {
+      is_deleted: false
+    };
 
     if (qFilter) {
       filter = {

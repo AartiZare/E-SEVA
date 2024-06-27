@@ -11,7 +11,11 @@ export const createDivision = catchAsync(async (req, res) => {
 });
 
 export const getDivision = catchAsync(async (req, res) => {
-  const divisions = await divisionModel.findAll();
+  const divisions = await divisionModel.findAll({
+    where: {
+      is_deleted: false
+    }
+  });
   res.status(httpStatus.OK).send(divisions);
 });
 
@@ -64,7 +68,10 @@ export const deleteDivision = catchAsync(async (req, res, next) => {
 export const getDivisionByStateId = catchAsync(async (req, res) => {
   const stateId = req.params.stateId;
   const division = await divisionModel.findAll({
-    where: { state_id: stateId },
+    where: { 
+      state_id: stateId,
+      is_deleted: false
+    },
   });
 
   if (!division) {

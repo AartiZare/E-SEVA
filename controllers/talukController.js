@@ -11,7 +11,11 @@ export const createTaluk = catchAsync(async (req, res) => {
 });
 
 export const getTaluks = catchAsync(async (req, res) => {
-  const taluks = await Taluk.findAll();
+  const taluks = await Taluk.findAll({
+    where: {
+      is_deleted: false
+    }
+  });
   res.status(httpStatus.OK).send(taluks);
 });
 
@@ -64,7 +68,12 @@ export const deleteTaluk = catchAsync(async (req, res, next) => {
 
 export const getTalukByDisctrictId = catchAsync(async (req, res) => {
   const districtId = req.params.districtId;
-  const taluks = await Taluk.findAll({ where: { district_id: districtId } });
+  const taluks = await Taluk.findAll({ 
+    where: {
+       district_id: districtId,
+       is_deleted: false
+    } 
+  });
 
   if (!taluks) {
     throw new ApiError(httpStatus.NOT_FOUND, "Taluk not found");

@@ -58,7 +58,10 @@ export const getAllBranches = catchAsync(async (req, res, next) => {
 
     const { state_id, division_id, district_id, taluk_id } = filter;
 
-    let branches = await branchModel.findAll();
+    // Step 1: Get all branches with is_deleted = false
+    let branches = await branchModel.findAll({
+      where: { is_deleted: false },
+    });
 
     // Step 2: Filter by taluk_id if provided
     if (taluk_id) {
