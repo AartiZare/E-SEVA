@@ -258,7 +258,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
       )}`,
       `public/uploads/${slugify(body.branch_name)}/${slugify(
         documentData.document_reg_no
-      )}/${slugify(body.document_reg_no)}.pdf`
+      )}/${body.timestamp}_${slugify(body.document_reg_no)}.pdf`
     );
     logger.info("Images to pdf successfully converted");
 
@@ -308,22 +308,23 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
     const { headers } = req;
     const userId = req.user.id;
 
-    if (headers["x-file-page-number"] == 1) {
-      // Deleting all images and pdfs from the directory but not the directory itself
-      const uploadPath = `public/uploads/${slugify(
-        headers["x-branch-name"]
-      )}/${slugify(headers["x-document-reg-no"])}`;
+    // Deleting all images and pdfs from the directory but not the directory itself
+    const uploadPath = `public/uploads/${slugify(
+      headers["x-branch-name"]
+    )}/${slugify(headers["x-document-reg-no"])}`;
 
-      logger.info(`Deleting all files from directory: ${uploadPath}`);
-      fs.readdir(uploadPath, (err, files) => {
-        if (err) {
-          logger.error(`Error reading directory: ${err.toString()}`);
-          return next(
-            new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
-          );
-        }
+    logger.info(`Deleting all files from directory: ${uploadPath}`);
+    fs.readdir(uploadPath, (err, files) => {
+      if (err) {
+        logger.error(`Error reading directory: ${err.toString()}`);
+        return next(
+          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
+        );
+      }
 
-        for (const file of files) {
+      const xTimestamp = req.headers["x-timestamp"];
+      for (const file of files) {
+        if (!file.startsWith(xTimestamp)) {
           fs.unlink(path.join(uploadPath, file), (err) => {
             if (err) {
               logger.error(`Error deleting file: ${err.toString()}`);
@@ -333,10 +334,10 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
             }
           });
         }
-      });
+      }
+    });
 
-      logger.info("All files deleted successfully");
-    }
+    logger.info("All files deleted successfully");
 
     logger.info(`User ID: ${userId}`);
     logger.info(`Document headers: ${JSON.stringify(headers)}`);
@@ -898,7 +899,7 @@ export const updateDocument = catchAsync(async (req, res, next) => {
       )}`,
       `public/uploads/${slugify(body.branch_name)}/${slugify(
         documentData.document_reg_no
-      )}/${slugify(body.document_reg_no)}.pdf`
+      )}/${body.timestamp}_${slugify(body.document_reg_no)}.pdf`
     );
     logger.info("Images to pdf successfully converted");
 
