@@ -260,6 +260,15 @@ export const createDocument = catchAsync(async (req, res, next) => {
         documentData.document_reg_no
       )}/${slugify(body.document_reg_no)}.pdf`
     );
+    logger.info("Images to pdf successfully converted");
+
+    documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${slugify(
+      body.branch_name
+    )}/${slugify(documentData.document_reg_no)}/${slugify(
+      body.document_reg_no
+    )}.pdf`;
+
+    // http://3.7.184.250/E-Seva/document/file?documentId=rajajinagar/upsc/upsc.pdf
 
     const newDocument = await documentModel.create(documentData);
     logger.info(
