@@ -334,7 +334,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
         inactiveUserCounts,
       };
     } else if (userRole.name === "Squad") {
-      const squadBranches = userBranches(req.user.role_id, req.user.id);
+      const squadBranches = await userBranches(req.user.role_id, req.user.id);
       const branch_users = await userStateToBranchModel.findAll({
         where: {
           branch_id: squadBranches,
