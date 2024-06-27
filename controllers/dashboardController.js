@@ -377,10 +377,14 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
       ]);
 
     return res.send({
-      userRecords,
+      userRecods: {
+        ...userRecords,
+        total: userTeam.userCounts,
+        active: userTeam.activeUserCounts,
+        inactive: userTeam.inactiveUserCounts,
+      },
       userDailyActivity,
       userMonthlyActivity,
-      userTeam,
     });
   } catch (error) {
     console.error(error.toString());
