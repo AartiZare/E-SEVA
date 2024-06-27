@@ -148,6 +148,50 @@ const fetchUserDailyActivity = async (req) => {
       rejected: rejectedCount,
       pending: pendingCount,
     };
+  } else if (userRole.name === "Squad") {
+    const filters = {
+      activity_created_by_id: userId,
+      activity_created_at: {
+        [Op.between]: [startDate, endDate],
+      },
+      activity_title: "Document Approved",
+    };
+
+    const approvedCount = await activityModel.count({
+      where: filters,
+    });
+
+    filters.activity_title = "Document Rejected";
+    const rejectedCount = await activityModel.count({
+      where: filters,
+    });
+
+    const _userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+        status: true,
+      },
+      attributes: ["branch_id"],
+    });
+
+    const branch_id = _userBranches.map((branch) => branch.branch_id);
+
+    const pendingCount = await documentModel.count({
+      where: {
+        createdAt: {
+          [Op.between]: [startDate, endDate],
+        },
+        supervisor_verification_status: 1,
+        squad_verification_status: 0,
+        branch_id,
+      },
+    });
+
+    return {
+      approved: approvedCount,
+      rejected: rejectedCount,
+      pending: pendingCount,
+    };
   } else {
     const filters = {
       activity_created_by_id: userId,
@@ -174,15 +218,14 @@ const fetchUserDailyActivity = async (req) => {
       attributes: ["branch_id"],
     });
 
-    branch_id = _userBranches.map((branch) => branch.branch_id);
+    const branch_id = _userBranches.map((branch) => branch.branch_id);
 
     const pendingCount = await documentModel.count({
       where: {
         createdAt: {
           [Op.between]: [startDate, endDate],
         },
-        supervisor_verification_status: 1,
-        squad_verification_status: 0,
+        supervisor_verification_status: 0,
         branch_id,
       },
     });
