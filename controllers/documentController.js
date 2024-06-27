@@ -1265,12 +1265,20 @@ export const deleteImages = catchAsync((req, res) => {
     }
 
     logger.info(`Deleting file: ${filePath}`);
-    fs.unlink(filePath, (err) => {
+    const filePathSplitted = filePath.split("/");
+    const fileName = filePathSplitted[filePathSplitted.length - 1];
+    const documentRegNo = filePathSplitted[filePathSplitted.length - 2];
+    const branchName = filePathSplitted[filePathSplitted.length - 3];
+    const uploadPath = path.join(
+      __dirname,
+      `../public/uploads/${branchName}/${documentRegNo}`
+    );
+    fs.unlink(uploadPath, (err) => {
       if (err) {
         logger.error(`Error deleting file: ${err}`);
         return res.status(500).send({ error: "Internal Server Error" });
       }
-      logger.info(`File deleted: ${filePath}`);
+      logger.info(`File deleted: ${uploadPath}`);
       return res.send({ message: "File deleted successfully" });
     });
   } catch (error) {
