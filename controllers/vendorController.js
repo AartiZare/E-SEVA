@@ -66,7 +66,11 @@ export const createVendor = catchAsync(async (req, res, next) => {
       profileImageUrl = `http://52.66.238.70/E-Seva/uploads/${req.file.originalname}`;
     }
 
-    const vendorData = { ...body, resetPasswordToken, resetPasswordTokenExpiry };
+    const vendorData = {
+      ...body,
+      resetPasswordToken,
+      resetPasswordTokenExpiry,
+    };
     if (profileImageUrl) {
       vendorData.profile_image = profileImageUrl;
     }
@@ -101,7 +105,7 @@ export const getAllVendors = catchAsync(async (req, res) => {
     }
 
     if (search) {
-      const searchTerm = search.trim();
+      const searchTerm = search?.trim();
       if (searchTerm !== "") {
         filter = {
           ...filter,

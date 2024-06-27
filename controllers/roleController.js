@@ -51,7 +51,7 @@ export const getAllRole = catchAsync(async (req, res, next) => {
     let page = parseInt(req.query.page) || 1;
     let pageSize = parseInt(req.query.pageSize) || 10;
     if (req.query.search) {
-      const searchTerm = req.query.search.trim();
+      const searchTerm = req.query?.search?.trim();
       if (searchTerm !== "") {
         filter = {
           name: {

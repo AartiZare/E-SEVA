@@ -453,7 +453,7 @@ export const getAll = catchAsync(async (req, res) => {
     }
 
     if (search) {
-      const searchTerm = search.trim();
+      const searchTerm = search?.trim();
       if (searchTerm !== "") {
         filter = {
           ...filter,
@@ -857,7 +857,7 @@ export const getMyTeamUserList = catchAsync(async (req, res, next) => {
     }
 
     if (search) {
-      const searchTerm = search.trim();
+      const searchTerm = search?.trim();
       if (searchTerm !== "") {
         filter = {
           ...filter,

@@ -25,7 +25,7 @@ export const getFeedbackList = catchAsync(async (req, res, next) => {
     }
 
     if (search) {
-      const searchTerm = search.trim();
+      const searchTerm = search?.trim();
       if (searchTerm !== "") {
         filter = {
           ...filter,

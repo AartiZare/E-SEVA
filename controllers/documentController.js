@@ -1148,7 +1148,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
     }
 
     if (search) {
-      const searchTerm = search.trim();
+      const searchTerm = search?.trim();
       if (searchTerm !== "") {
         conditions.document_name = {
           [Op.like]: `%${searchTerm}%`,

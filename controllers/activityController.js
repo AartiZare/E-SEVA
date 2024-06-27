@@ -26,7 +26,7 @@ export const userActivityList = catchAsync(async (req, res, next) => {
 
     // Add search term to the filter if provided
     if (search) {
-      const searchTerm = search.trim();
+      const searchTerm = search?.trim();
       if (searchTerm !== "") {
         filter.activity_name = {
           [Op.like]: `%${searchTerm}%`,
