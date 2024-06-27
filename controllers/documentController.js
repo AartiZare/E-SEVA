@@ -304,7 +304,7 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
       `Document(images) uploaded: ${headers["x-branch-name"]} (${headers["x-document-reg-no"]})`
     );
 
-    return res.send({ results: rowsUpdated });
+    return res.send({ results: "success" });
   } catch (error) {
     logger.error(`Error in createDocument: ${error.toString()}`);
     // const documentData = {};
