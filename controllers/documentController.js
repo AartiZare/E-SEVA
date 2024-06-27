@@ -250,15 +250,6 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     logger.info("Creating new document in the database");
 
-    // Generating images to pdf before creating the data
-
-    imagesToPdf(
-      `public/uploads/${body.branch_name}/${body.document_reg_no}`,
-      `public/uploads/${body.branch_name}/${slugify(
-        documentData.document_reg_no
-      )}/${slugify(body.document_reg_no)}.pdf`
-    );
-
     const newDocument = await documentModel.create(documentData);
     logger.info(
       `Document created: ${newDocument.document_name} (${newDocument.document_reg_no}), Unique ID: ${newDocument.document_unique_id}`
@@ -291,79 +282,55 @@ export const createDocument = catchAsync(async (req, res, next) => {
   }
 });
 
-export const uploadDocumentFile = catchAsync(async (req, res, next) => {
-  logger.info("Entered documentDocument method");
+export const convertImagesToPdf = catchAsync(async (req, res, next) => {
   try {
-    return res.send({ results: "success" });
-    const { body, file } = req;
+    const { body } = req;
+
+    // Generating images to pdf before creating the data
+
+    imagesToPdf(
+      `public/uploads/${body.branch_name}/${body.document_reg_no}`,
+      `public/uploads/${body.branch_name}/${slugify(
+        documentData.document_reg_no
+      )}/${slugify(body.document_reg_no)}.pdf`
+    );
+
+    return res.send({ results: "Images converted to PDF" });
+  } catch (error) {
+    logger.error(`Error in convertImagesToPdf: ${error.toString()}`);
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
+export const uploadDocumentFile = catchAsync(async (req, res, next) => {
+  logger.info("Entered uploadDocumentFile method");
+  try {
+    const { headers } = req;
     const userId = req.user.id;
 
     logger.info(`User ID: ${userId}`);
-    logger.info(`Document body: ${JSON.stringify(body)}`);
+    logger.info(`Document headers: ${JSON.stringify(headers)}`);
 
-    logger.info("Fetching user role");
-    const userRole = await roleModel.findByPk(req.user.role_id);
-    logger.info("Fetched user role");
-
-    logger.info("Checking if document exists");
-
-    const documentData = {};
-
-    // const id = crypto.randomBytes(16).toString('hex')
-    if (file) {
-      logger.info("Creating file path for uploaded file");
-      documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${
-        body.branch_name
-      }/${body.document_reg_no}${path.extname(file.originalname)}`;
-      logger.info(`File path created: ${documentData.image_pdf}`);
-      documentData.document_upload_status = "SUCCESS";
-    }
-
-    // india standard time. date format: dd-mm-yyyy
-    const todayDMY = new Date().toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-
-    logger.info("Counting documents created today");
-    const count = await documentModel.count({
-      where: {
-        createdAt: {
-          [Op.gte]: new Date(new Date().setHours(0, 0, 0)),
-          [Op.lt]: new Date(new Date().setHours(23, 59, 59)),
-        },
-      },
-    });
-
-    logger.info("Updating the document in the database by registration number");
-    const rowsUpdated = await documentModel.update(documentData, {
-      where: {
-        document_reg_no: body.document_reg_no,
-      },
-    });
     logger.info(
-      `Document uploaded: ${rowsUpdated.document_name} (${rowsUpdated.document_reg_no}), Unique ID: ${rowsUpdated.document_unique_id}`
+      `Document(images) uploaded: ${headers["x-branch-name"]} (${headers["x-document-reg-no"]})`
     );
 
     // Create activity entry after creating the document
-    const documentUniqueId = rowsUpdated.document_unique_id
-      ? rowsUpdated.document_unique_id
-      : "not available";
+    const documentRegNo = headers["x-document-reg-no"];
 
     const activityData = {
-      activity_title: "Document File uploaded",
-      activity_description: `Document ${rowsUpdated.document_name} with registration number ${rowsUpdated.document_reg_no} has been uploaded. Document Unique ID: ${documentUniqueId}`,
-      activity_created_at: rowsUpdated.createdAt,
+      activity_title: "Document (images) File uploaded",
+      activity_description: `Document ${headers["x-branch-name"]} (reg no: ${headers["x-document-reg-no"]}) has been uploaded.`,
+      activity_created_at: new Date(), // TODO: This also must be the created date of the document
       activity_created_by_id: req.user.id,
-      activity_created_by_type: userRole.name,
-      activity_document_id: rowsUpdated.id,
+      activity_created_by_type: "User",
+      activity_document_id: 0, // TODO: There must be a created document id. Which is not available in the headers for now. So, user must be able to upload the images only after creating the document
     };
 
     logger.info("Creating activity log for the new document");
     await activityModel.create(activityData);
     logger.info(
-      `Activity logged for document creation: ${rowsUpdated.document_name} (${rowsUpdated.document_reg_no})`
+      `Activity logged for document creation: ${headers["x-branch-name"]} (reg no: ${headers["x-document-reg-no"]})`
     );
 
     return res.send({ results: rowsUpdated });
@@ -1213,11 +1180,9 @@ export const getImages = (req, res) => {
 
   if (!branch_name || !document_reg_no) {
     logger.warn("Branch name or document registration number not provided");
-    return res
-      .status(400)
-      .send({
-        error: "Branch name and document registration number are required",
-      });
+    return res.status(400).send({
+      error: "Branch name and document registration number are required",
+    });
   }
 
   const uploadPath = path.join(

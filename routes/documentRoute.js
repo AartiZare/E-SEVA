@@ -17,20 +17,20 @@ router
   // Get document list
   .get(auth(), documentController.getDocumentList);
 
-// router
-//   .route("/")
-//   // Create a new document
-//   .post(
-//     auth(),
-//     // validate(documentValidation.createDocument),
-//     documentController.createDocument
-//   )
+router
+  .route("/convertImagesToPdf")
+  // Convert images to pdf
+  .post(
+    auth(),
+    // validate(documentValidation.createDocument),
+    documentController.convertImagesToPdf
+  );
 router
   .route("/")
   .post(
     auth(),
     // validate(documentValidation.createDocument), // Uncomment if validation is implemented
-    upload.single('file'), // Use multer to handle the file upload
+    upload.single("file"), // Use multer to handle the file upload
     documentController.createDocument
   )
   // Get all pending documents
@@ -81,8 +81,6 @@ router
   // Get data for web dashboard
   .post(auth(), documentController.webDashboard);
 
-router
-  .route("/images/pdf")
-  .get(documentController.getImages);
+router.route("/images/pdf").get(documentController.getImages);
 
 export default router;
