@@ -1265,14 +1265,10 @@ export const deleteImages = catchAsync((req, res) => {
     }
 
     logger.info(`Deleting file: ${filePath}`);
-    const filePathSplitted = filePath.split("/");
-    const fileName = filePathSplitted[filePathSplitted.length - 1];
-    const documentRegNo = filePathSplitted[filePathSplitted.length - 2];
-    const branchNameEq = filePathSplitted[filePathSplitted.length - 3];
-    const branchName = branchNameEq.split("=")[1];
+    const filePathSplitted = filePath.split("=")[1];
     const uploadPath = path.join(
       __dirname,
-      `../public/uploads/${branchName}/${documentRegNo}/${fileName}`
+      `../public/uploads/${filePathSplitted}`
     );
     fs.unlink(uploadPath, (err) => {
       if (err) {
