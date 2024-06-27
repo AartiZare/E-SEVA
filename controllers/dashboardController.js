@@ -377,7 +377,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
       ]);
 
     return res.send({
-      userRecods: {
+      userRecords: {
         ...userRecords,
         total: userTeam.userCounts,
         active: userTeam.activeUserCounts,
