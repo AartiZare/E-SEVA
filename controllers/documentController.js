@@ -253,8 +253,10 @@ export const createDocument = catchAsync(async (req, res, next) => {
     // Generating images to pdf before creating the data
 
     imagesToPdf(
-      `public/uploads/${body.branch_name}/${body.document_reg_no}`,
-      `public/uploads/${body.branch_name}/${slugify(
+      `public/uploads/${slugify(body.branch_name)}/${slugify(
+        body.document_reg_no
+      )}`,
+      `public/uploads/${slugify(body.branch_name)}/${slugify(
         documentData.document_reg_no
       )}/${slugify(body.document_reg_no)}.pdf`
     );

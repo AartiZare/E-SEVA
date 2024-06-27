@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import logger from "../loggers.js";
+import { slugify } from "light-string-utils";
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -9,8 +10,8 @@ const storage = multer.diskStorage({
     logger.info("Received request headers:" + JSON.stringify(req.headers));
 
     if (req.headers["x-branch-name"]) {
-      const branchName = req.headers["x-branch-name"];
-      const documentRegNo = req.headers["x-document-reg-no"];
+      const branchName = slugify(req.headers["x-branch-name"]);
+      const documentRegNo = slugify(req.headers["x-document-reg-no"]);
       const uploadPath = `public/uploads/${branchName}/${documentRegNo}`;
 
       logger.info(`Branch name: ${branchName}`);
