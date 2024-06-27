@@ -102,49 +102,96 @@ const fetchUserDailyActivity = async (req) => {
   const endDate = new Date(currentDate);
   endDate.setUTCHours(23, 59, 59, 999);
 
-  const filters = {
-    created_by: userId,
-    createdAt: {
-      [Op.between]: [startDate, endDate],
-    },
-  };
+  const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
+  if (userRole.name === "User") {
+    const filters = {
+      created_by: userId,
+      createdAt: {
+        [Op.between]: [startDate, endDate],
+      },
+    };
 
-  const _userBranches = await userStateToBranchModel.findAll({
-    where: {
-      user_id: userId,
-      status: true,
-    },
-    attributes: ["branch_id"],
-  });
+    const _userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+        status: true,
+      },
+      attributes: ["branch_id"],
+    });
 
-  filters.branch_id = _userBranches.map((branch) => branch.branch_id);
+    filters.branch_id = _userBranches.map((branch) => branch.branch_id);
 
-  const approvedCount = await documentModel.count({
-    where: {
-      ...filters,
-      final_verification_status: 1,
-    },
-  });
+    const approvedCount = await documentModel.count({
+      where: {
+        ...filters,
+        final_verification_status: 1,
+      },
+    });
 
-  const rejectedCount = await documentModel.count({
-    where: {
-      ...filters,
-      final_verification_status: 2,
-    },
-  });
+    const rejectedCount = await documentModel.count({
+      where: {
+        ...filters,
+        final_verification_status: 2,
+      },
+    });
 
-  const pendingCount = await documentModel.count({
-    where: {
-      ...filters,
-      final_verification_status: 0,
-    },
-  });
+    const pendingCount = await documentModel.count({
+      where: {
+        ...filters,
+        final_verification_status: 0,
+      },
+    });
 
-  return {
-    approved: approvedCount,
-    rejected: rejectedCount,
-    pending: pendingCount,
-  };
+    return {
+      approved: approvedCount,
+      rejected: rejectedCount,
+      pending: pendingCount,
+    };
+  } else {
+    const filters = {
+      activity_created_by_id: userId,
+      activity_created_at: {
+        [Op.between]: [startDate, endDate],
+      },
+      activity_title: "Document Approved",
+    };
+
+    const approvedCount = await activityModel.count({
+      where: filters,
+    });
+
+    filters.activity_title = "Document Rejected";
+    const rejectedCount = await activityModel.count({
+      where: filters,
+    });
+
+    const _userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+        status: true,
+      },
+      attributes: ["branch_id"],
+    });
+
+    branch_id = _userBranches.map((branch) => branch.branch_id);
+
+    const pendingCount = await documentModel.count({
+      where: {
+        createdAt: {
+          [Op.between]: [startDate, endDate],
+        },
+        supervisor_verification_status: 1,
+        squad_verification_status: 0,
+        branch_id,
+      },
+    });
+
+    return {
+      approved: approvedCount,
+      rejected: rejectedCount,
+      pending: pendingCount,
+    };
+  }
 };
 
 // Function to fetch user's monthly activity
