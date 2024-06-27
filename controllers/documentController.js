@@ -264,7 +264,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
 
     documentData.image_pdf = `${process.env.FILE_ACCESS_PATH}${slugify(
       body.branch_name
-    )}/${slugify(documentData.document_reg_no)}/${slugify(
+    )}/${slugify(documentData.document_reg_no)}/${body.timestamp}_${slugify(
       body.document_reg_no
     )}.pdf`;
 
@@ -314,28 +314,28 @@ export const uploadDocumentFile = catchAsync(async (req, res, next) => {
     )}/${slugify(headers["x-document-reg-no"])}`;
 
     logger.info(`Deleting all files from directory: ${uploadPath}`);
-    fs.readdir(uploadPath, (err, files) => {
-      if (err) {
-        logger.error(`Error reading directory: ${err.toString()}`);
-        return next(
-          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
-        );
-      }
+    // fs.readdir(uploadPath, (err, files) => {
+    //   if (err) {
+    //     logger.error(`Error reading directory: ${err.toString()}`);
+    //     return next(
+    //       new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
+    //     );
+    //   }
 
-      const xTimestamp = req.headers["x-timestamp"];
-      for (const file of files) {
-        if (!file.startsWith(xTimestamp)) {
-          fs.unlink(path.join(uploadPath, file), (err) => {
-            if (err) {
-              logger.error(`Error deleting file: ${err.toString()}`);
-              return next(
-                new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
-              );
-            }
-          });
-        }
-      }
-    });
+    //   const xTimestamp = req.headers["x-timestamp"];
+    //   for (const file of files) {
+    //     if (!file.startsWith(xTimestamp)) {
+    //       fs.unlink(path.join(uploadPath, file), (err) => {
+    //         if (err) {
+    //           logger.error(`Error deleting file: ${err.toString()}`);
+    //           return next(
+    //             new ApiError(httpStatus.INTERNAL_SERVER_ERROR, err.toString())
+    //           );
+    //         }
+    //       });
+    //     }
+    //   }
+    // });
 
     logger.info("All files deleted successfully");
 
