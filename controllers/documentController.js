@@ -490,6 +490,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
         attributes: ["branch_id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.branch_id);
+      filter.supervisor_verification_status = 1;
       filter.squad_verification_status = 0;
     } else if (user.role_id === 2) {
       // Supervisor
