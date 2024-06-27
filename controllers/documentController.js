@@ -1268,10 +1268,11 @@ export const deleteImages = catchAsync((req, res) => {
     const filePathSplitted = filePath.split("/");
     const fileName = filePathSplitted[filePathSplitted.length - 1];
     const documentRegNo = filePathSplitted[filePathSplitted.length - 2];
-    const branchName = filePathSplitted[filePathSplitted.length - 3];
+    const branchNameEq = filePathSplitted[filePathSplitted.length - 3];
+    const branchName = branchNameEq.split("=")[1];
     const uploadPath = path.join(
       __dirname,
-      `../public/uploads/${branchName}/${documentRegNo}`
+      `../public/uploads/${branchName}/${documentRegNo}/${fileName}`
     );
     fs.unlink(uploadPath, (err) => {
       if (err) {
