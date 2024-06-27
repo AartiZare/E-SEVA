@@ -311,21 +311,21 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
       const userCounts = await db.User.count({
         where: {
           id: branch_users.map((user) => user.user_id),
-          user_role_id: 4,
+          role_id: 4,
         },
       });
       const activeUserCounts = await db.User.count({
         where: {
           id: branch_users.map((user) => user.user_id),
           status: true,
-          user_role_id: 4,
+          role_id: 4,
         },
       });
       const inactiveUserCounts = await db.User.count({
         where: {
           id: branch_users.map((user) => user.user_id),
           status: false,
-          user_role_id: 4,
+          role_id: 4,
         },
       });
       userTeam = {
@@ -345,21 +345,21 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
       const userCounts = await db.User.count({
         where: {
           id: branch_users.map((user) => user.user_id),
-          user_role_id: 2,
+          role_id: 2,
         },
       });
       const activeUserCounts = await db.User.count({
         where: {
           id: branch_users.map((user) => user.user_id),
           status: true,
-          user_role_id: 2,
+          role_id: 2,
         },
       });
       const inactiveUserCounts = await db.User.count({
         where: {
           id: branch_users.map((user) => user.user_id),
           status: false,
-          user_role_id: 2,
+          role_id: 2,
         },
       });
       userTeam = {
