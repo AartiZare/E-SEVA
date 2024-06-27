@@ -35,6 +35,11 @@ const activityModel = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      is_deleted: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       timestamps: false,

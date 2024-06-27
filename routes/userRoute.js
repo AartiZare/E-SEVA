@@ -70,4 +70,11 @@ router
   // Deactivate user
   .put(userController.deactivateUser);
 
+router
+  .route("/soft-delete/:id")
+/**
+ * Soft delete
+ */
+  .put(userController.softDeleteUser);
+
 export default router;

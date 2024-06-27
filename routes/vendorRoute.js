@@ -18,4 +18,12 @@ router
   // Get all vendors
   .get(vendorController.getAllVendors);
 
+router
+  .route("/soft-delete/:id")
+/**
+ * Soft delete
+ */
+  .put(vendorController.softDeleteVendor);
+
+
 export default router;

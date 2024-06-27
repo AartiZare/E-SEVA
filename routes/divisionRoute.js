@@ -20,6 +20,12 @@ router
   .delete(divisionController.deleteDivision);
 
 router
+  .route("/delete/:id")
+   // Delete a district by ID
+  .put(divisionController.deleteDivision);
+
+
+router
   .route("/state/:stateId")
   // Get a division by state ID
   .get(divisionController.getDivisionByStateId);

@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
 const Taluk = db.Taluk;
+import logger from '../loggers.js';
 
 export const createTaluk = catchAsync(async (req, res) => {
   const taluk = await Taluk.create(req.body);
@@ -32,13 +33,33 @@ export const updateTaluk = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(taluk);
 });
 
-export const deleteTaluk = catchAsync(async (req, res) => {
-  const taluk = await Taluk.findByPk(req.params.id);
-  if (!taluk) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Taluk not found");
+export const deleteTaluk = catchAsync(async (req, res, next) => {
+  try {
+    const taluk = await Taluk.findOne({
+      where: {
+        id: req.params.id,
+        is_deleted: false
+      }
+    });
+
+    if (!taluk) {
+      logger.info(`Taluk with ID ${req.params.id} does not exist or is already deleted!`);
+      return next(new ApiError(httpStatus.BAD_REQUEST, `Taluk with ID ${req.params.id} does not exist or is already deleted!`));
+    }
+
+    taluk.is_deleted = true;
+    await taluk.save();
+
+    logger.info(`Taluk with ID ${taluk.id} deleted successfully`);
+    return res.send({
+      status: true,
+      message: "Taluk deleted successfully",
+      taluk,
+    });
+  } catch (error) {
+    logger.error('Error deleting taluk:', error);
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).send({ error: 'Internal Server Error' });
   }
-  await taluk.destroy();
-  res.status(httpStatus.NO_CONTENT).send();
 });
 
 export const getTalukByDisctrictId = catchAsync(async (req, res) => {

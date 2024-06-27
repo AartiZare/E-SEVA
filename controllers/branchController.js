@@ -257,3 +257,27 @@ export const listBranchesByUser = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: error.message });
   }
 });
+
+export const deleteBranch = catchAsync(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const [updatedRowsCount] = await branchModel.update(
+      { is_deleted: true },
+      {
+        where: {
+          id,
+          is_deleted: false,
+        },
+      }
+    );
+
+    if (updatedRowsCount === 0) {
+      return next(new ApiError(httpStatus.NOT_FOUND, "Branch not found or already deleted"));
+    }
+
+    return res.status(httpStatus.OK).send({ message: "Branch deleted successfully" });
+  } catch (error) {
+    console.error('Error deleting branch:', error);
+    return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"));
+  }
+});

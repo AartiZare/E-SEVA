@@ -16,9 +16,12 @@ router
   // Get a district by ID
   .get(districtController.getDistrictById)
   // Update a district by ID
-  .put(districtController.updateDistrict)
-  // Delete a district by ID
-  .delete(districtController.deleteDistrict);
+  .put(districtController.updateDistrict);
+
+router
+  .route("/delete/:id")
+   // Delete a district by ID
+  .put(districtController.deleteDistrict);
 
 router
   .route("/division/:divisionId")

@@ -7,6 +7,7 @@ import mailService from "../utils/mailService.js";
 import { secretKey } from "../middlewares/passport.js";
 import db from "../models/index.js";
 const vendorModel = db.Vendor;
+import logger from '../loggers.js';
 
 export const createVendor = catchAsync(async (req, res, next) => {
   try {
@@ -146,3 +147,31 @@ export const getAllVendors = catchAsync(async (req, res) => {
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
+
+export const softDeleteVendor = async (req, res, next) => {
+  try {
+    const vendorId = req.params.id;
+    const vendor = await vendorModel.findOne({
+      where: {
+        id: vendorId,
+        is_deleted: false
+      }
+    });
+
+    if (!vendor) {
+      return next(new ApiError(httpStatus.NOT_FOUND,  `Vendor with ID ${vendorId} does not exist or deleted already`));
+    }
+
+    vendor.is_deleted = true;
+    await vendor.save();
+    logger.info(`User with ID ${vendorId} soft deleted successfully`);
+    return res.send({
+      status: true,
+      message: "Vendor deleted successfully",
+      vendor,
+    });
+  } catch (error) {
+    logger.error('Error soft deleting user:', error);
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+};
