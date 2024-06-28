@@ -8,6 +8,12 @@ import upload from "../middlewares/multer.js";
 const router = express.Router();
 
 router
+  .route("/userListingWithDocuments")
+  /**
+   * user with document listing
+   */
+  .get(userController.userListingWithDocDetails);
+router
   .route("/forgot_password")
   // forgot password
   .post(userController.forgotPassword);

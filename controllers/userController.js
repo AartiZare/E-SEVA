@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import path from "path";
-import { Op } from "sequelize";
+import { Op, fn, where, col } from "sequelize";
 import jwt from "jsonwebtoken";
 import { catchAsync } from "../utils/catchAsync.js";
 import { userService } from "../services/index.js";
@@ -21,6 +21,7 @@ const userStateToBranchModel = db.UserStateToBranch;
 const roleModel = db.Role;
 const vendorModel = db.Vendor;
 const activityModel = db.Activity;
+const documentModel = db.Document;
 const saltRounds = 10;
 
 export const create = catchAsync(async (req, res, next) => {
@@ -976,3 +977,87 @@ export const softDeleteUser = async (req, res, next) => {
     return res.status(500).send({ error: "Internal Server Error" });
   }
 };
+
+export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
+  try {
+    const { vendor_id, document_reg_date, page = 1, pageSize = 10, search } = req.query; // Assuming vendor_id, document_reg_date, page, pageSize, and search are passed as query parameters
+
+    // Build the where condition for users
+    const userWhereCondition = {
+      role_id: 4,
+    };
+
+    if (vendor_id) {
+      userWhereCondition.vendor_id = vendor_id;
+    }
+
+    if (search) {
+      const searchTerm = search.trim();
+      if (searchTerm !== "") {
+        userWhereCondition.full_name = {
+          [Op.like]: `%${searchTerm}%`
+        };
+      }
+    }
+
+    const pageNumber = parseInt(page, 10) || 1;
+    const limit = parseInt(pageSize, 10) || 10;
+    const offset = (pageNumber - 1) * limit;
+
+    const { rows: users, count: totalCount } = await userModel.findAndCountAll({
+      where: userWhereCondition,
+      limit,
+      offset,
+    });
+
+    const userIds = users.map(user => user.id);
+
+    // Build the where condition for documents
+    const documentWhereCondition = {
+      created_by: {
+        [Op.in]: userIds
+      }
+    };
+
+    if (document_reg_date) {
+      documentWhereCondition[Op.and] = where(fn('DATE', col('document_reg_date')), document_reg_date);
+    }
+
+    // Query documents where created_by is in userIds and optionally filter by document_reg_date
+    const documents = await documentModel.findAll({
+      where: documentWhereCondition,
+      attributes: ['created_by', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', 'final_verification_status'] // Adjust attributes as per your Document model
+    });
+
+    // Organize documents by userId
+    const usersWithDocs = users.map(user => {
+      const userDocuments = documents.filter(doc => doc.created_by === user.id);
+      return {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        contact_number: user.contact_number,
+        vendor_id: user.vendor_id,
+        role_id: user.role_id,
+        documents: userDocuments,
+        document_count: userDocuments.length
+      };
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return res.send({
+      message: "Fetched users with documents successfully",
+      data: usersWithDocs,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: pageNumber,
+        pageSize: limit,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching users with documents:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
