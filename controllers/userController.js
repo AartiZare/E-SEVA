@@ -980,9 +980,8 @@ export const softDeleteUser = async (req, res, next) => {
 
 export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
   try {
-    const { vendor_id, document_reg_date, page = 1, pageSize = 10, search } = req.query; // Assuming vendor_id, document_reg_date, page, pageSize, and search are passed as query parameters
+    const { vendor_id, document_reg_date, page = 1, pageSize = 10, search } = req.query;
 
-    // Build the where condition for users
     const userWhereCondition = {
       role_id: 4,
     };
@@ -1011,27 +1010,37 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
     });
 
     const userIds = users.map(user => user.id);
-
-    // Build the where condition for documents
-    const documentWhereCondition = {
-      created_by: {
-        [Op.in]: userIds
-      }
-    };
-
-    if (document_reg_date) {
-      documentWhereCondition[Op.and] = where(fn('DATE', col('document_reg_date')), document_reg_date);
-    }
-
-    // Query documents where created_by is in userIds and optionally filter by document_reg_date
     const documents = await documentModel.findAll({
-      where: documentWhereCondition,
-      attributes: ['created_by', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', 'final_verification_status'] // Adjust attributes as per your Document model
+      where: {
+        created_by: {
+          [Op.in]: userIds
+        },
+        ...(document_reg_date ? { document_reg_date } : {})
+      },
+      attributes: ['id', 'created_by', 'total_no_of_page',  'document_upload_status', 'document_reg_no', 'document_name', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', 'final_verification_status']
     });
 
-    // Organize documents by userId
     const usersWithDocs = users.map(user => {
       const userDocuments = documents.filter(doc => doc.created_by === user.id);
+
+      const totalDocuments = userDocuments.length;
+      const totalPages = userDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
+
+      // Calculate pending documents and pages
+      const pendingDocuments = userDocuments.filter(doc => doc.final_verification_status === 0);
+      const pendingDocumentCount = pendingDocuments.length;
+      const pendingPages = pendingDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
+
+      // Calculate approved documents and pages
+      const approvedDocuments = userDocuments.filter(doc => doc.final_verification_status === 1);
+      const approvedDocumentCount = approvedDocuments.length;
+      const approvedPages = approvedDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
+
+      // Calculate rejected documents and pages
+      const rejectedDocuments = userDocuments.filter(doc => doc.final_verification_status === 2);
+      const rejectedDocumentCount = rejectedDocuments.length;
+      const rejectedPages = rejectedDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
+
       return {
         id: user.id,
         full_name: user.full_name,
@@ -1040,7 +1049,11 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
         vendor_id: user.vendor_id,
         role_id: user.role_id,
         documents: userDocuments,
-        document_count: userDocuments.length
+        document_count: totalDocuments,
+        totalCountOfDocAndPages: `${totalDocuments}/${totalPages}`,
+        totalCountOfPendingDocumentsAndPages: `${pendingDocumentCount}/${pendingPages}`,
+        totalCountOfApprovedDocumentsAndPages: `${approvedDocumentCount}/${approvedPages}`,
+        totalCountOfRejectedDocumentsAndPages: `${rejectedDocumentCount}/${rejectedPages}`
       };
     });
 
