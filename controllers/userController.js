@@ -1007,6 +1007,7 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
       where: userWhereCondition,
       limit,
       offset,
+      attributes: ['id', 'full_name', 'email', 'contact_number', 'vendor_id', 'role_id']
     });
 
     const userIds = users.map(user => user.id);
@@ -1017,30 +1018,44 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
         },
         ...(document_reg_date ? { document_reg_date } : {})
       },
-      attributes: ['id', 'created_by', 'total_no_of_page',  'document_upload_status', 'document_reg_no', 'document_name', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', 'final_verification_status']
+      attributes: ['id', 'created_by', 'total_no_of_page', 'final_verification_status', 'document_upload_status', 'document_reg_no', 'document_name', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', ]
+    });
+
+    // Organize documents by userId and status
+    const userDocumentData = userIds.reduce((acc, userId) => {
+      acc[userId] = {
+        pending: [],
+        approved: [],
+        rejected: [],
+        totalPages: 0,
+        totalDocuments: 0,
+        pendingPages: 0,
+        approvedPages: 0,
+        rejectedPages: 0
+      };
+      return acc;
+    }, {});
+
+    documents.forEach(doc => {
+      const userId = doc.created_by;
+      const { final_verification_status, total_no_of_page } = doc;
+      userDocumentData[userId].totalDocuments += 1;
+      userDocumentData[userId].totalPages += total_no_of_page;
+
+      if (final_verification_status === 0) {
+        userDocumentData[userId].pending.push(doc);
+        userDocumentData[userId].pendingPages += total_no_of_page;
+      } else if (final_verification_status === 1) {
+        userDocumentData[userId].approved.push(doc);
+        userDocumentData[userId].approvedPages += total_no_of_page;
+      } else if (final_verification_status === 2) {
+        userDocumentData[userId].rejected.push(doc);
+        userDocumentData[userId].rejectedPages += total_no_of_page;
+      }
     });
 
     const usersWithDocs = users.map(user => {
-      const userDocuments = documents.filter(doc => doc.created_by === user.id);
-
-      const totalDocuments = userDocuments.length;
-      const totalPages = userDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
-
-      // Calculate pending documents and pages
-      const pendingDocuments = userDocuments.filter(doc => doc.final_verification_status === 0);
-      const pendingDocumentCount = pendingDocuments.length;
-      const pendingPages = pendingDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
-
-      // Calculate approved documents and pages
-      const approvedDocuments = userDocuments.filter(doc => doc.final_verification_status === 1);
-      const approvedDocumentCount = approvedDocuments.length;
-      const approvedPages = approvedDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
-
-      // Calculate rejected documents and pages
-      const rejectedDocuments = userDocuments.filter(doc => doc.final_verification_status === 2);
-      const rejectedDocumentCount = rejectedDocuments.length;
-      const rejectedPages = rejectedDocuments.reduce((sum, doc) => sum + doc.total_no_of_page, 0);
-
+      const userDocs = userDocumentData[user.id];
       return {
         id: user.id,
         full_name: user.full_name,
@@ -1048,12 +1063,16 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
         contact_number: user.contact_number,
         vendor_id: user.vendor_id,
         role_id: user.role_id,
-        documents: userDocuments,
-        document_count: totalDocuments,
-        totalCountOfDocAndPages: `${totalDocuments}/${totalPages}`,
-        totalCountOfPendingDocumentsAndPages: `${pendingDocumentCount}/${pendingPages}`,
-        totalCountOfApprovedDocumentsAndPages: `${approvedDocumentCount}/${approvedPages}`,
-        totalCountOfRejectedDocumentsAndPages: `${rejectedDocumentCount}/${rejectedPages}`
+        documents: {
+          pending: userDocs.pending,
+          approved: userDocs.approved,
+          rejected: userDocs.rejected
+        },
+        document_count: userDocs.totalDocuments,
+        totalCountOfDocAndPages: `${userDocs.totalDocuments}/${userDocs.totalPages}`,
+        totalCountOfPendingDocumentsAndPages: `${userDocs.pending.length}/${userDocs.pendingPages}`,
+        totalCountOfApprovedDocumentsAndPages: `${userDocs.approved.length}/${userDocs.approvedPages}`,
+        totalCountOfRejectedDocumentsAndPages: `${userDocs.rejected.length}/${userDocs.rejectedPages}`
       };
     });
 
