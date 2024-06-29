@@ -15,6 +15,7 @@ import documentTypeRoute from "./documentTypeRoute.js";
 import designationRoute from "./designationRoute.js";
 import squadRoute from "./squadRoute.js";
 import feedbackRoute from "./feedbackRoute.js";
+import rejectDocumetReasonRoute from "./rejectDocumentReasonRoute.js";
 const router = express.Router();
 
 router.use("/user", userRoute);
@@ -33,5 +34,5 @@ router.use("/documentType", documentTypeRoute);
 router.use("/designation", designationRoute);
 router.use("/squad", squadRoute);
 router.use("/feedback", feedbackRoute);
-
+router.use("/rejectReason", rejectDocumetReasonRoute);
 export default router;

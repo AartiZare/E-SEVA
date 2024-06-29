@@ -15,6 +15,7 @@ import designationModel from "./designationModel.js";
 import feedbackModel from "./feedbackModel.js";
 import userStateToBranchModel from "./userStateToBranchModel.js";
 import NotificationModel from "./notificationModel.js";
+import rejectionReasonModel from "./rejectionReasonModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -46,7 +47,8 @@ const models = {
   User: userModel(sequelize, DataTypes),
   UserStateToBranch: userStateToBranchModel(sequelize, DataTypes),
   Vendor: vendorModel(sequelize, DataTypes),
-  Notification: NotificationModel(sequelize, DataTypes)
+  Notification: NotificationModel(sequelize, DataTypes),
+  DocumentRejectReason: rejectionReasonModel(sequelize, DataTypes)
 };
 
 const db = {
