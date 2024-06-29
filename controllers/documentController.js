@@ -23,6 +23,7 @@ const activityModel = db.Activity;
 const userModel = db.User;
 const branchModel = db.Branch;
 const userStateToBranchModel = db.UserStateToBranch;
+const rejectionReasonModel = db.DocumentRejectReason;
 
 export const userBranches = async (roleId, userId) => {
   if (roleId === 1) {
@@ -434,65 +435,6 @@ export const approveDocument = catchAsync(async (req, res, next) => {
       status: true,
       data: document,
       message: "Document approved successfully",
-    });
-  } catch (error) {
-    console.error(error.toString());
-    return res.status(500).send({ error: "Internal Server Error" });
-  }
-});
-
-export const rejectDocument = catchAsync(async (req, res, next) => {
-  try {
-    const { documentId } = req.params; // Assuming documentId is passed in the request params
-    const userId = req.user.id; // Fetch user ID
-    const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
-
-    // Find the document by ID
-    const document = await documentModel.findByPk(documentId);
-
-    // Check if the document exists
-    if (!document) {
-      return next(new ApiError(httpStatus.NOT_FOUND, "Document not found"));
-    }
-
-    // Check if the logged-in user is authorized to reject the document
-    let activityDescription = "";
-    if (userRole.name === "Supervisor") {
-      // Update supervisor_verification_status for rejection
-      document.supervisor_verification_status = 2;
-      document.final_verification_status = 2;
-      activityDescription = "rejected by Supervisor";
-    } else if (userRole.name === "Squad") {
-      // Update squad_verification_status for rejection
-      document.squad_verification_status = 2;
-      document.final_verification_status = 2;
-      activityDescription = "rejected by Squad";
-    } else {
-      // If user role is neither supervisor nor squad, return unauthorized
-      return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
-    }
-
-    // Save the updated document
-    document.updated_by = userId;
-
-    await document.save();
-
-    // Create activity entry after rejecting the document
-    const activityData = {
-      activity_title: "Document Rejected",
-      activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
-      activity_created_at: document.updatedAt,
-      activity_created_by_id: userId,
-      activity_created_by_type: userRole.name,
-      activity_document_id: document.id,
-    };
-
-    await activityModel.create(activityData);
-
-    return res.send({
-      status: true,
-      data: document,
-      message: "Document rejected successfully",
     });
   } catch (error) {
     console.error(error.toString());
@@ -936,6 +878,8 @@ export const updateDocument = catchAsync(async (req, res, next) => {
 
 export const getDocumentById = catchAsync(async (req, res, next) => {
   const documentId = req.params.documentId;
+
+  // Fetch the document by ID
   const document = await documentModel.findByPk(documentId);
   if (!document) {
     return next(
@@ -945,7 +889,89 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
       )
     );
   }
-  return res.send({ msg: "Document fetched successfully", data: document });
+
+  // Fetch rejection reasons based on issue_types
+  const rejectionReasons = await rejectionReasonModel.findAll({
+    where: {
+      id: document.issue_types
+    }
+  });
+
+  // Add the rejection reasons to the document object
+  const documentWithRejectionReasons = {
+    ...document.toJSON(),
+    issue_types: rejectionReasons,
+    other_reason: document.other_reason
+  };
+
+  return res.send({
+    msg: "Document fetched successfully",
+    data: documentWithRejectionReasons
+  });
+});
+
+export const rejectDocument = catchAsync(async (req, res, next) => {
+  try {
+    const { documentId } = req.params; // Assuming documentId is passed in the request params
+    const { issueTypes, otherReason } = req.body; // Assuming issueTypes is an array and otherReason is a string from the request body
+    const userId = req.user.id; // Fetch user ID
+    const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
+
+    // Find the document by ID
+    const document = await documentModel.findByPk(documentId);
+
+    // Check if the document exists
+    if (!document) {
+      return next(new ApiError(httpStatus.NOT_FOUND, "Document not found"));
+    }
+
+    // Check if the logged-in user is authorized to reject the document
+    let activityDescription = "";
+    if (userRole.name === "Supervisor") {
+      // Update supervisor_verification_status for rejection
+      document.supervisor_verification_status = 2;
+      document.final_verification_status = 2;
+      activityDescription = "rejected by Supervisor";
+    } else if (userRole.name === "Squad") {
+      // Update squad_verification_status for rejection
+      document.squad_verification_status = 2;
+      document.final_verification_status = 2;
+      activityDescription = "rejected by Squad";
+    } else {
+      // If user role is neither supervisor nor squad, return unauthorized
+      return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
+    }
+
+    // Set the issue types and other reason
+    document.issue_types = issueTypes;
+    document.other_reason = otherReason || null;
+
+    // Save the updated document
+    document.updated_by = userId;
+
+    await document.save();
+
+    // Create activity entry after rejecting the document
+    const activityData = {
+      activity_title: "Document Rejected",
+      activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
+      activity_created_at: document.updatedAt,
+      activity_created_by_id: userId,
+      activity_created_by_type: userRole.name,
+      activity_document_id: document.id,
+    };
+
+    await activityModel.create(activityData);
+
+    return res.send({
+      status: true,
+      data: document,
+      message: "Document rejected successfully",
+    });
+  } catch (error) {
+    console.error(error.toString());
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
 });
 
 export const getDocFileByDocId = catchAsync(async (req, res, next) => {

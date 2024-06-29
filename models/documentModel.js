@@ -85,6 +85,15 @@ const documentsModel = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
+      issue_types: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+        defaultValue: [],
+      },
+      other_reason: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      }
     },
     {
       timestamps: true,
