@@ -16,6 +16,8 @@ import feedbackModel from "./feedbackModel.js";
 import userStateToBranchModel from "./userStateToBranchModel.js";
 import NotificationModel from "./notificationModel.js";
 import rejectionReasonModel from "./rejectionReasonModel.js";
+import downloadedDocumentLogModel from "./downloadLogModel.js";
+import documentFeedbackModel from "./documentFeedbackModel.js";
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
@@ -48,7 +50,9 @@ const models = {
   UserStateToBranch: userStateToBranchModel(sequelize, DataTypes),
   Vendor: vendorModel(sequelize, DataTypes),
   Notification: NotificationModel(sequelize, DataTypes),
-  DocumentRejectReason: rejectionReasonModel(sequelize, DataTypes)
+  DocumentRejectReason: rejectionReasonModel(sequelize, DataTypes),
+  DownloadedDocumentLog: downloadedDocumentLogModel(sequelize, DataTypes),
+  DocumentFeedback: documentFeedbackModel(sequelize, DataTypes)
 };
 
 const db = {

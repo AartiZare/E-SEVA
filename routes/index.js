@@ -16,6 +16,8 @@ import designationRoute from "./designationRoute.js";
 import squadRoute from "./squadRoute.js";
 import feedbackRoute from "./feedbackRoute.js";
 import rejectDocumetReasonRoute from "./rejectDocumentReasonRoute.js";
+import downloadDocumentLogRoute from "./downloadedDocRoute.js";
+import documentfeedbackRoute from "./documentFeedbackRoute.js";
 const router = express.Router();
 
 router.use("/user", userRoute);
@@ -35,4 +37,6 @@ router.use("/designation", designationRoute);
 router.use("/squad", squadRoute);
 router.use("/feedback", feedbackRoute);
 router.use("/rejectReason", rejectDocumetReasonRoute);
+router.use("/document-download-log", downloadDocumentLogRoute);
+router.use("/document-feedback", documentfeedbackRoute);
 export default router;
