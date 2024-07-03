@@ -13,9 +13,21 @@ router
   .get(documentController.getDocFileByDocId);
 
 router
+  .route("/approve-mupltiple-document")
+  
+  .put(auth(), documentController.approveMultipleDocs);
+
+router
   .route("/completeDocList")
   // Get document list
   .get(auth(), documentController.getDocumentList);
+
+router
+  .route("/reject-multiple-document")
+  /**
+   * reject multiple doc
+   */
+  .put(auth(), documentController.rejectMultipleDocs);
 
 // router
 //   .route("/")

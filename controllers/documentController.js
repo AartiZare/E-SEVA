@@ -442,6 +442,58 @@ export const approveDocument = catchAsync(async (req, res, next) => {
   }
 });
 
+export const approveMultipleDocs = catchAsync(async (req, res, next) => {
+  try {
+    const { documentIds } = req.body;
+    const userId = req.user.id; 
+    const userRole = await roleModel.findByPk(req.user.role_id);
+
+    if (userRole.name !== "Squad") {
+      return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
+    }
+
+    const results = [];
+
+    for (const documentId of documentIds) {
+      const document = await documentModel.findByPk(documentId);
+
+      if (!document) {
+        results.push({ documentId, status: false, message: "Document not found" });
+        continue;
+      }
+
+      document.squad_verification_status = 1;
+      document.final_verification_status = 1;
+      const activityDescription = "approved by Squad";
+
+      document.updated_by = userId;
+      await document.save();
+
+      const activityData = {
+        activity_title: "Document Approved",
+        activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
+        activity_created_at: document.updatedAt,
+        activity_created_by_id: userId,
+        activity_created_by_type: userRole.name,
+        activity_document_id: document.id,
+      };
+
+      await activityModel.create(activityData);
+
+      results.push({ documentId, status: true, message: "Document approved successfully", document });
+    }
+
+    return res.send({
+      status: true,
+      data: results,
+      message: "Documents processed successfully",
+    });
+  } catch (error) {
+    console.error(error.toString());
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
 export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
@@ -912,46 +964,36 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
 
 export const rejectDocument = catchAsync(async (req, res, next) => {
   try {
-    const { documentId } = req.params; // Assuming documentId is passed in the request params
-    const { issueTypes, otherReason } = req.body; // Assuming issueTypes is an array and otherReason is a string from the request body
-    const userId = req.user.id; // Fetch user ID
-    const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
-
-    // Find the document by ID
+    const { documentId } = req.params; 
+    const { issueTypes, otherReason } = req.body;
+    const userId = req.user.id;
+    const userRole = await roleModel.findByPk(req.user.role_id);
     const document = await documentModel.findByPk(documentId);
 
-    // Check if the document exists
     if (!document) {
       return next(new ApiError(httpStatus.NOT_FOUND, "Document not found"));
     }
 
-    // Check if the logged-in user is authorized to reject the document
     let activityDescription = "";
     if (userRole.name === "Supervisor") {
-      // Update supervisor_verification_status for rejection
       document.supervisor_verification_status = 2;
       document.final_verification_status = 2;
       activityDescription = "rejected by Supervisor";
     } else if (userRole.name === "Squad") {
-      // Update squad_verification_status for rejection
       document.squad_verification_status = 2;
       document.final_verification_status = 2;
       activityDescription = "rejected by Squad";
     } else {
-      // If user role is neither supervisor nor squad, return unauthorized
       return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
     }
 
-    // Set the issue types and other reason
     document.issue_types = issueTypes;
     document.other_reason = otherReason || null;
 
-    // Save the updated document
     document.updated_by = userId;
 
     await document.save();
 
-    // Create activity entry after rejecting the document
     const activityData = {
       activity_title: "Document Rejected",
       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
@@ -967,6 +1009,60 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
       status: true,
       data: document,
       message: "Document rejected successfully",
+    });
+  } catch (error) {
+    console.error(error.toString());
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
+export const rejectMultipleDocs = catchAsync(async (req, res, next) => {
+  try {
+    const { documentIds, issueTypes, otherReason } = req.body;
+    const userId = req.user.id;
+    const userRole = await roleModel.findByPk(req.user.role_id);
+    if (userRole.name !== "Squad") {
+      return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
+    }
+
+    const results = [];
+
+    for (const documentId of documentIds) {
+      const document = await documentModel.findByPk(documentId);
+
+      if (!document) {
+        results.push({ documentId, status: false, message: "Document not found" });
+        continue;
+      }
+
+      document.squad_verification_status = 2;
+      document.final_verification_status = 2;
+      const activityDescription = "rejected by Squad";
+
+      document.issue_types = issueTypes;
+      document.other_reason = otherReason || null;
+
+      document.updated_by = userId;
+      await document.save();
+
+      const activityData = {
+        activity_title: "Document Rejected",
+        activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
+        activity_created_at: document.updatedAt,
+        activity_created_by_id: userId,
+        activity_created_by_type: userRole.name,
+        activity_document_id: document.id,
+      };
+
+      await activityModel.create(activityData);
+
+      results.push({ data: document, status: true, message: "Document rejected successfully" });
+    }
+
+    return res.send({
+      status: true,
+      data: results,
+      message: "Documents processed successfully",
     });
   } catch (error) {
     console.error(error.toString());
