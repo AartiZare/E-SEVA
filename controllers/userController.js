@@ -1011,12 +1011,22 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
     });
 
     const userIds = users.map(user => user.id);
+
+    const dateCondition = document_reg_date ? {
+      document_reg_date: {
+        [Op.between]: [
+          new Date(document_reg_date + 'T00:00:00.000Z'),
+          new Date(document_reg_date + 'T23:59:59.999Z')
+        ]
+      }
+    } : {};
+
     const documents = await documentModel.findAll({
       where: {
         created_by: {
           [Op.in]: userIds
         },
-        ...(document_reg_date ? { document_reg_date } : {})
+        ...dateCondition
       },
       attributes: ['id', 'created_by', 'total_no_of_page', 'final_verification_status', 'document_upload_status', 'document_reg_no', 'document_name', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', ]
     });
@@ -1093,3 +1103,117 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
+//   try {
+//     const { vendor_id, document_reg_date, page = 1, pageSize = 10, search } = req.query;
+
+//     const userWhereCondition = {
+//       role_id: 4,
+//     };
+
+//     if (vendor_id) {
+//       userWhereCondition.vendor_id = vendor_id;
+//     }
+
+//     if (search) {
+//       const searchTerm = search.trim();
+//       if (searchTerm !== "") {
+//         userWhereCondition.full_name = {
+//           [Op.like]: `%${searchTerm}%`
+//         };
+//       }
+//     }
+
+//     const pageNumber = parseInt(page, 10) || 1;
+//     const limit = parseInt(pageSize, 10) || 10;
+//     const offset = (pageNumber - 1) * limit;
+
+//     const { rows: users, count: totalCount } = await userModel.findAndCountAll({
+//       where: userWhereCondition,
+//       limit,
+//       offset,
+//       attributes: ['id', 'full_name', 'email', 'contact_number', 'vendor_id', 'role_id']
+//     });
+
+//     const userIds = users.map(user => user.id);
+//     const documents = await documentModel.findAll({
+//       where: {
+//         created_by: {
+//           [Op.in]: userIds
+//         },
+//         ...(document_reg_date ? { document_reg_date } : {})
+//       },
+//       attributes: ['id', 'created_by', 'total_no_of_page', 'final_verification_status', 'document_upload_status', 'document_reg_no', 'document_name', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', ]
+//     });
+
+//     // Organize documents by userId and status
+//     const userDocumentData = userIds.reduce((acc, userId) => {
+//       acc[userId] = {
+//         pending: [],
+//         approved: [],
+//         rejected: [],
+//         totalPages: 0,
+//         totalDocuments: 0,
+//         pendingPages: 0,
+//         approvedPages: 0,
+//         rejectedPages: 0
+//       };
+//       return acc;
+//     }, {});
+
+//     documents.forEach(doc => {
+//       const userId = doc.created_by;
+//       const { final_verification_status, total_no_of_page } = doc;
+//       userDocumentData[userId].totalDocuments += 1;
+//       userDocumentData[userId].totalPages += total_no_of_page;
+
+//       if (final_verification_status === 0) {
+//         userDocumentData[userId].pending.push(doc);
+//         userDocumentData[userId].pendingPages += total_no_of_page;
+//       } else if (final_verification_status === 1) {
+//         userDocumentData[userId].approved.push(doc);
+//         userDocumentData[userId].approvedPages += total_no_of_page;
+//       } else if (final_verification_status === 2) {
+//         userDocumentData[userId].rejected.push(doc);
+//         userDocumentData[userId].rejectedPages += total_no_of_page;
+//       }
+//     });
+
+//     const usersWithDocs = users.map(user => {
+//       const userDocs = userDocumentData[user.id];
+//       return {
+//         id: user.id,
+//         full_name: user.full_name,
+//         email: user.email,
+//         contact_number: user.contact_number,
+//         vendor_id: user.vendor_id,
+//         role_id: user.role_id,
+//         documents: {
+//           pending: userDocs.pending,
+//           approved: userDocs.approved,
+//           rejected: userDocs.rejected
+//         },
+//         document_count: userDocs.totalDocuments,
+//         totalCountOfDocAndPages: `${userDocs.totalDocuments}/${userDocs.totalPages}`,
+//         totalCountOfPendingDocumentsAndPages: `${userDocs.pending.length}/${userDocs.pendingPages}`,
+//         totalCountOfApprovedDocumentsAndPages: `${userDocs.approved.length}/${userDocs.approvedPages}`,
+//         totalCountOfRejectedDocumentsAndPages: `${userDocs.rejected.length}/${userDocs.rejectedPages}`
+//       };
+//     });
+
+//     const totalPages = Math.ceil(totalCount / limit);
+
+//     return res.send({
+//       message: "Fetched users with documents successfully",
+//       data: usersWithDocs,
+//       pagination: {
+//         totalCount,
+//         totalPages,
+//         currentPage: pageNumber,
+//         pageSize: limit,
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Error fetching users with documents:', error);
+//     return res.status(500).json({ message: 'Internal server error' });
+//   }
+// });

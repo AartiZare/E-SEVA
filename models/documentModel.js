@@ -84,15 +84,6 @@ const documentsModel = (sequelize, DataTypes) => {
       document_created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
-      },
-      issue_types: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
-        allowNull: true,
-        defaultValue: [],
-      },
-      other_reason: {
-        type: DataTypes.STRING,
-        allowNull: true,
       }
     },
     {
