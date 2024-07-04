@@ -1,7 +1,6 @@
 import express from 'express';
 import db from '../models/index.js';
-const documentModel = db.Document;
-const rejectionReasonModel = db.DocumentRejectReason;
+const issueTypeModel = db.IssueType;
 import { catchAsync } from "../utils/catchAsync.js";
 import ApiError from '../utils/ApiError.js';
 import httpStatus from 'http-status';
@@ -17,7 +16,7 @@ router.route('/rejection-reasons')
       const userId = req.user.id;
 
       // Create the rejection reason
-      const rejectionReason = await rejectionReasonModel.create({
+      const rejectionReason = await issueTypeModel.create({
         issue_types: issueTypes,
         created_by: userId,
       });
@@ -32,11 +31,11 @@ router.route('/rejection-reasons')
   .get(
     auth(),
     catchAsync(async (req, res, next) => {
-      const rejectionReasons = await rejectionReasonModel.findAll({});
+      const rejectionReasons = await issueTypeModel.findAll({});
       return res.status(httpStatus.OK).send({
         status: true,
         data: rejectionReasons,
-        message: "Rejection reasons retrieved successfully",
+        message: "Issue types retrieved successfully",
       });
     })
 );

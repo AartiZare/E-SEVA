@@ -9,6 +9,7 @@ const router = express.Router();
 const documentModel = db.Document;
 const downloadLogModel = db.DownloadedDocumentLog;
 const roleModel = db.Role;
+const userModel = db.User;
 
 router.route('/')
   .post(
@@ -17,6 +18,9 @@ router.route('/')
       const { document_id } = req.body;
       const downloaded_by = req.user.id; 
       const userRole = await roleModel.findByPk(req.user.role_id);
+
+      const userDetails = await userModel.findByPk(downloaded_by);
+
 
       const document = await documentModel.findByPk(document_id);
       if (!document) {
@@ -47,7 +51,7 @@ router.route('/')
           downloaded_by_role: userRole.name,
         });
       }
-      const downloadCount = await downloadLogModel.sum('download_count', {
+      const download_count = await downloadLogModel.sum('download_count', {
         where: { downloaded_by },
       });
 
@@ -55,8 +59,8 @@ router.route('/')
         msg: "Document downloaded successfully",
         data: {
           document_id,
-          downloaded_by,
-          downloadCount,
+          downloaded_by: userDetails,
+          download_count,
           downloaded_by_role: userRole.name,
         },
       });

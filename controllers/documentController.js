@@ -18,12 +18,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const documentModel = db.Document;
+const downloadLogModel = db.DownloadedDocumentLog;
 const roleModel = db.Role;
 const activityModel = db.Activity;
 const userModel = db.User;
 const branchModel = db.Branch;
 const userStateToBranchModel = db.UserStateToBranch;
-const rejectionReasonModel = db.DocumentRejectReason;
+const issueTypeModel = db.IssueType;
 
 export const userBranches = async (roleId, userId) => {
   if (roleId === 1) {
@@ -929,37 +930,58 @@ export const updateDocument = catchAsync(async (req, res, next) => {
 });
 
 export const getDocumentById = catchAsync(async (req, res, next) => {
-  const documentId = req.params.documentId;
-
-  // Fetch the document by ID
-  const document = await documentModel.findByPk(documentId);
-  if (!document) {
-    return next(
-      new ApiError(
-        httpStatus.NOT_FOUND,
-        `Document with id ${documentId} not found`
-      )
-    );
-  }
-
-  // Fetch rejection reasons based on issue_types
-  const rejectionReasons = await rejectionReasonModel.findAll({
-    where: {
-      id: document.issue_types
+  try {
+    const documentId = req.params.documentId;
+    const document = await documentModel.findByPk(documentId);
+    if (!document) {
+      return next(
+        new ApiError(
+          httpStatus.NOT_FOUND,
+          `Document with id ${documentId} not found`
+        )
+      );
     }
-  });
 
-  // Add the rejection reasons to the document object
-  const documentWithRejectionReasons = {
-    ...document.toJSON(),
-    issue_types: rejectionReasons,
-    other_reason: document.other_reason
-  };
+    const rejectionLog = await db.DocumentRejectionLog.findOne({
+      where: {
+        document_id: documentId,
+      },
+    });
 
-  return res.send({
-    msg: "Document fetched successfully",
-    data: documentWithRejectionReasons
-  });
+    let documentRejectionFeedback = null;
+    if (rejectionLog) {
+      const issueTypes = rejectionLog.issue_types || [];
+      const otherReason = rejectionLog.other_reasons || null;
+      const rejectedBy = rejectionLog.rejected_by || null;
+      const rejectedAt = rejectionLog.rejected_at || null;
+
+      const issueTypeRecords = await db.IssueType.findAll({
+        where: {
+          id: issueTypes,
+        },
+      });
+
+      documentRejectionFeedback = {
+        rejected_by: rejectedBy,
+        rejected_at: rejectedAt,
+        issue_types: issueTypeRecords,
+        other_reason: otherReason,
+      };
+    }
+
+    const documentWithRejectionReasons = {
+      ...document.toJSON(),
+      ...(documentRejectionFeedback && { document_rejection_feedback: documentRejectionFeedback }),
+    };
+
+    return res.send({
+      msg: "Document fetched successfully",
+      data: documentWithRejectionReasons,
+    });
+  } catch (error) {
+    console.error(error.toString());
+    return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"));
+  }
 });
 
 export const rejectDocument = catchAsync(async (req, res, next) => {
@@ -987,12 +1009,17 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
       return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
     }
 
-    document.issue_types = issueTypes;
-    document.other_reason = otherReason || null;
-
     document.updated_by = userId;
 
     await document.save();
+
+    await db.DocumentRejectionLog.create({
+      document_id: documentId,
+      rejected_by: userId,
+      issue_types: issueTypes,
+      rejected_at: new Date(),
+      other_reasons: otherReason || null,
+    });
 
     const activityData = {
       activity_title: "Document Rejected",
@@ -1007,7 +1034,11 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
 
     return res.send({
       status: true,
-      data: document,
+      data: {
+        ...document.toJSON(),
+        issue_types: issueTypes,
+        other_reason: otherReason,
+      },
       message: "Document rejected successfully",
     });
   } catch (error) {
@@ -1037,17 +1068,24 @@ export const rejectMultipleDocs = catchAsync(async (req, res, next) => {
 
       document.squad_verification_status = 2;
       document.final_verification_status = 2;
-      const activityDescription = "rejected by Squad";
 
-      document.issue_types = issueTypes;
-      document.other_reason = otherReason || null;
+      // Prepare data for DocumentRejectionLog
+      const rejectionLogData = {
+        document_id: documentId,
+        rejected_by: userId,
+        issue_types: issueTypes,
+        rejected_at: new Date(),
+        other_reasons: otherReason || null,
+      };
+
+      await db.DocumentRejectionLog.upsert(rejectionLogData);
 
       document.updated_by = userId;
       await document.save();
 
       const activityData = {
         activity_title: "Document Rejected",
-        activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
+        activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been rejected by Squad. Document Unique ID: ${document.document_unique_id}`,
         activity_created_at: document.updatedAt,
         activity_created_by_id: userId,
         activity_created_by_type: userRole.name,
@@ -1056,7 +1094,16 @@ export const rejectMultipleDocs = catchAsync(async (req, res, next) => {
 
       await activityModel.create(activityData);
 
-      results.push({ data: document, status: true, message: "Document rejected successfully" });
+      results.push({
+        documentId,
+        data: {
+          ...document.toJSON(),
+          issue_types: issueTypes,
+          other_reason: otherReason,
+        },
+        status: true,
+        message: "Document rejected successfully",
+      });
     }
 
     return res.send({
@@ -1139,10 +1186,37 @@ export const webDashboard = catchAsync(async (req, res, next) => {
 
     const uploads = await documentModel.count({ where });
     const pages = await documentModel.sum("total_no_of_page", { where });
-    const downloads = 0;
     const renewables = await documentModel.count({
       where: { ...where, document_renewal_date: { [Op.lte]: new Date() } },
     });
+
+    // Calculate total downloads based on user role
+    let downloadWhere = {};
+
+    if (req.user.role_id === 1) { // Admin
+      // Admin can see all downloads
+    } else {
+      const userRole = await roleModel.findByPk(req.user.role_id);
+      if (userRole.name === 'RCS') {
+        const arcs = await userModel.findAll({
+          where: { created_by: req.user.id, role_id: 9 },
+          attributes: ['id'],
+        });
+        const arcsIds = arcs.map((arc) => arc.id);
+        downloadWhere.downloaded_by = { [Op.in]: [req.user.id, ...arcsIds] };
+      } else if (userRole.name === 'ARCS') {
+        const users = await userModel.findAll({
+          where: { created_by: req.user.id, role_id: 10 },
+          attributes: ['id'],
+        });
+        const userIds = users.map((user) => user.id);
+        downloadWhere.downloaded_by = { [Op.in]: [req.user.id, ...userIds] };
+      } else if (userRole.name === 'Deputy Registrar' || userRole.name === 'Assistant Registrar' || userRole.name === 'Branch Registrar') {
+        downloadWhere.downloaded_by = req.user.id;
+      }
+    }
+
+    const downloads = await downloadLogModel.sum('download_count', { where: downloadWhere }) || 0;
 
     // Recent 7 days uploads (fromDate will be 7 days before the current date)
     const toDate = new Date();
