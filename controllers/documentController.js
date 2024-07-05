@@ -961,8 +961,9 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
         },
       });
 
+      const rejectedByDetails = await userModel.findByPk(rejectedBy);
       documentRejectionFeedback = {
-        rejected_by: rejectedBy,
+        rejected_by: rejectedByDetails,
         rejected_at: rejectedAt,
         issue_types: issueTypeRecords,
         other_reason: otherReason,
