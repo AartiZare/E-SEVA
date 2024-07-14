@@ -25,6 +25,7 @@ const userModel = db.User;
 const branchModel = db.Branch;
 const userStateToBranchModel = db.UserStateToBranch;
 const issueTypeModel = db.IssueType;
+const documentTypeModel = db.DocumentType;
 
 export const userBranches = async (roleId, userId) => {
   if (roleId === 1) {
@@ -1368,6 +1369,64 @@ export const webDashboard = catchAsync(async (req, res, next) => {
   }
 });
 
+// export const getDocumentList = catchAsync(async (req, res) => {
+//   try {
+//     const { qFilter, search, from_date, to_date, document_type } = req.query;
+
+//     let conditions = {};
+
+//     if (qFilter) {
+//       conditions = {
+//         ...JSON.parse(qFilter),
+//       };
+//     }
+
+//     if (search) {
+//       const searchTerm = search?.trim();
+//       if (searchTerm !== "") {
+//         conditions.document_name = {
+//           [Op.like]: `%${searchTerm}%`,
+//         };
+//       }
+//     }
+
+//     if (from_date && to_date) {
+//       conditions.document_reg_date = {
+//         [Op.between]: [new Date(from_date), new Date(to_date)],
+//       };
+//     } else if (from_date) {
+//       conditions.document_reg_date = {
+//         [Op.gte]: new Date(from_date),
+//       };
+//     } else if (to_date) {
+//       conditions.document_reg_date = {
+//         [Op.lte]: new Date(to_date),
+//       };
+//     }
+
+//     if (document_type) {
+//       conditions.document_type = document_type;
+//     }
+
+//     const documents = await documentModel.findAll({
+//       where: {
+//         ...conditions,
+//         final_verification_status: 1,
+//       },
+//     });
+
+//     console.log(documents, "documents")
+
+//     return res.send({
+//       results: documents,
+//       total: documents.length,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).send({ error: "Internal Server Error" });
+//   }
+// });
+
 export const getDocumentList = catchAsync(async (req, res) => {
   try {
     const { qFilter, search, from_date, to_date, document_type } = req.query;
@@ -1414,9 +1473,20 @@ export const getDocumentList = catchAsync(async (req, res) => {
       },
     });
 
+    // Fetch document type details for each document
+    const completeDocuments = await Promise.all(
+      documents.map(async (doc) => {
+        const documentType = await documentTypeModel.findByPk(doc.document_type);
+        return {
+          ...doc.toJSON(),
+          document_type: documentType,
+        };
+      })
+    );
+
     return res.send({
-      results: documents,
-      total: documents.length,
+      results: completeDocuments,
+      total: completeDocuments.length,
     });
   } catch (error) {
     console.log(error);
