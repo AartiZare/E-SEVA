@@ -6,7 +6,7 @@ const activityModel = db.Activity;
 
 export const userActivityList = catchAsync(async (req, res, next) => {
   try {
-    const { qFilter, page, pageSize, search } = req.query;
+    const { qFilter, page, pageSize, search, from_date, to_date } = req.query;
     const user = req.user;
     const userRole = await roleModel.findByPk(user.role_id);
 
@@ -28,28 +28,46 @@ export const userActivityList = catchAsync(async (req, res, next) => {
     if (search) {
       const searchTerm = search?.trim();
       if (searchTerm !== "") {
-        filter.activity_name = {
+        filter.activity_title = {
           [Op.like]: `%${searchTerm}%`,
         };
       }
+    }
+
+    if (from_date && to_date) {
+      const toDateEnd = new Date(to_date);
+      toDateEnd.setHours(23, 59, 59, 999); // Set to end of the day
+      filter.activity_created_at = {
+        [Op.between]: [new Date(from_date), toDateEnd],
+      };
+    } else if (from_date) {
+      filter.activity_created_at = {
+        [Op.gte]: new Date(from_date),
+      };
+    } else if (to_date) {
+      const toDateEnd = new Date(to_date);
+      toDateEnd.setHours(23, 59, 59, 999); // Set to end of the day
+      filter.activity_created_at = {
+        [Op.lte]: toDateEnd,
+      };
     }
 
     const pageNumber = parseInt(page) || 1;
     const limit = parseInt(pageSize) || 10;
     const offset = (pageNumber - 1) * limit;
 
-    const { rows: activities, count: totalCount } =
-      await activityModel.findAndCountAll({
-        where: filter,
-        order: [["activity_created_at", "DESC"]],
-        limit,
-        offset,
-      });
+    const { rows: activities, count: totalCount } = await activityModel.findAndCountAll({
+      where: filter,
+      order: [["activity_created_at", "DESC"]],
+      limit,
+      offset,
+    });
 
     if (!activities.length) {
-      return res
-        .status(200)
-        .send({ status: true, message: "No activities found for the user" });
+      return res.status(200).send({
+        status: true,
+        message: "No activities found for the user",
+      });
     }
 
     // Prepare response object with paginated results
