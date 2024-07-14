@@ -497,6 +497,7 @@ export const approveMultipleDocs = catchAsync(async (req, res, next) => {
 
 export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
   try {
+    const { from_date, to_date, document_type, user_id, branch_id } = req.query;
     const user = req.user;
     const userRole = await roleModel.findByPk(user.role_id);
 
@@ -660,6 +661,38 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       filter.branch_id = _userBranches.map((branch) => branch.branch_id);
       filter.final_verification_status = 0;
     }
+
+    // Add date range filter if from_date and to_date are provided
+    if (from_date && to_date) {
+      const toDateEnd = new Date(to_date);
+      toDateEnd.setHours(23, 59, 59, 999); // Set to end of the day
+      filter.document_created_at = {
+        [Op.between]: [new Date(from_date), toDateEnd],
+      };
+    } else if (from_date) {
+      filter.document_created_at = {
+        [Op.gte]: new Date(from_date),
+      };
+    } else if (to_date) {
+      const toDateEnd = new Date(to_date);
+      toDateEnd.setHours(23, 59, 59, 999); // Set to end of the day
+      filter.document_created_at = {
+        [Op.lte]: toDateEnd,
+      };
+    }
+
+    if (document_type) {
+      filter.document_type = document_type;
+    }
+
+    if (user_id) {
+      filter.created_by = user_id;
+    }
+
+    if (branch_id) {
+      filter.branch_id = branch_id;
+    }
+
     pendingDoc = await documentModel.findAll({ where: filter });
 
     return res.send({ status: true, data: pendingDoc });
