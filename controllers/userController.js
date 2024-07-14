@@ -734,13 +734,30 @@ export const login = catchAsync(async (req, res, next) => {
       return noUserErrorNext();
     }
 
-    // Log user activity
+    // Fetch branch details
+    const userBranch = await userStateToBranchModel.findOne({
+      where: { user_id: user.id }
+    });
+
+    const branchDetails = await branchModel.findByPk(userBranch.branch_id);
+
+    // Add branch details to user object
+    user = {
+      ...user.toJSON(), // Convert Sequelize instance to plain object
+      branch: branchDetails,
+    };
+
+    // Log user activity with current local time
+    const currentTime = new Date();
+    const offset = currentTime.getTimezoneOffset();
+    const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+    
     const userActivity = await activityModel.create({
       activity_title: "Login",
       activity_description: "User logged in",
       activity_created_by_id: user.id,
       activity_created_by_type: userRole.name,
-      activity_created_at: new Date(),
+      activity_created_at: localTime,
     });
 
     // Check if activity was successfully logged
