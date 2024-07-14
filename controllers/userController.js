@@ -19,6 +19,7 @@ dotenv.config();
 const userModel = db.User;
 const userStateToBranchModel = db.UserStateToBranch;
 const roleModel = db.Role;
+const branchModel = db.Branch;
 const vendorModel = db.Vendor;
 const activityModel = db.Activity;
 const documentModel = db.Document;
@@ -457,7 +458,7 @@ export const getAll = catchAsync(async (req, res) => {
 
     if (search) {
       const searchTerm = search?.trim();
-      if (searchTerm !== "") {
+      if (searchTerm !== '') {
         filter = {
           ...filter,
           full_name: {
@@ -533,6 +534,42 @@ export const getAll = catchAsync(async (req, res) => {
         },
       ],
     });
+    
+    const userStateToBranchData = await userStateToBranchModel.findAll({
+      where: {
+        user_id: {
+          [Op.in]: users.map(user => user.id),
+        },
+      },
+      attributes: ["user_id", "branch_id"],
+    });
+
+    // Extract branch IDs from userStateToBranchData
+    const branchIds = [...new Set(userStateToBranchData.map(usb => usb.branch_id))];
+
+    // Fetch branch details
+    const branches = await branchModel.findAll({
+      where: {
+        id: {
+          [Op.in]: branchIds,
+        },
+      },
+    });
+
+    // Map branch details by branch_id
+    const branchDetailsMap = branches.reduce((acc, branch) => {
+      acc[branch.id] = branch;
+      return acc;
+    }, {});
+
+    // Map userStateToBranch data to get branches for each user
+    const userBranchesMap = userStateToBranchData.reduce((acc, usb) => {
+      if (!acc[usb.user_id]) {
+        acc[usb.user_id] = [];
+      }
+      acc[usb.user_id].push(branchDetailsMap[usb.branch_id]);
+      return acc;
+    }, {});
 
     const totalCount = await userModel.count({
       where: filter,
@@ -546,7 +583,34 @@ export const getAll = catchAsync(async (req, res) => {
     });
 
     const response = {
-      users,
+      users: users.map(user => ({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        contact_number: user.contact_number,
+        alternate_contact_number: user.alternate_contact_number,
+        pan_number: user.pan_number,
+        aadhaar_number: user.aadhaar_number,
+        qualification: user.qualification,
+        date_of_birth: user.date_of_birth,
+        pincode: user.pincode,
+        district: user.district,
+        taluk: user.taluk,
+        village: user.village,
+        address: user.address,
+        bank_account_number: user.bank_account_number,
+        bank_ifsc: user.bank_ifsc,
+        bank_name: user.bank_name,
+        role_id: user.role_id,
+        role_name: userRole.name,
+        bank_branch: user.bank_branch,
+        created_by: user.created_by,
+        status: user.status,
+        vendor_id: user.vendor_id,
+        is_active: user.is_active,
+        is_deleted: user.is_deleted,
+        branches: userBranchesMap[user.id] || [],  // Add branches field
+      })),      
       totalCount,
       totalPages: Math.ceil(totalCount / limit),
       currentPage: pageNumber,
@@ -992,9 +1056,9 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
 
     if (search) {
       const searchTerm = search.trim();
-      if (searchTerm !== "") {
+      if (searchTerm !== '') {
         userWhereCondition.full_name = {
-          [Op.like]: `%${searchTerm}%`
+          [Op.like]: `%${searchTerm}%`,
         };
       }
     }
@@ -1011,24 +1075,53 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
     });
 
     const userIds = users.map(user => user.id);
+    const vendorIds = [...new Set(users.map(user => user.vendor_id))];  // Unique vendor IDs
 
-    const dateCondition = document_reg_date ? {
-      document_reg_date: {
-        [Op.between]: [
-          new Date(document_reg_date + 'T00:00:00.000Z'),
-          new Date(document_reg_date + 'T23:59:59.999Z')
-        ]
-      }
-    } : {};
+    // Fetch vendor details
+    const vendors = await vendorModel.findAll({
+      where: {
+        id: {
+          [Op.in]: vendorIds,
+        },
+      },
+    });
+
+    // Map vendor details by vendor_id
+    const vendorDetailsMap = vendors.reduce((acc, vendor) => {
+      acc[vendor.id] = vendor;
+      return acc;
+    }, {});
+
+    const dateCondition = document_reg_date
+      ? {
+          document_reg_date: {
+            [Op.between]: [
+              new Date(document_reg_date + 'T00:00:00.000Z'),
+              new Date(document_reg_date + 'T23:59:59.999Z'),
+            ],
+          },
+        }
+      : {};
 
     const documents = await documentModel.findAll({
       where: {
         created_by: {
-          [Op.in]: userIds
+          [Op.in]: userIds,
         },
-        ...dateCondition
+        ...dateCondition,
       },
-      attributes: ['id', 'created_by', 'total_no_of_page', 'final_verification_status', 'document_upload_status', 'document_reg_no', 'document_name', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', ]
+      attributes: [
+        'id',
+        'created_by',
+        'total_no_of_page',
+        'final_verification_status',
+        'document_upload_status',
+        'document_reg_no',
+        'document_name',
+        'document_reg_date',
+        'supervisor_verification_status',
+        'squad_verification_status',
+      ],
     });
 
     // Organize documents by userId and status
@@ -1071,7 +1164,7 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
         full_name: user.full_name,
         email: user.email,
         contact_number: user.contact_number,
-        vendor_id: user.vendor_id,
+        vendor: vendorDetailsMap[user.vendor_id],  // Include complete vendor details
         role_id: user.role_id,
         documents: {
           pending: userDocs.pending,
@@ -1103,117 +1196,3 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
-//   try {
-//     const { vendor_id, document_reg_date, page = 1, pageSize = 10, search } = req.query;
-
-//     const userWhereCondition = {
-//       role_id: 4,
-//     };
-
-//     if (vendor_id) {
-//       userWhereCondition.vendor_id = vendor_id;
-//     }
-
-//     if (search) {
-//       const searchTerm = search.trim();
-//       if (searchTerm !== "") {
-//         userWhereCondition.full_name = {
-//           [Op.like]: `%${searchTerm}%`
-//         };
-//       }
-//     }
-
-//     const pageNumber = parseInt(page, 10) || 1;
-//     const limit = parseInt(pageSize, 10) || 10;
-//     const offset = (pageNumber - 1) * limit;
-
-//     const { rows: users, count: totalCount } = await userModel.findAndCountAll({
-//       where: userWhereCondition,
-//       limit,
-//       offset,
-//       attributes: ['id', 'full_name', 'email', 'contact_number', 'vendor_id', 'role_id']
-//     });
-
-//     const userIds = users.map(user => user.id);
-//     const documents = await documentModel.findAll({
-//       where: {
-//         created_by: {
-//           [Op.in]: userIds
-//         },
-//         ...(document_reg_date ? { document_reg_date } : {})
-//       },
-//       attributes: ['id', 'created_by', 'total_no_of_page', 'final_verification_status', 'document_upload_status', 'document_reg_no', 'document_name', 'document_reg_date', 'supervisor_verification_status', 'squad_verification_status', ]
-//     });
-
-//     // Organize documents by userId and status
-//     const userDocumentData = userIds.reduce((acc, userId) => {
-//       acc[userId] = {
-//         pending: [],
-//         approved: [],
-//         rejected: [],
-//         totalPages: 0,
-//         totalDocuments: 0,
-//         pendingPages: 0,
-//         approvedPages: 0,
-//         rejectedPages: 0
-//       };
-//       return acc;
-//     }, {});
-
-//     documents.forEach(doc => {
-//       const userId = doc.created_by;
-//       const { final_verification_status, total_no_of_page } = doc;
-//       userDocumentData[userId].totalDocuments += 1;
-//       userDocumentData[userId].totalPages += total_no_of_page;
-
-//       if (final_verification_status === 0) {
-//         userDocumentData[userId].pending.push(doc);
-//         userDocumentData[userId].pendingPages += total_no_of_page;
-//       } else if (final_verification_status === 1) {
-//         userDocumentData[userId].approved.push(doc);
-//         userDocumentData[userId].approvedPages += total_no_of_page;
-//       } else if (final_verification_status === 2) {
-//         userDocumentData[userId].rejected.push(doc);
-//         userDocumentData[userId].rejectedPages += total_no_of_page;
-//       }
-//     });
-
-//     const usersWithDocs = users.map(user => {
-//       const userDocs = userDocumentData[user.id];
-//       return {
-//         id: user.id,
-//         full_name: user.full_name,
-//         email: user.email,
-//         contact_number: user.contact_number,
-//         vendor_id: user.vendor_id,
-//         role_id: user.role_id,
-//         documents: {
-//           pending: userDocs.pending,
-//           approved: userDocs.approved,
-//           rejected: userDocs.rejected
-//         },
-//         document_count: userDocs.totalDocuments,
-//         totalCountOfDocAndPages: `${userDocs.totalDocuments}/${userDocs.totalPages}`,
-//         totalCountOfPendingDocumentsAndPages: `${userDocs.pending.length}/${userDocs.pendingPages}`,
-//         totalCountOfApprovedDocumentsAndPages: `${userDocs.approved.length}/${userDocs.approvedPages}`,
-//         totalCountOfRejectedDocumentsAndPages: `${userDocs.rejected.length}/${userDocs.rejectedPages}`
-//       };
-//     });
-
-//     const totalPages = Math.ceil(totalCount / limit);
-
-//     return res.send({
-//       message: "Fetched users with documents successfully",
-//       data: usersWithDocs,
-//       pagination: {
-//         totalCount,
-//         totalPages,
-//         currentPage: pageNumber,
-//         pageSize: limit,
-//       },
-//     });
-//   } catch (error) {
-//     console.error('Error fetching users with documents:', error);
-//     return res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
