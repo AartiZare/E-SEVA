@@ -739,7 +739,10 @@ export const login = catchAsync(async (req, res, next) => {
       where: { user_id: user.id }
     });
 
-    const branchDetails = await branchModel.findByPk(userBranch.branch_id);
+    let branchDetails = null;
+    if (userBranch) {
+      branchDetails = await branchModel.findByPk(userBranch.branch_id);
+    }
 
     // Add branch details to user object
     user = {
