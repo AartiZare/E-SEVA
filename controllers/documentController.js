@@ -283,10 +283,15 @@ export const createDocument = catchAsync(async (req, res, next) => {
       ? newDocument.document_unique_id
       : "not available";
 
+    // Log user activity with current local time
+    const currentTime = new Date();
+    const offset = currentTime.getTimezoneOffset();
+    const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+    
     const activityData = {
       activity_title: "Document Created",
       activity_description: `Document ${newDocument.document_name} with registration number ${newDocument.document_reg_no} has been uploaded. Document Unique ID: ${documentUniqueId}`,
-      activity_created_at: newDocument.createdAt,
+      activity_created_at: localTime,
       activity_created_by_id: req.user.id,
       activity_created_by_type: userRole.name,
       activity_document_id: newDocument.id,
@@ -421,11 +426,16 @@ export const approveDocument = catchAsync(async (req, res, next) => {
     document.updated_by = userId;
     await document.save();
 
+    // Log user activity with current local time
+    const currentTime = new Date();
+    const offset = currentTime.getTimezoneOffset();
+    const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+
     // Create activity entry after approving the document
     const activityData = {
       activity_title: "Document Approved",
       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
-      activity_created_at: document.updatedAt,
+      activity_created_at: localTime,
       activity_created_by_id: userId,
       activity_created_by_type: userRole.name,
       activity_document_id: document.id,
@@ -1056,10 +1066,15 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
       other_reasons: otherReason || null,
     });
 
+    // Log user activity with current local time
+    const currentTime = new Date();
+    const offset = currentTime.getTimezoneOffset();
+    const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+
     const activityData = {
       activity_title: "Document Rejected",
       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
-      activity_created_at: document.updatedAt,
+      activity_created_at: localTime,
       activity_created_by_id: userId,
       activity_created_by_type: userRole.name,
       activity_document_id: document.id,
@@ -1118,10 +1133,15 @@ export const rejectMultipleDocs = catchAsync(async (req, res, next) => {
       document.updated_by = userId;
       await document.save();
 
+      // Log user activity with current local time
+      const currentTime = new Date();
+      const offset = currentTime.getTimezoneOffset();
+      const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+
       const activityData = {
         activity_title: "Document Rejected",
         activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been rejected by Squad. Document Unique ID: ${document.document_unique_id}`,
-        activity_created_at: document.updatedAt,
+        activity_created_at: localTime,
         activity_created_by_id: userId,
         activity_created_by_type: userRole.name,
         activity_document_id: document.id,

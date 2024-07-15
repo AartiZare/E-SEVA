@@ -302,12 +302,17 @@ export const create = catchAsync(async (req, res, next) => {
       );
     }
 
+    // Log user activity with current local time
+    const currentTime = new Date();
+    const offset = currentTime.getTimezoneOffset();
+    const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+
     const activityData = {
       activity_title: "User Created",
       activity_description: `User ${createdUser.full_name} was created.`,
       activity_created_by_id: req.user.id,
       activity_created_by_type: userRole.name,
-      activity_created_at: new Date(),
+      activity_created_at: localTime,
     };
 
     await activityModel.create(activityData);
