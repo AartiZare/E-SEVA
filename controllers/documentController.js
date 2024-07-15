@@ -510,37 +510,55 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
   try {
     const { from_date, to_date, document_type, user_id, branch_id } = req.query;
     const user = req.user;
-    const userRole = await roleModel.findByPk(user.role_id);
 
-    let pendingDoc;
     let filter = {};
 
     if (user.role_id === 1) {
       // Admin
       filter.final_verification_status = 0;
-    } else if (user.role_id === 3) {
-      // Squad
-      const _userBranches = await userStateToBranchModel.findAll({
-        where: {
-          user_id: user.id,
-          status: true,
-        },
-        attributes: ["branch_id"],
-      });
-      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
-      filter.supervisor_verification_status = 1;
-      filter.squad_verification_status = 0;
     } else if (user.role_id === 2) {
       // Supervisor
       const _userBranches = await userStateToBranchModel.findAll({
-        where: {
-          user_id: user.id,
-          status: true,
-        },
+        where: { user_id: user.id, status: true },
         attributes: ["branch_id"],
       });
-      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
-      filter.supervisor_verification_status = 0;
+      const branchIds = _userBranches.map(branch => branch.branch_id);
+      const createdBySupervisor = await userModel.findAll({
+        where: { created_by: user.id },
+        attributes: ['id'],
+      });
+      const createdByUserIds = createdBySupervisor.map(user => user.id);
+      filter.branch_id = branchIds;
+      filter.final_verification_status = 0;
+      filter[Op.or] = [
+        { created_by: user.id },
+        { created_by: { [Op.in]: createdByUserIds } }
+      ];
+    } else if (user.role_id === 3) {
+      // Squad
+      const _userBranches = await userStateToBranchModel.findAll({
+        where: { user_id: user.id, status: true },
+        attributes: ["branch_id"],
+      });
+      const branchIds = _userBranches.map(branch => branch.branch_id);
+      const createdSupervisors = await userModel.findAll({
+        where: { created_by: user.id, role_id: 2 }, // Supervisors
+        attributes: ['id'],
+      });
+      const supervisorIds = createdSupervisors.map(supervisor => supervisor.id);
+      const createdUsers = await userModel.findAll({
+        where: { created_by: { [Op.in]: supervisorIds }, role_id: 4 }, // Users
+        attributes: ['id'],
+      });
+      const userIds = createdUsers.map(user => user.id);
+      filter.branch_id = branchIds;
+      filter.supervisor_verification_status = 1;
+      filter.squad_verification_status = 0;
+      filter[Op.or] = [
+        { created_by: user.id },
+        { created_by: { [Op.in]: supervisorIds } },
+        { created_by: { [Op.in]: userIds } }
+      ];
     } else if (user.role_id === 4) {
       // User
       const _userBranches = await userStateToBranchModel.findAll({
@@ -644,11 +662,12 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       filter.final_verification_status = 0;
     } else if (user.role_id === 6) {
       // Assistant Registrar
+      const _userDistricts = await userStateToBranchModel.findAll({
+        where: { user_id: user.id, status: true },
+        attributes: ["district_id"],
+      });
       const _userTaluks = await db.Taluk.findAll({
-        where: {
-          districtId: _userDistricts.map((district) => district.district_id),
-          // status: true
-        },
+        where: { districtId: _userDistricts.map(district => district.district_id) },
         attributes: ["id"],
       });
       const _userBranches = await db.Branch.findAll({
@@ -704,7 +723,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       filter.branch_id = branch_id;
     }
 
-    pendingDoc = await documentModel.findAll({ where: filter });
+    const pendingDoc = await documentModel.findAll({ where: filter });
 
     return res.send({ status: true, data: pendingDoc });
   } catch (error) {
