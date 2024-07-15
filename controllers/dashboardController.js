@@ -17,22 +17,13 @@ const activityModel = db.Activity;
 const userStateToBranchModel = db.UserStateToBranch;
 const roleModel = db.Role;
 
-// Function to fetch user records based on filters
 const fetchUserRecords = async (req) => {
   const userId = req.user.id;
-  const { fromDate, toDate, branch_id, date, user_id } = req.query;
+  const { fromDate, toDate, branch_id } = req.query;
 
   let filters = {};
 
-  if (date) {
-    const selectedDate = new Date(date);
-    selectedDate.setUTCHours(0, 0, 0, 0);
-
-    filters.createdAt = {
-      [Op.between]: [selectedDate, new Date(selectedDate).setUTCHours(23, 59, 59, 999)],
-    };
-
-  } else if (fromDate && toDate) {
+  if (fromDate && toDate) {
     const startDate = new Date(fromDate);
     startDate.setUTCHours(0, 0, 0, 0);
 
@@ -44,13 +35,9 @@ const fetchUserRecords = async (req) => {
     };
   }
 
-  if (branch_id) {
-    filters.branch_id = branch_id;
-  }
-
-  if (user_id) {
-    filters.created_by = user_id; // Add user_id filter for created_by
-  }
+  //     if (branch_id) {
+  //         filters.branch_id = branch_id;
+  //   }
 
   const _userBranches = await userStateToBranchModel.findAll({
     where: {
@@ -67,8 +54,6 @@ const fetchUserRecords = async (req) => {
       ...filters,
       final_verification_status: 1,
     },
-    raw: true, // Ensure raw results for easier inspection
-    logging: (msg) => console.log('Sequelize Query for Approved Documents:', msg),
   });
 
   const rejectedDocuments = await documentModel.findAll({
@@ -76,8 +61,6 @@ const fetchUserRecords = async (req) => {
       ...filters,
       final_verification_status: 2,
     },
-    raw: true, // Ensure raw results for easier inspection
-    logging: (msg) => console.log('Sequelize Query for Rejected Documents:', msg),
   });
 
   const pendingDocuments = await documentModel.findAll({
@@ -85,8 +68,6 @@ const fetchUserRecords = async (req) => {
       ...filters,
       final_verification_status: 0,
     },
-    raw: true, // Ensure raw results for easier inspection
-    logging: (msg) => console.log('Sequelize Query for Pending Documents:', msg),
   });
 
   const totalApprovedPages = approvedDocuments.reduce(
@@ -115,7 +96,6 @@ const fetchUserRecords = async (req) => {
 // Function to fetch user's daily activity
 const fetchUserDailyActivity = async (req) => {
   const userId = req.user.dataValues.id;
-  const { date, user_id } = req.query;
 
   const currentDate = new Date();
   currentDate.setUTCHours(0, 0, 0, 0);
@@ -124,19 +104,10 @@ const fetchUserDailyActivity = async (req) => {
   const endDate = new Date(currentDate);
   endDate.setUTCHours(23, 59, 59, 999);
 
-  if (date) {
-    const selectedDate = new Date(date);
-    selectedDate.setUTCHours(0, 0, 0, 0);
-    endDate.setUTCHours(23, 59, 59, 999);
-
-    startDate.setTime(selectedDate.getTime());
-    endDate.setTime(selectedDate.getTime());
-  }
-
   const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
   if (userRole.name === "User") {
     const filters = {
-      created_by: user_id || userId,  // Add user_id filter if provided
+      created_by: userId,
       createdAt: {
         [Op.between]: [startDate, endDate],
       },
@@ -180,7 +151,7 @@ const fetchUserDailyActivity = async (req) => {
     };
   } else if (userRole.name === "Squad") {
     const filters = {
-      activity_created_by_id: user_id || userId,  // Add user_id filter if provided
+      activity_created_by_id: userId,
       activity_created_at: {
         [Op.between]: [startDate, endDate],
       },
@@ -224,7 +195,7 @@ const fetchUserDailyActivity = async (req) => {
     };
   } else {
     const filters = {
-      activity_created_by_id: user_id || userId,  // Add user_id filter if provided
+      activity_created_by_id: userId,
       activity_created_at: {
         [Op.between]: [startDate, endDate],
       },
@@ -271,73 +242,52 @@ const fetchUserDailyActivity = async (req) => {
 // Function to fetch user's monthly activity
 const fetchUserMonthlyActivity = async (req) => {
   const userId = req.user.dataValues.id;
-  const { date, user_id } = req.query;
 
   const currentDate = new Date();
   currentDate.setUTCHours(23, 59, 59, 999); // Set current date to end of the day
 
-  let firstDayOfMonth;
-  if (date) {
-    const selectedDate = new Date(date);
-    firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-  } else {
-    firstDayOfMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      1
-    );
-  }
+  const firstDayOfMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
   firstDayOfMonth.setUTCHours(0, 0, 0, 0); // Set first day of the month to start of the day
 
   const startDate = firstDayOfMonth;
   const endDate = new Date(currentDate);
   endDate.setUTCHours(23, 59, 59, 999);
 
-  if (date) {
-    const selectedDate = new Date(date);
-    startDate.setFullYear(selectedDate.getFullYear());
-    startDate.setMonth(selectedDate.getMonth());
-    startDate.setDate(1);
-    endDate.setFullYear(selectedDate.getFullYear());
-    endDate.setMonth(selectedDate.getMonth());
+  const activities = await activityModel.findAll({
+    where: {
+      activity_created_by_id: userId,
+      activity_created_at: { [Op.between]: [startDate, endDate] },
+    },
+    attributes: ["activity_created_at"],
+  });
+
+  const activeDates = [
+    ...new Set(
+      activities.map(
+        (activity) => activity.activity_created_at.toISOString().split("T")[0]
+      )
+    ),
+  ];
+
+  const allDates = [];
+  for (
+    let d = new Date(firstDayOfMonth);
+    d <= currentDate;
+    d.setDate(d.getDate() + 1)
+  ) {
+    allDates.push(new Date(d).toISOString().split("T")[0]);
   }
 
-  const filters = {
-    created_by: user_id || userId,  // Add user_id filter if provided
-    createdAt: {
-      [Op.between]: [startDate, endDate],
-    },
-  };
+  const inactiveDates = allDates.filter((date) => !activeDates.includes(date));
 
-  const approvedCount = await documentModel.count({
-    where: {
-      ...filters,
-      final_verification_status: 1,
-    },
-  });
-
-  const rejectedCount = await documentModel.count({
-    where: {
-      ...filters,
-      final_verification_status: 2,
-    },
-  });
-
-  const pendingCount = await documentModel.count({
-    where: {
-      ...filters,
-      final_verification_status: 0,
-    },
-  });
-
-  return {
-    approved: approvedCount,
-    rejected: rejectedCount,
-    pending: pendingCount,
-  };
+  return { activeDates, inactiveDates };
 };
 
-// Function to fetch all user data
+// Combined data API for user
 export const fetchAllUserData = catchAsync(async (req, res) => {
   try {
     const userRecordsPromise = fetchUserRecords(req);
