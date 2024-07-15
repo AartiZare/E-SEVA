@@ -19,11 +19,19 @@ const roleModel = db.Role;
 
 const fetchUserRecords = async (req) => {
   const userId = req.user.id;
-  const { fromDate, toDate, branch_id } = req.query;
+  const { fromDate, toDate, branch_id, date, user_id } = req.query;
 
   let filters = {};
 
-  if (fromDate && toDate) {
+  // Date filter
+  if (date) {
+    const selectedDate = new Date(date);
+    selectedDate.setUTCHours(0, 0, 0, 0);
+
+    filters.createdAt = {
+      [Op.between]: [selectedDate, new Date(selectedDate).setUTCHours(23, 59, 59, 999)],
+    };
+  } else if (fromDate && toDate) {
     const startDate = new Date(fromDate);
     startDate.setUTCHours(0, 0, 0, 0);
 
@@ -35,9 +43,15 @@ const fetchUserRecords = async (req) => {
     };
   }
 
-  //     if (branch_id) {
-  //         filters.branch_id = branch_id;
-  //   }
+  // Branch filter
+  if (branch_id) {
+    filters.branch_id = branch_id;
+  }
+
+  // User filter
+  if (user_id) {
+    filters.created_by = user_id;
+  }
 
   const _userBranches = await userStateToBranchModel.findAll({
     where: {
