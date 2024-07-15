@@ -899,7 +899,8 @@ export const getMyTeamUserList = catchAsync(async (req, res, next) => {
 
     let filter = {
       // status: true  // Assuming status is a boolean
-      is_deleted: false
+      is_deleted: false,
+      created_by: req.user.id
     };
 
     const _userFilter = await fillUserStateToBranchFilter(req, {});
