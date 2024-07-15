@@ -552,7 +552,6 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       });
       const userIds = createdUsers.map(user => user.id);
       filter.branch_id = branchIds;
-      filter.created_by = req.user.id;
       filter.supervisor_verification_status = 1;
       filter.squad_verification_status = 0;
       filter[Op.or] = [
@@ -571,6 +570,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       });
 
       filter.branch_id = _userBranches.map((branch) => branch.branch_id);
+      filter.created_by = req.user.id;
       filter.final_verification_status = 0;
     } else if (user.role_id === 8) {
       // RCS
