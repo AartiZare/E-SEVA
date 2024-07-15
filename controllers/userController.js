@@ -1147,6 +1147,8 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
         'document_reg_date',
         'supervisor_verification_status',
         'squad_verification_status',
+        'createdAt',
+        'updatedAt'
       ],
     });
 
