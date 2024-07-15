@@ -69,6 +69,7 @@ const fetchUserRecords = async (req) => {
     where: {
       ...filters,
       final_verification_status: 0,
+      updated_by: req.user.id
     },
   });
 
