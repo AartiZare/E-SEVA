@@ -53,6 +53,7 @@ const fetchUserRecords = async (req) => {
     where: {
       ...filters,
       final_verification_status: 1,
+      updated_by: req.user.id
     },
   });
 
@@ -60,6 +61,7 @@ const fetchUserRecords = async (req) => {
     where: {
       ...filters,
       final_verification_status: 2,
+      updated_by: req.user.id
     },
   });
 
@@ -312,6 +314,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
         where: {
           id: branch_users.map((user) => user.user_id),
           role_id: 4,
+          created_by: req.user.id
         },
       });
       const activeUserCounts = await db.User.count({
@@ -319,6 +322,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
           id: branch_users.map((user) => user.user_id),
           status: true,
           role_id: 4,
+          created_by: req.user.id
         },
       });
       const inactiveUserCounts = await db.User.count({
@@ -326,6 +330,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
           id: branch_users.map((user) => user.user_id),
           status: false,
           role_id: 4,
+          created_by: req.user.id
         },
       });
       userTeam = {
@@ -346,6 +351,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
         where: {
           id: branch_users.map((user) => user.user_id),
           role_id: 2,
+          created_by: req.user.id
         },
       });
       const activeUserCounts = await db.User.count({
@@ -353,6 +359,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
           id: branch_users.map((user) => user.user_id),
           status: true,
           role_id: 2,
+          created_by: req.user.id
         },
       });
       const inactiveUserCounts = await db.User.count({
@@ -360,6 +367,7 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
           id: branch_users.map((user) => user.user_id),
           status: false,
           role_id: 2,
+          created_by: req.user.id
         },
       });
       userTeam = {
