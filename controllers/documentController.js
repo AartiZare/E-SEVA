@@ -531,7 +531,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       filter.branch_id = branchIds;
       filter.final_verification_status = 0;
       filter.supervisor_verification_status = 0;
-      filter[Op.and] = [
+      filter[Op.or] = [
         { created_by: user.id },
         { created_by: { [Op.in]: createdByUserIds } }
       ];
