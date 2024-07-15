@@ -314,8 +314,8 @@ export const create = catchAsync(async (req, res, next) => {
 
     if (!body.password) {
       const emailSubject = "Set Your Password";
-      const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
-      const emailHtml = `<p>To set your password, click <a href="http://localhost:3000/set-password?token=${resetPasswordToken}">here</a>.</p>`;
+      const emailText = `To set your password, use the following URL: http://esevarcs.com/set-password?token=${resetPasswordToken}`;
+      const emailHtml = `<p>To set your password, click <a href="http://esevarcs.com/set-password?token=${resetPasswordToken}">here</a>.</p>`;
 
       await mailService(body.email, emailSubject, emailText, emailHtml);
     }
