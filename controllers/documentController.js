@@ -530,7 +530,8 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       const createdByUserIds = createdBySupervisor.map(user => user.id);
       filter.branch_id = branchIds;
       filter.final_verification_status = 0;
-      filter[Op.or] = [
+      filter.supervisor_verification_status = 0;
+      filter[Op.and] = [
         { created_by: user.id },
         { created_by: { [Op.in]: createdByUserIds } }
       ];
