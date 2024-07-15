@@ -552,6 +552,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       });
       const userIds = createdUsers.map(user => user.id);
       filter.branch_id = branchIds;
+      filter.created_by = req.user.id;
       filter.supervisor_verification_status = 1;
       filter.squad_verification_status = 0;
       filter[Op.or] = [
