@@ -79,12 +79,17 @@ export const create = catchAsync(async (req, res, next) => {
       user_email: req.user.email,
     });
 
+    // Log user activity with current local time
+    const currentTime = new Date();
+    const offset = currentTime.getTimezoneOffset();
+    const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+
     const activityData = {
       activity_title: "Feedback Created",
       activity_description: `Feedback with subject ${feedback.feedback_for} created by user ${req.user.id}`,
       activity_created_by_id: req.user.id,
       activity_created_by_type: userRole.name,
-      activity_created_at: new Date(),
+      activity_created_at: localTime,
     };
 
     await Activity.create(activityData);
