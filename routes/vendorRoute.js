@@ -10,7 +10,7 @@ const router = express.Router();
 router
   .route("/")
   // Create a new vendor
-  .post(
+  .post(auth(),
     upload.single("profile_image"),
     validate(vendorValidation.createVendor),
     vendorController.createVendor

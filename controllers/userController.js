@@ -610,6 +610,8 @@ export const getAll = catchAsync(async (req, res) => {
         role_name: userRole.name,
         bank_branch: user.bank_branch,
         created_by: user.created_by,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
         status: user.status,
         vendor_id: user.vendor_id,
         is_active: user.is_active,
