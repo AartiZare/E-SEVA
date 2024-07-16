@@ -481,10 +481,15 @@ export const approveMultipleDocs = catchAsync(async (req, res, next) => {
       document.updated_by = userId;
       await document.save();
 
+            // Log user activity with current local time
+      const currentTime = new Date();
+      const offset = currentTime.getTimezoneOffset();
+      const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+      
       const activityData = {
         activity_title: "Document Approved",
         activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
-        activity_created_at: document.updatedAt,
+        activity_created_at: localTime,
         activity_created_by_id: userId,
         activity_created_by_type: userRole.name,
         activity_document_id: document.id,

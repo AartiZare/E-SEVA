@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import { catchAsync } from "../utils/catchAsync.js";
 import db from "../models/index.js";
+
 const roleModel = db.Role;
 const activityModel = db.Activity;
 
