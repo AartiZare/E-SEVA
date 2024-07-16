@@ -15,6 +15,7 @@ const vendorModel = (sequelize, DataTypes) => {
       },
       profile_image: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       email: {
         type: DataTypes.STRING,
@@ -26,60 +27,67 @@ const vendorModel = (sequelize, DataTypes) => {
       },
       alternate_contact_number: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       pan_number: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       aadhaar_number: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       qualification: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       reset_otp: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       password: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       reset_otp_expiration: {
         type: DataTypes.DATE,
+        allowNull: true,
       },
       pincode: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       district: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       taluk: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       village: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       address: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       bank_account_number: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       bank_branch: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       bank_ifsc: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       bank_name: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       company_name: {
         type: DataTypes.STRING,
