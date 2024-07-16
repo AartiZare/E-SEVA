@@ -290,7 +290,7 @@ export const createDocument = catchAsync(async (req, res, next) => {
     
     const activityData = {
       activity_title: "Document Created",
-      activity_description: `Document ${newDocument.document_name} with registration number ${newDocument.document_reg_no} has been uploaded. Document Unique ID: ${documentUniqueId}`,
+      activity_description: `The document ${newDocument.document_name} with registration number ${newDocument.document_reg_no} has been uploaded. The document's unique ID is ${documentUniqueId}, and it contains a total of ${newDocument.total_no_of_page} pages.`,
       activity_created_at: localTime,
       activity_created_by_id: req.user.id,
       activity_created_by_type: userRole.name,
