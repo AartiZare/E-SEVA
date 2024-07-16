@@ -15,6 +15,7 @@ const userModel = (sequelize, DataTypes) => {
       },
       profile_image: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       email: {
         type: DataTypes.STRING,
@@ -26,39 +27,43 @@ const userModel = (sequelize, DataTypes) => {
       },
       alternate_contact_number: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       pan_number: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       aadhaar_number: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       qualification: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       date_of_birth: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
       },
       pincode: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       district: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       taluk: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       village: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       address: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       bank_account_number: {
         type: DataTypes.STRING,
@@ -66,6 +71,7 @@ const userModel = (sequelize, DataTypes) => {
       },
       password: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       bank_ifsc: {
         type: DataTypes.STRING,
@@ -77,12 +83,15 @@ const userModel = (sequelize, DataTypes) => {
       },
       role_id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
       },
       reset_otp: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       reset_otp_expiration: {
         type: DataTypes.DATE,
+        allowNull: true,
       },
       bank_branch: {
         type: DataTypes.STRING,
