@@ -1012,6 +1012,9 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
       );
     }
 
+    // Fetch the document type
+    const documentType = await documentTypeModel.findByPk(document.document_type);
+
     const rejectionLog = await db.DocumentRejectionLog.findOne({
       where: {
         document_id: documentId,
@@ -1042,6 +1045,7 @@ export const getDocumentById = catchAsync(async (req, res, next) => {
 
     const documentWithRejectionReasons = {
       ...document.toJSON(),
+      document_type: documentType, // Include the document type object
       ...(documentRejectionFeedback && { document_rejection_feedback: documentRejectionFeedback }),
     };
 
