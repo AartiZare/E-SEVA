@@ -7,13 +7,15 @@ import mailService from "../utils/mailService.js";
 import { secretKey } from "../middlewares/passport.js";
 import db from "../models/index.js";
 const vendorModel = db.Vendor;
+const roleModel = db.Role;
+const activityModel = db.Activity;
 import logger from '../loggers.js';
 
 export const createVendor = catchAsync(async (req, res, next) => {
   try {
     const { body } = req;
     body.email = body.email.toLowerCase();
-
+    const userRole = await roleModel.findByPk(req.user.role_id);
     const vendor = await vendorModel.findOne({
       where: {
         [Op.or]: [
@@ -77,6 +79,20 @@ export const createVendor = catchAsync(async (req, res, next) => {
     }
 
     const createdVendor = await vendorModel.create(vendorData);
+     // Log user activity with current local time
+     const currentTime = new Date();
+     const offset = currentTime.getTimezoneOffset();
+     const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+ 
+     const activityData = {
+       activity_title: "Vendor Created",
+       activity_description: `Vendor ${createdVendor.full_name} is Created.`,
+       activity_created_by_id: req.user.id,
+       activity_created_by_type: userRole.name,
+       activity_created_at: localTime,
+     };
+ 
+     await activityModel.create(activityData);
 
     const emailSubject = "Set Your Password";
     const emailText = `To set your password, use the following URL: http://localhost:3000/set-password?token=${resetPasswordToken}`;
