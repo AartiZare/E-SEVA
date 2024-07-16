@@ -1072,7 +1072,7 @@ export const softDeleteUser = async (req, res, next) => {
 
 export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
   try {
-    const { vendor_id, document_reg_date, page = 1, pageSize = 10, search } = req.query;
+    const { vendor_id, document_created_at, page = 1, pageSize = 10, search } = req.query;
 
     const userWhereCondition = {
       role_id: 4,
@@ -1120,12 +1120,12 @@ export const userListingWithDocDetails = catchAsync(async (req, res, next) => {
       return acc;
     }, {});
 
-    const dateCondition = document_reg_date
+    const dateCondition = document_created_at
       ? {
-          document_reg_date: {
+        document_created_at: {
             [Op.between]: [
-              new Date(document_reg_date + 'T00:00:00.000Z'),
-              new Date(document_reg_date + 'T23:59:59.999Z'),
+              new Date(document_created_at + 'T00:00:00.000Z'),
+              new Date(document_created_at + 'T23:59:59.999Z'),
             ],
           },
         }
