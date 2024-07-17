@@ -1469,7 +1469,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
         attributes: ["id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.id);
-      filter.final_verification_status = 0;
+      filter.final_verification_status = 1;
     } else if (userRoleId === 9) {
       // ARCS
       const _userDistricts = await userStateToBranchModel.findAll({
@@ -1492,7 +1492,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
         attributes: ["id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.id);
-      filter.final_verification_status = 0;
+      filter.final_verification_status = 1;
     } else if (userRoleId === 7) {
       // Deputy Registrar
       const _userDistricts = await userStateToBranchModel.findAll({
@@ -1515,7 +1515,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
         attributes: ["id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.id);
-      filter.final_verification_status = 0;
+      filter.final_verification_status = 1;
     } else if (userRoleId === 6) {
       // Assistant Registrar
       const _userDistricts = await userStateToBranchModel.findAll({
@@ -1533,7 +1533,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
         attributes: ["id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.id);
-      filter.final_verification_status = 0;
+      filter.final_verification_status = 1;
     } else if (userRoleId === 10) {
       // Branch Registrar
       const _userBranches = await userStateToBranchModel.findAll({
@@ -1544,7 +1544,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
         attributes: ["branch_id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.branch_id);
-      filter.final_verification_status = 0;
+      filter.final_verification_status = 1;
     }
 
     if (qFilter) {
