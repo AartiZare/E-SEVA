@@ -1419,72 +1419,205 @@ export const webDashboard = catchAsync(async (req, res, next) => {
   }
 });
 
-// export const getDocumentList = catchAsync(async (req, res) => {
-//   try {
-//     const { qFilter, search, from_date, to_date, document_type } = req.query;
-
-//     let conditions = {};
-
-//     if (qFilter) {
-//       conditions = {
-//         ...JSON.parse(qFilter),
-//       };
-//     }
-
-//     if (search) {
-//       const searchTerm = search?.trim();
-//       if (searchTerm !== "") {
-//         conditions.document_name = {
-//           [Op.like]: `%${searchTerm}%`,
-//         };
-//       }
-//     }
-
-//     if (from_date && to_date) {
-//       conditions.document_reg_date = {
-//         [Op.between]: [new Date(from_date), new Date(to_date)],
-//       };
-//     } else if (from_date) {
-//       conditions.document_reg_date = {
-//         [Op.gte]: new Date(from_date),
-//       };
-//     } else if (to_date) {
-//       conditions.document_reg_date = {
-//         [Op.lte]: new Date(to_date),
-//       };
-//     }
-
-//     if (document_type) {
-//       conditions.document_type = document_type;
-//     }
-
-//     const documents = await documentModel.findAll({
-//       where: {
-//         ...conditions,
-//         final_verification_status: 1,
-//       },
-//     });
-
-//     console.log(documents, "documents")
-
-//     return res.send({
-//       results: documents,
-//       total: documents.length,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(500).send({ error: "Internal Server Error" });
-//   }
-// });
-
 export const getDocumentList = catchAsync(async (req, res) => {
   try {
     const { qFilter, search, from_date, to_date, document_type } = req.query;
+    const userId = req.user.id;
+    const userRoleId = req.user.role_id;
 
     let conditions = {};
 
+    // Admin role - role_id 1
+    if (userRoleId === 1) {
+      // Admin: Show all documents with final_verification_status: 1
+      conditions.final_verification_status = 1;
+
+    // Branch Registrar role - role_id 10
+    } else if (userRoleId === 10) {
+      // Fetch branches assigned to the logged-in user
+      const userBranches = await userStateToBranchModel.findAll({
+        where: {
+          user_id: userId,
+        },
+      });
+      const branchIds = userBranches.map(branch => branch.branch_id);
+
+      // Set conditions for documents from the fetched branches
+      conditions = {
+        ...conditions,
+        branch_id: {
+          [Op.in]: branchIds,
+        },
+        final_verification_status: 1,
+      };
+
+    // ARCS role - role_id 9
+    } else if (userRoleId === 9) {
+      const createdDrByArcs = await userModel.findAll({
+        where: {
+          created_by: userId
+        }
+      });
+      const userDrIds = createdDrByArcs.map(user => user.id);
+      const createdArUsers = await userModel.findAll({
+        where: {
+          created_by: userDrIds,
+        },
+      });
+
+      const userArIds = createdArUsers.map(user => user.id);
+      const createdBrByAr = await userModel.findAll({
+        where: {
+          created_by: userArIds
+        }
+      });
+
+      const userBrIds = createdBrByAr.map(user => user.id);
+
+      // Fetch branches for the created users
+      const userBranches = await userStateToBranchModel.findAll({
+        where: {
+          user_id: {
+            [Op.in]: userBrIds,
+          },
+        },
+      });
+      const branchIds = userBranches.map(branch => branch.branch_id);
+
+      conditions = {
+        ...conditions,
+        branch_id: {
+          [Op.in]: branchIds,
+        },
+        final_verification_status: 1,
+      };
+
+    // RCS role - role_id 8
+    } else if (userRoleId === 8) {
+      const createdArcsByRcs = await userModel.findAll({
+        where: {
+          created_by: userId
+        }
+      });
+      const userArcsIds = createdArcsByRcs.map(user => user.id);
+      const createdDrByArcs = await userModel.findAll({
+        where: {
+          created_by: userArcsIds
+        }
+      });
+      const userDrIds = createdDrByArcs.map(user => user.id);
+      const createdArUsers = await userModel.findAll({
+        where: {
+          created_by: userDrIds,
+        },
+      });
+
+      const userArIds = createdArUsers.map(user => user.id);
+      const createdBrByAr = await userModel.findAll({
+        where: {
+          created_by: userArIds
+        }
+      });
+
+      const userBrIds = createdBrByAr.map(user => user.id);
+
+      // Fetch branches for the created users
+      const userBranches = await userStateToBranchModel.findAll({
+        where: {
+          user_id: {
+            [Op.in]: userBrIds,
+          },
+        },
+      });
+      const branchIds = userBranches.map(branch => branch.branch_id);
+
+      conditions = {
+        ...conditions,
+        branch_id: {
+          [Op.in]: branchIds,
+        },
+        final_verification_status: 1,
+      };
+    // Deputy Registrar role - role_id 7
+    } else if (userRoleId === 7) {
+      // Fetch documents from branches created by users created by the logged-in Deputy Registrar
+      const createdArUsers = await userModel.findAll({
+        where: {
+          created_by: userId,
+        },
+      });
+
+      const userArIds = createdArUsers.map(user => user.id);
+      const createdBrByAr = await userModel.findAll({
+        where: {
+          created_by: userArIds
+        }
+      });
+
+      const userBrIds = createdBrByAr.map(user => user.id);
+
+      // Fetch branches for the created users
+      const userBranches = await userStateToBranchModel.findAll({
+        where: {
+          user_id: {
+            [Op.in]: userBrIds,
+          },
+        },
+      });
+      const branchIds = userBranches.map(branch => branch.branch_id);
+
+      conditions = {
+        ...conditions,
+        branch_id: {
+          [Op.in]: branchIds,
+        },
+        final_verification_status: 1,
+      };
+
+    // Assistant Registrar role - role_id 6
+    } else if (userRoleId === 6) {
+      // Fetch documents created by the logged-in user
+      const createdBranchRegistrars = await userModel.findAll({
+        where: {
+          created_by: userId
+        }
+      });
+
+      console.log(createdBranchRegistrars, "createdBranchRegistrars")
+      const userBrIds = createdBranchRegistrars.map(user => user.id);
+
+      // Fetch branches for the created users
+      const userBranches = await userStateToBranchModel.findAll({
+        where: {
+          user_id: {
+            [Op.in]: userBrIds,
+          },
+        },
+      });
+      const branchIds = userBranches.map(branch => branch.branch_id);
+
+      conditions = {
+        ...conditions,
+        branch_id: {
+          [Op.in]: branchIds,
+        },
+        final_verification_status: 1,
+      };
+
+    // Other Roles
+    } else {
+      // Default condition for any other roles: Show documents created by the logged-in user
+      conditions = {
+        ...conditions,
+        user_id: userId,
+        final_verification_status: 1,
+      };
+    }
+
+    // Apply additional query conditions
     if (qFilter) {
       conditions = {
+        ...conditions,
         ...JSON.parse(qFilter),
       };
     }
@@ -1516,12 +1649,13 @@ export const getDocumentList = catchAsync(async (req, res) => {
       conditions.document_type = document_type;
     }
 
+    // Fetch documents based on the conditions
     const documents = await documentModel.findAll({
-      where: {
-        ...conditions,
-        final_verification_status: 1,
-      },
+      where: conditions,
     });
+
+    // Debugging: Log the documents fetched
+    console.log('Fetched Documents:', documents, documents.length);
 
     // Fetch document type details for each document
     const completeDocuments = await Promise.all(
