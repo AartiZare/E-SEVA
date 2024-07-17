@@ -61,6 +61,22 @@ const documentsModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      squad_verified_by: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      supervisor_verified_by: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      squad_rejected_by: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      supervisor_rejected_by:  {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       supervisor_verification_status: {
         type: DataTypes.INTEGER,
         defaultValue: 0,

@@ -16,6 +16,7 @@ const documentModel = db.Document;
 const activityModel = db.Activity;
 const userStateToBranchModel = db.UserStateToBranch;
 const roleModel = db.Role;
+const userModel = db.User;
 
 const fetchUserRecords = async (req) => {
   const userId = req.user.id;
@@ -67,7 +68,11 @@ const fetchUserRecords = async (req) => {
     where: {
       ...filters,
       final_verification_status: 1,
-      updated_by: req.user.id
+      [Op.or]: [
+        { squad_verified_by: userId },
+        { supervisor_verified_by: userId },
+        { created_by: userId }
+      ]
     },
   });
 
@@ -75,17 +80,69 @@ const fetchUserRecords = async (req) => {
     where: {
       ...filters,
       final_verification_status: 2,
-      updated_by: req.user.id
+      [Op.or]: [
+        { supervisor_rejected_by: userId },
+        { squad_rejected_by: userId },
+        { created_by: userId }
+      ]
     },
   });
 
-  const pendingDocuments = await documentModel.findAll({
-    where: {
-      ...filters,
-      final_verification_status: 0,
-      updated_by: req.user.id
-    },
-  });
+  let pendingDocuments = [];
+
+  if (req.user.role_id === 4) {
+    pendingDocuments = await documentModel.findAll({
+      where: {
+        ...filters,
+        final_verification_status: 0,
+        created_by: userId,
+      },
+    });
+  } else if (req.user.role_id === 2) {
+    const users = await userModel.findAll({
+      where: {
+        created_by: userId
+      }
+    });
+    const userIdsMap = users.map((user) => user.id);
+    pendingDocuments = await documentModel.findAll({
+      where: {
+        ...filters,
+        final_verification_status: 0,
+        supervisor_verified_by: null,
+        squad_verified_by: null,
+        supervisor_verification_status: 0,
+        squad_verification_status: 0,
+        created_by: userIdsMap
+      },
+    });
+  } else if (req.user.role_id === 3) {
+    const createdSupervisors = await userModel.findAll({
+      where: {
+        created_by: userId
+      }
+    });
+
+    const superVisorIds = createdSupervisors.map((user) => user.id);
+    const users = await userModel.findAll({
+      where: {
+        created_by: superVisorIds
+      }
+    });
+    const userIdsMap = users.map((user) => user.id);
+    pendingDocuments = await documentModel.findAll({
+      where: {
+        ...filters,
+        final_verification_status: 0,
+        supervisor_verified_by: { [Op.ne]: null },
+        supervisor_verification_status: 1,
+        squad_verification_status: 0,
+        squad_verified_by: null,
+        created_by: userIdsMap
+      },
+    });
+  }
+
 
   const totalApprovedPages = approvedDocuments.reduce(
     (total, doc) => total + doc.total_no_of_page,
@@ -112,33 +169,65 @@ const fetchUserRecords = async (req) => {
 
 // Function to fetch user's daily activity
 const fetchUserDailyActivity = async (req) => {
-  const userId = req.user.dataValues.id;
+  const userId = req.user.id;
+  const { fromDate, toDate, branch_id, date, user_id } = req.query;
 
-  const currentDate = new Date();
-  currentDate.setUTCHours(0, 0, 0, 0);
+  let filters = {};
 
-  const startDate = new Date(currentDate);
-  const endDate = new Date(currentDate);
-  endDate.setUTCHours(23, 59, 59, 999);
+  // Date filter
+  if (date) {
+    const selectedDate = new Date(date);
+    selectedDate.setUTCHours(0, 0, 0, 0);
 
-  const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
-  if (userRole.name === "User") {
-    const filters = {
-      created_by: userId,
-      createdAt: {
-        [Op.between]: [startDate, endDate],
-      },
+    filters.createdAt = {
+      [Op.between]: [selectedDate, new Date(selectedDate).setUTCHours(23, 59, 59, 999)],
     };
+  } else if (fromDate && toDate) {
+    const startDate = new Date(fromDate);
+    startDate.setUTCHours(0, 0, 0, 0);
 
-    const _userBranches = await userStateToBranchModel.findAll({
-      where: {
-        user_id: userId,
-        status: true,
-      },
-      attributes: ["branch_id"],
-    });
+    const endDate = new Date(toDate);
+    endDate.setUTCHours(23, 59, 59, 999);
 
-    filters.branch_id = _userBranches.map((branch) => branch.branch_id);
+    filters.createdAt = {
+      [Op.between]: [startDate, endDate],
+    };
+  } else {
+    // Default to today's date
+    const currentDate = new Date();
+    currentDate.setUTCHours(0, 0, 0, 0);
+
+    const startDate = new Date(currentDate);
+    const endDate = new Date(currentDate);
+    endDate.setUTCHours(23, 59, 59, 999);
+
+    filters.createdAt = {
+      [Op.between]: [startDate, endDate],
+    };
+  }
+
+  if (branch_id) {
+    filters.branch_id = branch_id;
+  }
+
+  if (user_id) {
+    filters.created_by = user_id;
+  }
+
+  const _userBranches = await userStateToBranchModel.findAll({
+    where: {
+      user_id: userId,
+      status: true,
+    },
+    attributes: ["branch_id"],
+  });
+
+  filters.branch_id = _userBranches.map((branch) => branch.branch_id);
+
+  const userRole = await roleModel.findByPk(req.user.role_id);
+
+  if (userRole.name === "User") {
+    filters.created_by = userId;
 
     const approvedCount = await documentModel.count({
       where: {
@@ -167,41 +256,52 @@ const fetchUserDailyActivity = async (req) => {
       pending: pendingCount,
     };
   } else if (userRole.name === "Squad") {
-    const filters = {
-      activity_created_by_id: userId,
-      activity_created_at: {
-        [Op.between]: [startDate, endDate],
-      },
-      activity_title: "Document Approved",
-    };
-
-    const approvedCount = await activityModel.count({
-      where: filters,
-    });
-
-    filters.activity_title = "Document Rejected";
-    const rejectedCount = await activityModel.count({
-      where: filters,
-    });
-
-    const _userBranches = await userStateToBranchModel.findAll({
+    const createdSupervisors = await userModel.findAll({
       where: {
-        user_id: userId,
-        status: true,
+        created_by: userId,
       },
-      attributes: ["branch_id"],
     });
 
-    const branch_id = _userBranches.map((branch) => branch.branch_id);
+    const superVisorIds = createdSupervisors.map((user) => user.id);
+
+    const users = await userModel.findAll({
+      where: {
+        created_by: superVisorIds,
+      },
+    });
+    const userIdsMap = users.map((user) => user.id);
+
+    const approvedCount = await documentModel.count({
+      where: {
+        ...filters,
+        final_verification_status: 1,
+        [Op.or]: [
+          { squad_verified_by: userId },
+          { supervisor_verified_by: userId },
+        ],
+      },
+    });
+
+    const rejectedCount = await documentModel.count({
+      where: {
+        ...filters,
+        final_verification_status: 2,
+        [Op.or]: [
+          { supervisor_rejected_by: userId },
+          { squad_rejected_by: userId },
+        ],
+      },
+    });
 
     const pendingCount = await documentModel.count({
       where: {
-        createdAt: {
-          [Op.between]: [startDate, endDate],
-        },
+        ...filters,
+        final_verification_status: 0,
+        supervisor_verified_by: { [Op.ne]: null },
         supervisor_verification_status: 1,
         squad_verification_status: 0,
-        branch_id,
+        squad_verified_by: null,
+        created_by: userIdsMap,
       },
     });
 
@@ -211,40 +311,44 @@ const fetchUserDailyActivity = async (req) => {
       pending: pendingCount,
     };
   } else {
-    const filters = {
-      activity_created_by_id: userId,
-      activity_created_at: {
-        [Op.between]: [startDate, endDate],
-      },
-      activity_title: "Document Approved",
-    };
-
-    const approvedCount = await activityModel.count({
-      where: filters,
-    });
-
-    filters.activity_title = "Document Rejected";
-    const rejectedCount = await activityModel.count({
-      where: filters,
-    });
-
-    const _userBranches = await userStateToBranchModel.findAll({
+    const users = await userModel.findAll({
       where: {
-        user_id: userId,
-        status: true,
+        created_by: userId,
       },
-      attributes: ["branch_id"],
+    });
+    const userIdsMap = users.map((user) => user.id);
+
+    const approvedCount = await documentModel.count({
+      where: {
+        ...filters,
+        final_verification_status: 1,
+        [Op.or]: [
+          { squad_verified_by: userId },
+          { supervisor_verified_by: userId },
+        ],
+      },
     });
 
-    const branch_id = _userBranches.map((branch) => branch.branch_id);
+    const rejectedCount = await documentModel.count({
+      where: {
+        ...filters,
+        final_verification_status: 2,
+        [Op.or]: [
+          { supervisor_rejected_by: userId },
+          { squad_rejected_by: userId },
+        ],
+      },
+    });
 
     const pendingCount = await documentModel.count({
       where: {
-        createdAt: {
-          [Op.between]: [startDate, endDate],
-        },
+        ...filters,
+        final_verification_status: 0,
+        created_by: userIdsMap,
+        supervisor_verified_by: { [Op.ne]: null },
         supervisor_verification_status: 0,
-        branch_id,
+        squad_verification_status: 0,
+        squad_verified_by: null,
       },
     });
 
