@@ -23,6 +23,10 @@ const branchModel = db.Branch;
 const vendorModel = db.Vendor;
 const activityModel = db.Activity;
 const documentModel = db.Document;
+const talukModel = db.Taluk;
+const stateModel = db.State;
+const divisionModel = db.Division;
+const districtModel = db.District;
 const saltRounds = 10;
 
 export const create = catchAsync(async (req, res, next) => {
@@ -680,6 +684,7 @@ export const getUserById = catchAsync(async (req, res, next) => {
   try {
     const id = req.params.id;
     const user = await userService.getById(id);
+    
     if (!user) {
       return next(
         new ApiError(
@@ -688,7 +693,41 @@ export const getUserById = catchAsync(async (req, res, next) => {
         )
       );
     }
-    return res.send(user);
+
+    // Fetch user branches and related details
+    const userBranches = await userStateToBranchModel.findAll({
+      where: {
+        user_id: id
+      }
+    });
+
+    // Extract IDs from userBranches
+    const talukId = userBranches.length > 0 ? userBranches[0].taluk_id : null;
+    const districtId = userBranches.length > 0 ? userBranches[0].district_id : null;
+    const divisionId = userBranches.length > 0 ? userBranches[0].division_id : null;
+    const stateId = userBranches.length > 0 ? userBranches[0].state_id : null;
+    const branchId = userBranches.length > 0 ? userBranches[0].branch_id : null;
+
+    // Fetch related objects based on available IDs
+    const [talukObject, districtObject, divisionObject, stateObject, branchObject] = await Promise.all([
+      talukId ? talukModel.findByPk(talukId) : null,
+      districtId ? districtModel.findByPk(districtId) : null,
+      divisionId ? divisionModel.findByPk(divisionId) : null,
+      stateId ? stateModel.findByPk(stateId) : null,
+      branchId ? branchModel.findByPk(branchId) : null
+    ]);
+
+    // Construct the response object
+    const responseUser = {
+      ...user.toJSON(),
+      talukObject,
+      districtObject,
+      divisionObject,
+      stateObject,
+      branchObject
+    };
+
+    return res.send(responseUser);
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Internal Server Error" });
