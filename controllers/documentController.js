@@ -411,11 +411,13 @@ export const approveDocument = catchAsync(async (req, res, next) => {
     if (userRole.name === "Supervisor") {
       // Update supervisor_verification_status for approved
       document.supervisor_verification_status = 1;
+      document.supervisor_verified_by = userId; // Set the supervisor who verified the document
       activityDescription = "approved by Supervisor";
     } else if (userRole.name === "Squad") {
       // Update squad_verification_status for approved
       document.squad_verification_status = 1;
       document.final_verification_status = 1;
+      document.squad_verified_by = userId; // Set the squad who verified the document
       activityDescription = "approved by Squad";
     } else {
       // If user role is neither supervisor nor squad, return unauthorized
@@ -423,7 +425,6 @@ export const approveDocument = catchAsync(async (req, res, next) => {
     }
 
     // Save the updated document
-    document.updated_by = userId;
     await document.save();
 
     // Log user activity with current local time
@@ -560,6 +561,7 @@ export const pendingDocumentListUser = catchAsync(async (req, res, next) => {
       filter.branch_id = branchIds;
       filter.supervisor_verification_status = 1;
       filter.squad_verification_status = 0;
+      filter.squad_verified_by = null;
       filter[Op.or] = [
         { created_by: user.id },
         { created_by: { [Op.in]: supervisorIds } },
@@ -1075,17 +1077,17 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
     if (userRole.name === "Supervisor") {
       document.supervisor_verification_status = 2;
       document.final_verification_status = 2;
+      document.supervisor_rejected_by = req.user.id;
       activityDescription = "rejected by Supervisor";
     } else if (userRole.name === "Squad") {
       document.squad_verification_status = 2;
       document.final_verification_status = 2;
+      document.squad_rejected_by = req.user.id;
       activityDescription = "rejected by Squad";
     } else {
       return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
     }
-
-    document.updated_by = userId;
-
+    
     await document.save();
 
     await db.DocumentRejectionLog.create({
