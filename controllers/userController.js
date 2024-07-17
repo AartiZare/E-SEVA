@@ -700,32 +700,31 @@ export const getUserById = catchAsync(async (req, res, next) => {
         user_id: id
       }
     });
+  // Extract IDs from userBranches
+  const talukIds = userBranches.map(branch => branch.taluk_id).filter(id => id !== null);
+  const districtIds = userBranches.map(branch => branch.district_id).filter(id => id !== null);
+  const divisionIds = userBranches.map(branch => branch.division_id).filter(id => id !== null);
+  const stateIds = userBranches.map(branch => branch.state_id).filter(id => id !== null);
+  const branchIds = userBranches.map(branch => branch.branch_id).filter(id => id !== null);
 
-    // Extract IDs from userBranches
-    const talukId = userBranches.length > 0 ? userBranches[0].taluk_id : null;
-    const districtId = userBranches.length > 0 ? userBranches[0].district_id : null;
-    const divisionId = userBranches.length > 0 ? userBranches[0].division_id : null;
-    const stateId = userBranches.length > 0 ? userBranches[0].state_id : null;
-    const branchId = userBranches.length > 0 ? userBranches[0].branch_id : null;
+  // Fetch related objects based on available IDs
+  const [talukObjects, districtObjects, divisionObjects, stateObjects, branchObjects] = await Promise.all([
+    talukIds.length > 0 ? talukModel.findAll({ where: { id: talukIds } }) : [],
+    districtIds.length > 0 ? districtModel.findAll({ where: { id: districtIds } }) : [],
+    divisionIds.length > 0 ? divisionModel.findAll({ where: { id: divisionIds } }) : [],
+    stateIds.length > 0 ? stateModel.findAll({ where: { id: stateIds } }) : [],
+    branchIds.length > 0 ? branchModel.findAll({ where: { id: branchIds } }) : []
+  ]);
 
-    // Fetch related objects based on available IDs
-    const [talukObject, districtObject, divisionObject, stateObject, branchObject] = await Promise.all([
-      talukId ? talukModel.findByPk(talukId) : null,
-      districtId ? districtModel.findByPk(districtId) : null,
-      divisionId ? divisionModel.findByPk(divisionId) : null,
-      stateId ? stateModel.findByPk(stateId) : null,
-      branchId ? branchModel.findByPk(branchId) : null
-    ]);
-
-    // Construct the response object
-    const responseUser = {
-      ...user.toJSON(),
-      talukObject,
-      districtObject,
-      divisionObject,
-      stateObject,
-      branchObject
-    };
+  // Construct the response object
+  const responseUser = {
+    ...user.toJSON(),
+    talukObjects,
+    districtObjects,
+    divisionObjects,
+    stateObjects,
+    branchObjects
+  };
 
     return res.send(responseUser);
   } catch (error) {

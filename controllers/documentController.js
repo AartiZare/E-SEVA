@@ -1654,9 +1654,6 @@ export const getDocumentList = catchAsync(async (req, res) => {
       where: conditions,
     });
 
-    // Debugging: Log the documents fetched
-    console.log('Fetched Documents:', documents, documents.length);
-
     // Fetch document type details for each document
     const completeDocuments = await Promise.all(
       documents.map(async (doc) => {
