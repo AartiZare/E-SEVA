@@ -1229,6 +1229,8 @@ export const getDocFileByDocId = catchAsync(async (req, res, next) => {
 export const webDashboard = catchAsync(async (req, res, next) => {
   try {
     let where = {};
+
+    // Date Filters
     if (req.body?.fromDate) {
       where = {
         ...where,
@@ -1427,199 +1429,127 @@ export const getDocumentList = catchAsync(async (req, res) => {
     const userId = req.user.id;
     const userRoleId = req.user.role_id;
 
-    let conditions = {};
+    let filter = {};
 
-    // Admin role - role_id 1
     if (userRoleId === 1) {
       // Admin: Show all documents with final_verification_status: 1
-      conditions.final_verification_status = 1;
+      filter.final_verification_status = 1;
 
-    // Branch Registrar role - role_id 10
-    } else if (userRoleId === 10) {
-      // Fetch branches assigned to the logged-in user
-      const userBranches = await userStateToBranchModel.findAll({
+    } else if (userRoleId === 8) {
+      // RCS
+      const _userStates = await userStateToBranchModel.findAll({
         where: {
           user_id: userId,
+          status: true,
         },
+        attributes: ["state_id"],
       });
-      const branchIds = userBranches.map(branch => branch.branch_id);
-
-      // Set conditions for documents from the fetched branches
-      conditions = {
-        ...conditions,
-        branch_id: {
-          [Op.in]: branchIds,
+      const _userDivisions = await db.Division.findAll({
+        where: {
+          state_id: _userStates.map((state) => state.state_id),
         },
-        final_verification_status: 1,
-      };
-
-    // ARCS role - role_id 9
+        attributes: ["id"],
+      });
+      const _userDistricts = await db.District.findAll({
+        where: {
+          division_id: _userDivisions.map((division) => division.id),
+        },
+        attributes: ["id"],
+      });
+      const _userTaluks = await db.Taluk.findAll({
+        where: {
+          district_id: _userDistricts.map((district) => district.id),
+        },
+        attributes: ["id"],
+      });
+      const _userBranches = await db.Branch.findAll({
+        where: {
+          taluk_id: _userTaluks.map((taluk) => taluk.id),
+        },
+        attributes: ["id"],
+      });
+      filter.branch_id = _userBranches.map((branch) => branch.id);
+      filter.final_verification_status = 0;
     } else if (userRoleId === 9) {
-      const createdDrByArcs = await userModel.findAll({
+      // ARCS
+      const _userDistricts = await userStateToBranchModel.findAll({
         where: {
-          created_by: userId
-        }
-      });
-      const userDrIds = createdDrByArcs.map(user => user.id);
-      const createdArUsers = await userModel.findAll({
-        where: {
-          created_by: userDrIds,
+          user_id: userId,
+          status: true,
         },
+        attributes: ["district_id"],
       });
-
-      const userArIds = createdArUsers.map(user => user.id);
-      const createdBrByAr = await userModel.findAll({
+      const _userTaluks = await db.Taluk.findAll({
         where: {
-          created_by: userArIds
-        }
-      });
-
-      const userBrIds = createdBrByAr.map(user => user.id);
-
-      // Fetch branches for the created users
-      const userBranches = await userStateToBranchModel.findAll({
-        where: {
-          user_id: {
-            [Op.in]: userBrIds,
-          },
+          district_id: _userDistricts.map((district) => district.district_id),
         },
+        attributes: ["id"],
       });
-      const branchIds = userBranches.map(branch => branch.branch_id);
-
-      conditions = {
-        ...conditions,
-        branch_id: {
-          [Op.in]: branchIds,
+      const _userBranches = await db.Branch.findAll({
+        where: {
+          taluk_id: _userTaluks.map((taluk) => taluk.id),
         },
-        final_verification_status: 1,
-      };
-
-    // RCS role - role_id 8
-    } else if (userRoleId === 8) {
-      const createdArcsByRcs = await userModel.findAll({
-        where: {
-          created_by: userId
-        }
+        attributes: ["id"],
       });
-      const userArcsIds = createdArcsByRcs.map(user => user.id);
-      const createdDrByArcs = await userModel.findAll({
-        where: {
-          created_by: userArcsIds
-        }
-      });
-      const userDrIds = createdDrByArcs.map(user => user.id);
-      const createdArUsers = await userModel.findAll({
-        where: {
-          created_by: userDrIds,
-        },
-      });
-
-      const userArIds = createdArUsers.map(user => user.id);
-      const createdBrByAr = await userModel.findAll({
-        where: {
-          created_by: userArIds
-        }
-      });
-
-      const userBrIds = createdBrByAr.map(user => user.id);
-
-      // Fetch branches for the created users
-      const userBranches = await userStateToBranchModel.findAll({
-        where: {
-          user_id: {
-            [Op.in]: userBrIds,
-          },
-        },
-      });
-      const branchIds = userBranches.map(branch => branch.branch_id);
-
-      conditions = {
-        ...conditions,
-        branch_id: {
-          [Op.in]: branchIds,
-        },
-        final_verification_status: 1,
-      };
-    // Deputy Registrar role - role_id 7
+      filter.branch_id = _userBranches.map((branch) => branch.id);
+      filter.final_verification_status = 0;
     } else if (userRoleId === 7) {
-      // Fetch documents from branches created by users created by the logged-in Deputy Registrar
-      const createdArUsers = await userModel.findAll({
+      // Deputy Registrar
+      const _userDistricts = await userStateToBranchModel.findAll({
         where: {
-          created_by: userId,
+          user_id: userId,
+          status: true,
         },
+        attributes: ["district_id"],
       });
-
-      const userArIds = createdArUsers.map(user => user.id);
-      const createdBrByAr = await userModel.findAll({
+      const _userTaluks = await db.Taluk.findAll({
         where: {
-          created_by: userArIds
-        }
+          district_id: _userDistricts.map((district) => district.district_id),
+        },
+        attributes: ["id"],
       });
-
-      const userBrIds = createdBrByAr.map(user => user.id);
-
-      // Fetch branches for the created users
-      const userBranches = await userStateToBranchModel.findAll({
+      const _userBranches = await db.Branch.findAll({
         where: {
-          user_id: {
-            [Op.in]: userBrIds,
-          },
+          taluk_id: _userTaluks.map((taluk) => taluk.id),
         },
+        attributes: ["id"],
       });
-      const branchIds = userBranches.map(branch => branch.branch_id);
-
-      conditions = {
-        ...conditions,
-        branch_id: {
-          [Op.in]: branchIds,
-        },
-        final_verification_status: 1,
-      };
-
-    // Assistant Registrar role - role_id 6
+      filter.branch_id = _userBranches.map((branch) => branch.id);
+      filter.final_verification_status = 0;
     } else if (userRoleId === 6) {
-      // Fetch documents created by the logged-in user
-      const createdBranchRegistrars = await userModel.findAll({
-        where: {
-          created_by: userId
-        }
+      // Assistant Registrar
+      const _userDistricts = await userStateToBranchModel.findAll({
+        where: { user_id: userId, status: true },
+        attributes: ["district_id"],
       });
-
-      console.log(createdBranchRegistrars, "createdBranchRegistrars")
-      const userBrIds = createdBranchRegistrars.map(user => user.id);
-
-      // Fetch branches for the created users
-      const userBranches = await userStateToBranchModel.findAll({
-        where: {
-          user_id: {
-            [Op.in]: userBrIds,
-          },
-        },
+      const _userTaluks = await db.Taluk.findAll({
+        where: { district_id: _userDistricts.map(district => district.district_id) },
+        attributes: ["id"],
       });
-      const branchIds = userBranches.map(branch => branch.branch_id);
-
-      conditions = {
-        ...conditions,
-        branch_id: {
-          [Op.in]: branchIds,
+      const _userBranches = await db.Branch.findAll({
+        where: {
+          taluk_id: _userTaluks.map((taluk) => taluk.id),
         },
-        final_verification_status: 1,
-      };
-
-    // Other Roles
-    } else {
-      // Default condition for any other roles: Show documents created by the logged-in user
-      conditions = {
-        ...conditions,
-        user_id: userId,
-        final_verification_status: 1,
-      };
+        attributes: ["id"],
+      });
+      filter.branch_id = _userBranches.map((branch) => branch.id);
+      filter.final_verification_status = 0;
+    } else if (userRoleId === 10) {
+      // Branch Registrar
+      const _userBranches = await userStateToBranchModel.findAll({
+        where: {
+          user_id: userId,
+          status: true,
+        },
+        attributes: ["branch_id"],
+      });
+      filter.branch_id = _userBranches.map((branch) => branch.branch_id);
+      filter.final_verification_status = 0;
     }
 
-    // Apply additional query conditions
     if (qFilter) {
-      conditions = {
-        ...conditions,
+      filter = {
+        ...filter,
         ...JSON.parse(qFilter),
       };
     }
@@ -1627,33 +1557,42 @@ export const getDocumentList = catchAsync(async (req, res) => {
     if (search) {
       const searchTerm = search?.trim();
       if (searchTerm !== "") {
-        conditions.document_name = {
+        filter.document_name = {
           [Op.like]: `%${searchTerm}%`,
         };
       }
     }
 
+    // Date filtering logic for document_created_at
     if (from_date && to_date) {
-      conditions.document_reg_date = {
-        [Op.between]: [new Date(from_date), new Date(to_date)],
+      filter.document_created_at = {
+        [Op.between]: [new Date(from_date).toISOString(), new Date(to_date).toISOString()],
       };
     } else if (from_date) {
-      conditions.document_reg_date = {
-        [Op.gte]: new Date(from_date),
+      filter.document_created_at = {
+        [Op.gte]: new Date(from_date).toISOString(),
       };
     } else if (to_date) {
-      conditions.document_reg_date = {
-        [Op.lte]: new Date(to_date),
+      filter.document_created_at = {
+        [Op.lte]: new Date(to_date).toISOString(),
       };
     }
 
     if (document_type) {
-      conditions.document_type = document_type;
+      filter.document_type = document_type;
     }
 
     // Fetch documents based on the conditions
     const documents = await documentModel.findAll({
-      where: conditions,
+      where: filter,
+      attributes: [
+        'id', 'image_pdf', 'document_name', 'document_reg_no', 'document_unique_id', 
+        'document_reg_date', 'document_renewal_date', 'total_no_of_page', 'created_by', 
+        'updated_by', 'document_type', 'branch_id', 'squad_verified_by', 'supervisor_verified_by', 
+        'squad_rejected_by', 'supervisor_rejected_by', 'supervisor_verification_status', 
+        'squad_verification_status', 'final_verification_status', 'status', 'document_upload_status', 
+        'document_created_at', 'createdAt', 'updatedAt'
+      ],
     });
 
     // Fetch document type details for each document
@@ -1662,7 +1601,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
         const documentType = await documentTypeModel.findByPk(doc.document_type);
         return {
           ...doc.toJSON(),
-          document_type: documentType,
+          document_type: documentType ? { id: documentType.id, name: documentType.name } : { id: doc.document_type, name: 'Unknown' },
         };
       })
     );
@@ -1672,7 +1611,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
       total: completeDocuments.length,
     });
   } catch (error) {
-    console.log(error);
+    console.log('Error:', error);
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
