@@ -1925,7 +1925,7 @@ export const getDocumentList = catchAsync(async (req, res) => {
         final_verification_status: 1
       },
       attributes: [
-        'id', 'image_pdf', 'document_name', 'document_reg_no', 'document_unique_id', 
+        'id', 'image_pdf', 'document_name', 'document_reg_no', 'document_unique_id', 'authorised_persons',
         'document_reg_date', 'document_renewal_date', 'total_no_of_page', 'created_by', 
         'updated_by', 'document_type', 'branch_id', 'squad_verified_by', 'supervisor_verified_by', 
         'squad_rejected_by', 'supervisor_rejected_by', 'supervisor_verification_status', 
