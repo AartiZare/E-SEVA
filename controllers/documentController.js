@@ -135,6 +135,12 @@ export const userBranches = async (roleId, userId) => {
     return _userBranches.map((branch) => branch.id);
   } else if (roleId === 6) {
     // Assistant Registrar
+    const _userDistricts = await userStateToBranchModel.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["district_id"],
+    });
     const _userTaluks = await db.Taluk.findAll({
       where: {
         district_id: _userDistricts.map((district) => district.district_id),
@@ -143,7 +149,7 @@ export const userBranches = async (roleId, userId) => {
     });
     const _userBranches = await db.Branch.findAll({
       where: {
-        talukId: _userTaluks.map((taluk) => taluk.id),
+        taluk_id: _userTaluks.map((taluk) => taluk.id),
       },
       attributes: ["id"],
     });
@@ -159,6 +165,139 @@ export const userBranches = async (roleId, userId) => {
     return _userBranches.map((branch) => branch.branch_id);
   }
 };
+
+// export const userBranches = async (roleId, userId) => {
+//   if (roleId === 1) {
+//     // Admin
+//     return [];
+//   } else if (roleId === 3) {
+//     // Squad
+//     const _userBranches = await userStateToBranchModel.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       attributes: ["branch_id"],
+//     });
+//     return _userBranches.map((branch) => branch.branch_id);
+//   } else if (roleId === 2) {
+//     // Supervisor
+//     const _userBranches = await userStateToBranchModel.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       attributes: ["branch_id"],
+//     });
+//     return _userBranches.map((branch) => branch.branch_id);
+//   } else if (roleId === 4) {
+//     // User
+//     const _userBranches = await userStateToBranchModel.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       attributes: ["branch_id"],
+//     });
+//     return _userBranches.map((branch) => branch.branch_id);
+//   } else if (roleId === 8) {
+//     // RCS
+//     const _userStates = await userStateToBranchModel.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       attributes: ["state_id"],
+//     });
+//     const _userDivisions = await db.Division.findAll({
+//       where: {
+//         state_id: _userStates.map((state) => state.state_id),
+//       },
+//       attributes: ["id"],
+//     });
+//     const _userDistricts = await db.District.findAll({
+//       where: {
+//         division_id: _userDivisions.map((division) => division.id),
+//       },
+//       attributes: ["id"],
+//     });
+//     const _userTaluks = await db.Taluk.findAll({
+//       where: {
+//         district_id: _userDistricts.map((district) => district.id),
+//       },
+//       attributes: ["id"],
+//     });
+//     const _userBranches = await db.Branch.findAll({
+//       where: {
+//         taluk_id: _userTaluks.map((taluk) => taluk.id),
+//       },
+//       attributes: ["id"],
+//     });
+//     return _userBranches.map((branch) => branch.id);
+//   } else if (roleId === 9) {
+//     // ARCS
+//     const _userDistricts = await userStateToBranchModel.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       attributes: ["district_id"],
+//     });
+//     const _userTaluks = await db.Taluk.findAll({
+//       where: {
+//         district_id: _userDistricts.map((district) => district.district_id),
+//       },
+//       attributes: ["id"],
+//     });
+//     const _userBranches = await db.Branch.findAll({
+//       where: {
+//         taluk_id: _userTaluks.map((taluk) => taluk.id),
+//       },
+//       attributes: ["id"],
+//     });
+//     return _userBranches.map((branch) => branch.id);
+//   } else if (roleId === 7) {
+//     // Deputy Registrar
+//     const _userDistricts = await userStateToBranchModel.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       attributes: ["district_id"],
+//     });
+//     const _userTaluks = await db.Taluk.findAll({
+//       where: {
+//         district_id: _userDistricts.map((district) => district.district_id),
+//       },
+//       attributes: ["id"],
+//     });
+//     const _userBranches = await db.Branch.findAll({
+//       where: {
+//         taluk_id: _userTaluks.map((taluk) => taluk.id),
+//       },
+//       attributes: ["id"],
+//     });
+//     return _userBranches.map((branch) => branch.id);
+//   } else if (roleId === 6) {
+//     // Assistant Registrar
+//     const _userTaluks = await db.Taluk.findAll({
+//       where: {
+//         district_id: _userDistricts.map((district) => district.district_id),
+//       },
+//       attributes: ["id"],
+//     });
+//     const _userBranches = await db.Branch.findAll({
+//       where: {
+//         talukId: _userTaluks.map((taluk) => taluk.id),
+//       },
+//       attributes: ["id"],
+//     });
+//     return _userBranches.map((branch) => branch.id);
+//   } else if (roleId === 10) {
+//     // Branch Registrar
+//     const _userBranches = await userStateToBranchModel.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       attributes: ["branch_id"],
+//     });
+//     return _userBranches.map((branch) => branch.branch_id);
+//   }
+// };
 
 export const createDocument = catchAsync(async (req, res, next) => {
   try {
@@ -1422,6 +1561,203 @@ export const webDashboard = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
+
+// export const webDashboard = catchAsync(async (req, res, next) => {
+//   try {
+//     let where = {};
+
+//     // Date Filters
+//     if (req.body?.fromDate) {
+//       where = {
+//         ...where,
+//         createdAt: {
+//           [Op.gte]: req.body?.fromDate,
+//         },
+//       };
+//     }
+//     if (req.body?.toDate) {
+//       where = {
+//         ...where,
+//         createdAt: {
+//           [Op.lte]: req.body?.toDate,
+//         },
+//       };
+//     }
+//     if (req.body?.documentType) {
+//       where = {
+//         ...where,
+//         document_type: req.body?.documentType,
+//       };
+//     }
+
+//     // Add where condition based on the user role
+//     // We need to find the user role by the auth token
+//     // RCS => ARCS => Deputy Registrar => Assistant Registrar => Branch Registrar
+
+//     const branches = await userBranches(req.user.role_id, req.user.id);
+//     if (branches.length > 0) {
+//       where.branch_id = branches;
+//     }
+//     where.final_verification_status = 1;
+
+//     const responseData = {
+//       uploads: 0,
+//       pages: 0,
+//       downloads: 0,
+//       renewables: 0,
+//       uploadsByDateAndType: {},
+//       uploadsByDate: {},
+//     };
+
+//     const uploads = await documentModel.count({ where });
+//     const pages = await documentModel.sum("total_no_of_page", { where });
+//     const renewables = await documentModel.count({
+//       where: { ...where, document_renewal_date: { [Op.lte]: new Date() } },
+//     });
+
+//     // Calculate total downloads based on user role
+//     let downloadWhere = {};
+
+//     if (req.user.role_id === 1) { // Admin
+//       // Admin can see all downloads
+//     } else {
+//       const userRole = await roleModel.findByPk(req.user.role_id);
+//       if (userRole.name === 'RCS') {
+//         const arcs = await userModel.findAll({
+//           where: { created_by: req.user.id, role_id: 9 },
+//           attributes: ['id'],
+//         });
+//         const arcsIds = arcs.map((arc) => arc.id);
+//         downloadWhere.downloaded_by = { [Op.in]: [req.user.id, ...arcsIds] };
+//       } else if (userRole.name === 'ARCS') {
+//         const users = await userModel.findAll({
+//           where: { created_by: req.user.id, role_id: 10 },
+//           attributes: ['id'],
+//         });
+//         const userIds = users.map((user) => user.id);
+//         downloadWhere.downloaded_by = { [Op.in]: [req.user.id, ...userIds] };
+//       } else if (userRole.name === 'Deputy Registrar' || userRole.name === 'Assistant Registrar' || userRole.name === 'Branch Registrar') {
+//         downloadWhere.downloaded_by = req.user.id;
+//       }
+//     }
+
+//     const downloads = await downloadLogModel.sum('download_count', { where: downloadWhere }) || 0;
+
+//     // Recent 7 days uploads (fromDate will be 7 days before the current date)
+//     const toDate = new Date();
+//     const fromDate = new Date(new Date(toDate).setDate(toDate.getDate() - 6));
+//     let allDates = [];
+//     for (let i = 1; i < 7; i++) {
+//       allDates.push(
+//         new Date(
+//           new Date(fromDate).setDate(fromDate.getDate() + i)
+//         ).toISOString()
+//       );
+//     }
+//     allDates = allDates.map((date) => {
+//       return date.split("T")[0];
+//     });
+
+//     where.createdAt = {
+//       [Op.between]: [
+//         new Date(fromDate.setHours(0, 0, 0)),
+//         new Date(toDate.setHours(23, 59, 59)),
+//       ],
+//     };
+
+//     // Charts Data. fill the dates with 0 if no data available for that date and type
+//     const uploadsByDateAndType = await documentModel.findAll({
+//       where,
+//       attributes: [
+//         "document_type",
+//         [db.sequelize.fn("DATE", db.sequelize.col("createdAt")), "createdAt"],
+//         [db.sequelize.fn("COUNT", "document_type"), "count"],
+//       ],
+//       group: [
+//         "document_type",
+//         [db.sequelize.fn("DATE", db.sequelize.col("createdAt"))],
+//       ],
+//     });
+
+//     const uniqueDocuments = [
+//       ...new Set(uploadsByDateAndType.map((upload) => upload.document_type)),
+//     ];
+//     const chartData = {};
+//     const chartDataByDate = {};
+//     uniqueDocuments.forEach((documentType) => {
+//       allDates.forEach((date) => {
+//         if (!chartData[documentType]) {
+//           chartData[documentType] = {};
+//         }
+//         if (!chartDataByDate[documentType]) {
+//           chartDataByDate[documentType] = {};
+//         }
+//         const isExists = uploadsByDateAndType.find((upload) => {
+//           return (
+//             upload.document_type === documentType &&
+//             new Date(upload.createdAt).toISOString().split("T")[0] === date
+//           );
+//         });
+//         if (isExists) {
+//           chartData[documentType][date] = parseInt(
+//             isExists.dataValues.count,
+//             10
+//           );
+//         } else {
+//           chartData[documentType][date] = 0;
+//         }
+//         const isExistsByDate = uploadsByDateAndType.find((upload) => {
+//           return (
+//             upload.document_type === documentType &&
+//             new Date(upload.createdAt).toISOString().split("T")[0] === date
+//           );
+//         });
+//         if (isExistsByDate) {
+//           chartDataByDate[documentType][date] = parseInt(
+//             isExistsByDate.dataValues.count,
+//             10
+//           );
+//         } else {
+//           chartDataByDate[documentType][date] = 0;
+//         }
+//       });
+//     });
+//     const uploadsByDate = await documentModel.findAll({
+//       where,
+//       attributes: [
+//         [db.sequelize.fn("DATE", db.sequelize.col("createdAt")), "createdAt"],
+//         [db.sequelize.fn("COUNT", "createdAt"), "count"],
+//       ],
+//       group: [[db.sequelize.fn("DATE", db.sequelize.col("createdAt"))]],
+//     });
+
+//     const documentTypeNames = await db.DocumentType.findAll({
+//       attributes: ["id", "name"],
+//     });
+
+//     responseData.uploads = uploads;
+//     responseData.pages = pages;
+//     responseData.downloads = downloads;
+//     responseData.renewables = renewables;
+//     responseData.uploadsByDateAndType = Object.keys(chartData).map((key) => {
+//       const documentTypeName = documentTypeNames.find((type) => {
+//         return parseInt(type.id, 10) === parseInt(key, 10);
+//       });
+//       return {
+//         document_type: key,
+//         data: chartData[key],
+//         document_type_name: documentTypeName ? documentTypeName.name : null,
+//       };
+//     });
+//     // Date wise uploads
+//     responseData.uploadsByDate = uploadsByDate;
+
+//     return res.send({ status: true, data: responseData });
+//   } catch (error) {
+//     console.error(error.toString());
+//     return res.status(500).send({ error: "Internal Server Error" });
+//   }
+// });
 
 export const getDocumentList = catchAsync(async (req, res) => {
   try {
