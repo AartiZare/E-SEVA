@@ -459,6 +459,76 @@ export const fetchAllUserData = catchAsync(async (req, res) => {
       };
     } else if (userRole.name === "Squad") {
       const squadBranches = await userBranches(req.user.role_id, req.user.id);
+      // Find supervisors created by the logged-in user
+      const branch_users = await userStateToBranchModel.findAll({
+        where: {
+          branch_id: squadBranches,
+          status: true,
+        },
+        attributes: ["user_id"],
+      });
+      const supervisors = await db.User.findAll({
+        where: {
+          id: branch_users.map((user) => user.user_id),
+          role_id: 2,
+          created_by: req.user.id,
+          status: true,
+          
+        },
+        attributes: ['id'],
+      });
+
+      const supervisorIds = supervisors.map((supervisor) => supervisor.id);
+      
+      // Find users created by the supervisors
+      const users = await db.User.findAll({
+        where: {
+          created_by: 
+          {
+            [Op.in]:
+             supervisorIds,
+          },
+          id: branch_users.map((user) => user.user_id),
+          status: true,
+        },
+        attributes: ['id'],
+      });
+      const userIds = users.map((user) => user.id);
+    
+      const userCounts = await db.User.count({
+        where: {
+          id: {
+            [Op.in]: [...supervisorIds, ...userIds],
+          },
+        },
+      });
+    
+      const activeUserCounts = await db.User.count({
+        where: {
+          id: {
+            [Op.in]: [...supervisorIds, ...userIds],
+          },
+          status: true,
+        },
+      });
+    
+      const inactiveUserCounts = await db.User.count({
+        where: {
+          id: {
+            [Op.in]: [...supervisorIds, ...userIds],
+          },
+          status: false,
+        },
+      });
+    
+      userTeam = {
+        userCounts,
+        activeUserCounts,
+        inactiveUserCounts,
+      };
+    }
+     else if (userRole.name === "Squad") {
+      const squadBranches = await userBranches(req.user.role_id, req.user.id);
       const branch_users = await userStateToBranchModel.findAll({
         where: {
           branch_id: squadBranches,
