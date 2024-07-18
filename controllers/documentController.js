@@ -1584,7 +1584,10 @@ export const getDocumentList = catchAsync(async (req, res) => {
 
     // Fetch documents based on the conditions
     const documents = await documentModel.findAll({
-      where: filter,
+      where: {
+        ...filter,
+        final_verification_status: 1
+      },
       attributes: [
         'id', 'image_pdf', 'document_name', 'document_reg_no', 'document_unique_id', 
         'document_reg_date', 'document_renewal_date', 'total_no_of_page', 'created_by', 
