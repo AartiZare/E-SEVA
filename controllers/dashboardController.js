@@ -229,31 +229,47 @@ const fetchUserDailyActivity = async (req) => {
   if (userRole.name === "User") {
     filters.created_by = userId;
 
-    const approvedCount = await documentModel.count({
+    const approvedCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 1,
       },
     });
 
-    const rejectedCount = await documentModel.count({
+    const rejectedCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 2,
       },
     });
 
-    const pendingCount = await documentModel.count({
+    const pendingCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 0,
       },
     });
 
+    const totalApprovedPages = approvedCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+    const totalRejectedPages = rejectedCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+    const totalPendingPages = pendingCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+
     return {
-      approved: approvedCount,
-      rejected: rejectedCount,
-      pending: pendingCount,
+      approved: approvedCount.length,
+      rejected: rejectedCount.length,
+      pending: pendingCount.length,
+      totalApprovedPages,
+      totalRejectedPages,
+      totalPendingPages,
     };
   } else if (userRole.name === "Squad") {
     const createdSupervisors = await userModel.findAll({
@@ -271,7 +287,7 @@ const fetchUserDailyActivity = async (req) => {
     });
     const userIdsMap = users.map((user) => user.id);
 
-    const approvedCount = await documentModel.count({
+    const approvedCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 1,
@@ -282,7 +298,7 @@ const fetchUserDailyActivity = async (req) => {
       },
     });
 
-    const rejectedCount = await documentModel.count({
+    const rejectedCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 2,
@@ -293,7 +309,7 @@ const fetchUserDailyActivity = async (req) => {
       },
     });
 
-    const pendingCount = await documentModel.count({
+    const pendingCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 0,
@@ -304,11 +320,26 @@ const fetchUserDailyActivity = async (req) => {
         created_by: userIdsMap,
       },
     });
+    const totalApprovedPages = approvedCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+    const totalRejectedPages = rejectedCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+    const totalPendingPages = pendingCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
 
     return {
-      approved: approvedCount,
-      rejected: rejectedCount,
-      pending: pendingCount,
+      approved: approvedCount.length,
+      rejected: rejectedCount.length,
+      pending: pendingCount.length,
+      totalApprovedPages,
+      totalRejectedPages,
+      totalPendingPages,
     };
   } else {
     const users = await userModel.findAll({
@@ -318,7 +349,7 @@ const fetchUserDailyActivity = async (req) => {
     });
     const userIdsMap = users.map((user) => user.id);
 
-    const approvedCount = await documentModel.count({
+    const approvedCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 1,
@@ -329,7 +360,7 @@ const fetchUserDailyActivity = async (req) => {
       },
     });
 
-    const rejectedCount = await documentModel.count({
+    const rejectedCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 2,
@@ -340,7 +371,7 @@ const fetchUserDailyActivity = async (req) => {
       },
     });
 
-    const pendingCount = await documentModel.count({
+    const pendingCount = await documentModel.findAll({
       where: {
         ...filters,
         final_verification_status: 0,
@@ -352,10 +383,26 @@ const fetchUserDailyActivity = async (req) => {
       },
     });
 
+    const totalApprovedPages = approvedCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+    const totalRejectedPages = rejectedCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+    const totalPendingPages = pendingCount.reduce(
+      (total, doc) => total + doc.total_no_of_page,
+      0
+    );
+
     return {
-      approved: approvedCount,
-      rejected: rejectedCount,
-      pending: pendingCount,
+      approved: approvedCount.length,
+      rejected: rejectedCount.length,
+      pending: pendingCount.length,
+      totalApprovedPages,
+      totalRejectedPages,
+      totalPendingPages,
     };
   }
 };
