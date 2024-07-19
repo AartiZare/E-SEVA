@@ -304,7 +304,7 @@ const fetchUserDailyActivity = async (req) => {
         ...filters,
         final_verification_status: 2,
         [Op.or]: [
-          // { supervisor_rejected_by: userId },
+          { supervisor_rejected_by: userId },
           { squad_rejected_by: userId },
         ],
       },
