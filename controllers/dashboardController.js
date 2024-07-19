@@ -80,13 +80,15 @@ const fetchUserRecords = async (req) => {
   let appdoc = [];
   if(req.user.role_id === 4) {
     appdoc = await documentModel.findAll({
-      ...filters,
-      final_verification_status: 1,
-      [Op.or]: [
-        { squad_verified_by: userId },
-        { supervisor_verified_by: userId },
-        { created_by: userId }
-      ]
+      where: {
+        ...filters,
+        final_verification_status: 1,
+        [Op.or]: [
+          { squad_verified_by: userId },
+          { supervisor_verified_by: userId },
+          { created_by: userId }
+        ]
+      }
     })
   } else if(req.user.role_id === 2) {
     appdoc = await documentModel.findAll({
@@ -400,7 +402,7 @@ const fetchUserDailyActivity = async (req) => {
         // final_verification_status: 2,
         // [Op.or]: [
           // { 
-            supervisor_rejected_by: userId 
+        supervisor_rejected_by: userId 
           // },
           // { squad_rejected_by: userId },
         // ],
