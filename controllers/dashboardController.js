@@ -304,7 +304,7 @@ const fetchUserDailyActivity = async (req) => {
         ...filters,
         final_verification_status: 2,
         [Op.or]: [
-          { supervisor_rejected_by: userId },
+          // { supervisor_rejected_by: userId },
           { squad_rejected_by: userId },
         ],
       },
@@ -353,7 +353,7 @@ const fetchUserDailyActivity = async (req) => {
     const approvedCount = await documentModel.findAll({
       where: {
         ...filters,
-        final_verification_status: 1,
+        // final_verification_status: 1,
         [Op.or]: [
           { squad_verified_by: userId },
           { supervisor_verified_by: userId },
@@ -377,7 +377,8 @@ const fetchUserDailyActivity = async (req) => {
         ...filters,
         final_verification_status: 0,
         created_by: userIdsMap,
-        supervisor_verified_by: { [Op.ne]: null },
+        // supervisor_verified_by: { [Op.ne]: null },
+        supervisor_verified_by: null,
         supervisor_verification_status: 0,
         squad_verification_status: 0,
         squad_verified_by: null,
