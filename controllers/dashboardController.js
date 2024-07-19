@@ -65,8 +65,21 @@ const fetchUserRecords = async (req) => {
 
   filters.branch_id = _userBranches.map((branch) => branch.branch_id);
 
-  const approvedDocuments = await documentModel.findAll({
-    where: {
+  // const approvedDocuments = await documentModel.findAll({
+  //   where: {
+  //     ...filters,
+  //     final_verification_status: 1,
+  //     [Op.or]: [
+  //       { squad_verified_by: userId },
+  //       { supervisor_verified_by: userId },
+  //       { created_by: userId }
+  //     ]
+  //   },
+  // });
+
+  let appdoc = [];
+  if(req.user.role_id === 4) {
+    appdoc = await documentModel.findAll({
       ...filters,
       final_verification_status: 1,
       [Op.or]: [
@@ -74,8 +87,27 @@ const fetchUserRecords = async (req) => {
         { supervisor_verified_by: userId },
         { created_by: userId }
       ]
-    },
-  });
+    })
+  } else if(req.user.role_id === 2) {
+    appdoc = await documentModel.findAll({
+      where: {
+        ...filters,
+        supervisor_verified_by: userId,
+        supervisor_verification_status: 1
+      },
+    });
+    console.log(appdoc, "appdoc", appdoc.length)
+  } else if (req.user.role_id === 3) {
+    appdoc = await documentModel.findAll({
+      where: {
+        ...filters,
+        supervisor_verified_by: { [Op.ne]: null },
+        supervisor_verification_status: 1,
+        squad_verification_status: 1,
+        squad_verified_by: userId,
+      },
+    });
+  }
 
   const rejectedDocuments = await documentModel.findAll({
     where: {
@@ -145,7 +177,7 @@ const fetchUserRecords = async (req) => {
   }
 
 
-  const totalApprovedPages = approvedDocuments.reduce(
+  const totalApprovedPages = appdoc.reduce(
     (total, doc) => total + doc.total_no_of_page,
     0
   );
@@ -159,7 +191,7 @@ const fetchUserRecords = async (req) => {
   );
 
   return {
-    approved: approvedDocuments.length,
+    approved: appdoc.length,
     rejected: rejectedDocuments.length,
     pending: pendingDocuments.length,
     totalApprovedPages,
@@ -294,7 +326,7 @@ const fetchUserDailyActivity = async (req) => {
         final_verification_status: 1,
         [Op.or]: [
           { squad_verified_by: userId },
-          { supervisor_verified_by: userId },
+          // { supervisor_verified_by: userId },
         ],
       },
     });
@@ -304,7 +336,7 @@ const fetchUserDailyActivity = async (req) => {
         ...filters,
         final_verification_status: 2,
         [Op.or]: [
-          { supervisor_rejected_by: userId },
+          // { supervisor_rejected_by: userId },
           { squad_rejected_by: userId },
         ],
       },
@@ -354,21 +386,24 @@ const fetchUserDailyActivity = async (req) => {
       where: {
         ...filters,
         // final_verification_status: 1,
-        [Op.or]: [
-          { squad_verified_by: userId },
-          { supervisor_verified_by: userId },
-        ],
+        supervisor_verified_by: userId
+        // [Op.or]: [
+        //   // { squad_verified_by: userId },
+        //   { supervisor_verified_by: userId },
+        // ],
       },
     });
 
     const rejectedCount = await documentModel.findAll({
       where: {
         ...filters,
-        final_verification_status: 2,
-        [Op.or]: [
-          { supervisor_rejected_by: userId },
-          { squad_rejected_by: userId },
-        ],
+        // final_verification_status: 2,
+        // [Op.or]: [
+          // { 
+            supervisor_rejected_by: userId 
+          // },
+          // { squad_rejected_by: userId },
+        // ],
       },
     });
 
@@ -380,8 +415,8 @@ const fetchUserDailyActivity = async (req) => {
         // supervisor_verified_by: { [Op.ne]: null },
         supervisor_verified_by: null,
         supervisor_verification_status: 0,
-        squad_verification_status: 0,
-        squad_verified_by: null,
+        // squad_verification_status: 0,
+        // squad_verified_by: null,
       },
     });
 
