@@ -680,8 +680,10 @@ export const approveMultipleDocs = catchAsync(async (req, res, next) => {
         continue;
       }
 
+      document.squad_verified_by = req.user.id;
       document.squad_verification_status = 1;
       document.final_verification_status = 1;
+      document.approved_at = new Date();
       const activityDescription = "approved by Squad";
 
       document.updated_by = userId;
@@ -966,6 +968,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         attributes: ["branch_id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.branch_id);
+      filter.squad_rejected_by = req.user.id
       filter.squad_verification_status = 2;
     } else if (user.role_id === 2) {
       // Supervisor
@@ -976,6 +979,7 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         attributes: ["branch_id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.branch_id);
+      filter.supervisor_rejected_by = req.user.id;
       filter.supervisor_verification_status = 2;
     } else if (user.role_id === 4) {
       // User
@@ -986,9 +990,9 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
         attributes: ["branch_id"],
       });
       filter.branch_id = _userBranches.map((branch) => branch.branch_id);
-      filter[Op.or] = {
-        supervisor_verification_status: 2,
-        squad_verification_status: 2,
+      filter[Op.and] = {
+        final_verification_status: 2,
+        created_by: req.user.id
       };
     } else if (user.role_id === 8) {
       // RCS
@@ -1096,7 +1100,10 @@ export const rejectedDocumentListUser = catchAsync(async (req, res, next) => {
       filter.final_verification_status = 2;
     }
 
-    rejectedDoc = await documentModel.findAll({ where: filter });
+    rejectedDoc = await documentModel.findAll({
+       where: filter,
+       final_verification_status: 2
+     });
 
     return res.send({ status: true, data: rejectedDoc });
   } catch (error) {
@@ -1354,8 +1361,10 @@ export const rejectMultipleDocs = catchAsync(async (req, res, next) => {
         continue;
       }
 
+      document.squad_rejected_by = req.user.id;
       document.squad_verification_status = 2;
       document.final_verification_status = 2;
+      document.rejected_at = new Date();
 
       // Prepare data for DocumentRejectionLog
       const rejectionLogData = {
