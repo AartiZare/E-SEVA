@@ -744,8 +744,13 @@ export const login = catchAsync(async (req, res, next) => {
         new ApiError(httpStatus.BAD_REQUEST, "Invalid Email ID or Password")
       );
 
-    // Find user by email in user model
-    let user = await userModel.findOne({ where: { email } });
+    // Find user by email and check if the user is active
+    let user = await userModel.findOne({ 
+      where: { 
+        email, 
+        is_active: true 
+      } 
+    });
 
     // If user not found, find user in vendor model
     if (!user) {
