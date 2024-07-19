@@ -20,29 +20,30 @@ const userModel = db.User;
 
 const fetchUserRecords = async (req) => {
   const userId = req.user.id;
-  const { fromDate, toDate, branch_id, date, user_id } = req.query;
+  // const { fromDate, toDate, branch_id, date, user_id } = req.query;
+  const { branch_id, user_id } = req.query;
 
   let filters = {};
 
-  // Date filter
-  if (date) {
-    const selectedDate = new Date(date);
-    selectedDate.setUTCHours(0, 0, 0, 0);
+  // // Date filter
+  // if (date) {
+  //   const selectedDate = new Date(date);
+  //   selectedDate.setUTCHours(0, 0, 0, 0);
 
-    filters.createdAt = {
-      [Op.between]: [selectedDate, new Date(selectedDate).setUTCHours(23, 59, 59, 999)],
-    };
-  } else if (fromDate && toDate) {
-    const startDate = new Date(fromDate);
-    startDate.setUTCHours(0, 0, 0, 0);
+  //   filters.createdAt = {
+  //     [Op.between]: [selectedDate, new Date(selectedDate).setUTCHours(23, 59, 59, 999)],
+  //   };
+  // } else if (fromDate && toDate) {
+  //   const startDate = new Date(fromDate);
+  //   startDate.setUTCHours(0, 0, 0, 0);
 
-    const endDate = new Date(toDate);
-    endDate.setUTCHours(23, 59, 59, 999);
+  //   const endDate = new Date(toDate);
+  //   endDate.setUTCHours(23, 59, 59, 999);
 
-    filters.createdAt = {
-      [Op.between]: [startDate, endDate],
-    };
-  }
+  //   filters.createdAt = {
+  //     [Op.between]: [startDate, endDate],
+  //   };
+  // }
 
   // Branch filter
   if (branch_id) {
