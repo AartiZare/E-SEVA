@@ -202,7 +202,250 @@ const fetchUserRecords = async (req) => {
   };
 };
 
-// Function to fetch user's daily activity
+// // Function to fetch user's daily activity
+// const fetchUserDailyActivity = async (req) => {
+//   const userId = req.user.id;
+//   const { fromDate, toDate, branch_id, date, user_id } = req.query;
+
+//   let filters = {};
+
+//   // Date filter
+//   if (date) {
+//     const selectedDate = new Date(date);
+//     selectedDate.setUTCHours(0, 0, 0, 0);
+
+//     filters.createdAt = {
+//       [Op.between]: [selectedDate, new Date(selectedDate).setUTCHours(23, 59, 59, 999)],
+//     };
+//   } else if (fromDate && toDate) {
+//     const startDate = new Date(fromDate);
+//     startDate.setUTCHours(0, 0, 0, 0);
+
+//     const endDate = new Date(toDate);
+//     endDate.setUTCHours(23, 59, 59, 999);
+
+//     filters.createdAt = {
+//       [Op.between]: [startDate, endDate],
+//     };
+//   } else {
+//     // Default to today's date
+//     const currentDate = new Date();
+//     currentDate.setUTCHours(0, 0, 0, 0);
+
+//     const startDate = new Date(currentDate);
+//     const endDate = new Date(currentDate);
+//     endDate.setUTCHours(23, 59, 59, 999);
+
+//     filters.createdAt = {
+//       [Op.between]: [startDate, endDate],
+//     };
+//   }
+
+//   if (branch_id) {
+//     filters.branch_id = branch_id;
+//   }
+
+//   if (user_id) {
+//     filters.created_by = user_id;
+//   }
+
+//   const _userBranches = await userStateToBranchModel.findAll({
+//     where: {
+//       user_id: userId,
+//       status: true,
+//     },
+//     attributes: ["branch_id"],
+//   });
+
+//   filters.branch_id = _userBranches.map((branch) => branch.branch_id);
+
+//   const userRole = await roleModel.findByPk(req.user.role_id);
+
+//   if (userRole.name === "User") {
+//     filters.created_by = userId;
+
+//     const approvedCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         final_verification_status: 1,
+//       },
+//     });
+
+//     const rejectedCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         final_verification_status: 2,
+//       },
+//     });
+
+//     const pendingCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         final_verification_status: 0,
+//       },
+//     });
+
+//     const totalApprovedPages = approvedCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+//     const totalRejectedPages = rejectedCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+//     const totalPendingPages = pendingCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+
+//     return {
+//       approved: approvedCount.length,
+//       rejected: rejectedCount.length,
+//       pending: pendingCount.length,
+//       totalApprovedPages,
+//       totalRejectedPages,
+//       totalPendingPages,
+//     };
+//   } else if (userRole.name === "Squad") {
+//     const createdSupervisors = await userModel.findAll({
+//       where: {
+//         created_by: userId,
+//       },
+//     });
+
+//     const superVisorIds = createdSupervisors.map((user) => user.id);
+
+//     const users = await userModel.findAll({
+//       where: {
+//         created_by: superVisorIds,
+//       },
+//     });
+//     const userIdsMap = users.map((user) => user.id);
+
+//     const approvedCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         final_verification_status: 1,
+//         [Op.or]: [
+//           { squad_verified_by: userId },
+//           // { supervisor_verified_by: userId },
+//         ],
+//       },
+//     });
+
+//     const rejectedCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         final_verification_status: 2,
+//         [Op.or]: [
+//           // { supervisor_rejected_by: userId },
+//           { squad_rejected_by: userId },
+//         ],
+//       },
+//     });
+
+//     const pendingCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         final_verification_status: 0,
+//         supervisor_verified_by: { [Op.ne]: null },
+//         supervisor_verification_status: 1,
+//         squad_verification_status: 0,
+//         squad_verified_by: null,
+//         created_by: userIdsMap,
+//       },
+//     });
+//     const totalApprovedPages = approvedCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+//     const totalRejectedPages = rejectedCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+//     const totalPendingPages = pendingCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+
+//     return {
+//       approved: approvedCount.length,
+//       rejected: rejectedCount.length,
+//       pending: pendingCount.length,
+//       totalApprovedPages,
+//       totalRejectedPages,
+//       totalPendingPages,
+//     };
+//   } else {
+//     const users = await userModel.findAll({
+//       where: {
+//         created_by: userId,
+//       },
+//     });
+//     const userIdsMap = users.map((user) => user.id);
+
+//     const approvedCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         // final_verification_status: 1,
+//         supervisor_verified_by: userId
+//         // [Op.or]: [
+//         //   // { squad_verified_by: userId },
+//         //   { supervisor_verified_by: userId },
+//         // ],
+//       },
+//     });
+
+//     const rejectedCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         // final_verification_status: 2,
+//         // [Op.or]: [
+//           // { 
+//         supervisor_rejected_by: userId 
+//           // },
+//           // { squad_rejected_by: userId },
+//         // ],
+//       },
+//     });
+
+//     const pendingCount = await documentModel.findAll({
+//       where: {
+//         ...filters,
+//         final_verification_status: 0,
+//         created_by: userIdsMap,
+//         // supervisor_verified_by: { [Op.ne]: null },
+//         supervisor_verified_by: null,
+//         supervisor_verification_status: 0,
+//         // squad_verification_status: 0,
+//         // squad_verified_by: null,
+//       },
+//     });
+
+//     const totalApprovedPages = approvedCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+//     const totalRejectedPages = rejectedCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+//     const totalPendingPages = pendingCount.reduce(
+//       (total, doc) => total + doc.total_no_of_page,
+//       0
+//     );
+
+//     return {
+//       approved: approvedCount.length,
+//       rejected: rejectedCount.length,
+//       pending: pendingCount.length,
+//       totalApprovedPages,
+//       totalRejectedPages,
+//       totalPendingPages,
+//     };
+//   }
+// };
+
 const fetchUserDailyActivity = async (req) => {
   const userId = req.user.id;
   const { fromDate, toDate, branch_id, date, user_id } = req.query;
@@ -214,8 +457,16 @@ const fetchUserDailyActivity = async (req) => {
     const selectedDate = new Date(date);
     selectedDate.setUTCHours(0, 0, 0, 0);
 
-    filters.createdAt = {
-      [Op.between]: [selectedDate, new Date(selectedDate).setUTCHours(23, 59, 59, 999)],
+    const startDate = new Date(selectedDate);
+    const endDate = new Date(selectedDate);
+    endDate.setUTCHours(23, 59, 59, 999);
+
+    filters = {
+      [Op.or]: [
+        { approved_at: { [Op.between]: [startDate, endDate] } },
+        { rejected_at: { [Op.between]: [startDate, endDate] } },
+        { createdAt: { [Op.between]: [startDate, endDate] } },
+      ]
     };
   } else if (fromDate && toDate) {
     const startDate = new Date(fromDate);
@@ -224,11 +475,14 @@ const fetchUserDailyActivity = async (req) => {
     const endDate = new Date(toDate);
     endDate.setUTCHours(23, 59, 59, 999);
 
-    filters.createdAt = {
-      [Op.between]: [startDate, endDate],
+    filters = {
+      [Op.or]: [
+        { approved_at: { [Op.between]: [startDate, endDate] } },
+        { rejected_at: { [Op.between]: [startDate, endDate] } },
+        { createdAt: { [Op.between]: [startDate, endDate] } },
+      ]
     };
   } else {
-    // Default to today's date
     const currentDate = new Date();
     currentDate.setUTCHours(0, 0, 0, 0);
 
@@ -236,8 +490,12 @@ const fetchUserDailyActivity = async (req) => {
     const endDate = new Date(currentDate);
     endDate.setUTCHours(23, 59, 59, 999);
 
-    filters.createdAt = {
-      [Op.between]: [startDate, endDate],
+    filters = {
+      [Op.or]: [
+        { approved_at: { [Op.between]: [startDate, endDate] } },
+        { rejected_at: { [Op.between]: [startDate, endDate] } },
+        { createdAt: { [Op.between]: [startDate, endDate] } },
+      ]
     };
   }
 

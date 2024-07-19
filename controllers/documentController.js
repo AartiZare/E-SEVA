@@ -563,6 +563,9 @@ export const approveDocument = catchAsync(async (req, res, next) => {
       return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
     }
 
+    // Set the approved_at field with the current date and time
+    document.approved_at = new Date();
+
     // Save the updated document
     await document.save();
 
@@ -593,6 +596,69 @@ export const approveDocument = catchAsync(async (req, res, next) => {
     return res.status(500).send({ error: "Internal Server Error" });
   }
 });
+
+// export const approveDocument = catchAsync(async (req, res, next) => {
+//   try {
+//     const { documentId } = req.params; // Assuming documentId is passed in the request params
+//     const userId = req.user.id; // Fetch user ID
+//     const userRole = await roleModel.findByPk(req.user.role_id); // Fetch user role
+
+//     // Find the document by ID
+//     const document = await documentModel.findByPk(documentId);
+
+//     // Check if the document exists
+//     if (!document) {
+//       return next(new ApiError(httpStatus.NOT_FOUND, "Document not found"));
+//     }
+
+//     // Check if the logged-in user is authorized to approve the document
+//     let activityDescription = "";
+//     if (userRole.name === "Supervisor") {
+//       // Update supervisor_verification_status for approved
+//       document.supervisor_verification_status = 1;
+//       document.supervisor_verified_by = userId; // Set the supervisor who verified the document
+//       activityDescription = "approved by Supervisor";
+//     } else if (userRole.name === "Squad") {
+//       // Update squad_verification_status for approved
+//       document.squad_verification_status = 1;
+//       document.final_verification_status = 1;
+//       document.squad_verified_by = userId; // Set the squad who verified the document
+//       activityDescription = "approved by Squad";
+//     } else {
+//       // If user role is neither supervisor nor squad, return unauthorized
+//       return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
+//     }
+
+//     // Save the updated document
+//     await document.save();
+
+//     // Log user activity with current local time
+//     const currentTime = new Date();
+//     const offset = currentTime.getTimezoneOffset();
+//     const localTime = new Date(currentTime.getTime() - (offset * 60 * 1000));
+
+//     // Create activity entry after approving the document
+//     const activityData = {
+//       activity_title: "Document Approved",
+//       activity_description: `Document ${document.document_name} with registration number ${document.document_reg_no} has been ${activityDescription}. Document Unique ID: ${document.document_unique_id}`,
+//       activity_created_at: localTime,
+//       activity_created_by_id: userId,
+//       activity_created_by_type: userRole.name,
+//       activity_document_id: document.id,
+//     };
+
+//     await activityModel.create(activityData);
+
+//     return res.send({
+//       status: true,
+//       data: document,
+//       message: "Document approved successfully",
+//     });
+//   } catch (error) {
+//     console.error(error.toString());
+//     return res.status(500).send({ error: "Internal Server Error" });
+//   }
+// });
 
 export const approveMultipleDocs = catchAsync(async (req, res, next) => {
   try {
@@ -1227,6 +1293,7 @@ export const rejectDocument = catchAsync(async (req, res, next) => {
       return next(new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized"));
     }
     
+    document.rejected_at = new Date();
     await document.save();
 
     await db.DocumentRejectionLog.create({

@@ -100,7 +100,15 @@ const documentsModel = (sequelize, DataTypes) => {
       document_created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
-      }
+      },
+      approved_at: {
+        type: DataTypes.DATE,
+        allowNull: true, // Allows null values
+      },
+      rejected_at: {
+        type: DataTypes.DATE,
+        allowNull: true, // Allows null values
+      },      
     },
     {
       timestamps: true,
