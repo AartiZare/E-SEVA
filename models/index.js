@@ -1,5 +1,5 @@
 import { Sequelize, DataTypes } from "sequelize";
-import dbConfig from "../config/dbConfig.js";
+import dbConfig from "../config/config.js";
 import userModel from "./userModel.js";
 import roleModel from "./roleModel.js";
 import branchModel from "./branchModel.js";
